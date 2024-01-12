@@ -3,7 +3,13 @@ package com.felipe.projectmanagerapi.models;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.felipe.projectmanagerapi.enums.Role;
 import com.felipe.projectmanagerapi.enums.converters.RoleConverter;
-import jakarta.persistence.*;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
+import jakarta.persistence.Id;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
@@ -32,11 +38,11 @@ public class User {
   private Role role = Role.READ_ONLY;
 
   @CreationTimestamp
-  @Column(name = "created_at", columnDefinition = "TIMESTAMP(3)", nullable = false)
+  @Column(name = "created_at", columnDefinition = "TIMESTAMP(2)", nullable = false)
   private LocalDateTime createdAt;
 
   @UpdateTimestamp
-  @Column(name = "updated_at", columnDefinition = "TIMESTAMP(3)", nullable = false)
+  @Column(name = "updated_at", columnDefinition = "TIMESTAMP(2)", nullable = false)
   private LocalDateTime updatedAt;
 
   public User() {}
