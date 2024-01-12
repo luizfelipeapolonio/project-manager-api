@@ -19,7 +19,7 @@ public class RoleConverter implements AttributeConverter<Role, String> {
     if(name == null) return null;
 
     return Stream.of(Role.values())
-      .filter(role -> role.getName().equals(name.toLowerCase()))
+      .filter(role -> role.getName().equals(name))
       .findFirst()
       .orElseThrow(() -> new IllegalArgumentException("Valor do Enum inválido: " + name));
   }
