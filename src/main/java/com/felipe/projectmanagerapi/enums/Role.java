@@ -1,9 +1,9 @@
 package com.felipe.projectmanagerapi.enums;
 
 public enum Role {
-  ADMIN("admin", 1),
-  WRITE_READ("write_read", 2),
-  READ_ONLY("read_only", 3);
+  ADMIN("ADMIN", 1),
+  WRITE_READ("WRITE_READ", 2),
+  READ_ONLY("READ_ONLY", 3);
 
   private final String name;
   private final int code;
