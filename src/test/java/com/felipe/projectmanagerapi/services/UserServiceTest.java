@@ -3,6 +3,7 @@ package com.felipe.projectmanagerapi.services;
 import com.felipe.projectmanagerapi.dtos.UserRegisterDTO;
 import com.felipe.projectmanagerapi.dtos.UserResponseDTO;
 import com.felipe.projectmanagerapi.dtos.mappers.UserMapper;
+import com.felipe.projectmanagerapi.enums.Role;
 import com.felipe.projectmanagerapi.models.User;
 import com.felipe.projectmanagerapi.repositories.UserRepository;
 import org.junit.jupiter.api.AfterEach;
@@ -14,6 +15,8 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.mockito.Spy;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.Optional;
@@ -117,6 +120,48 @@ public class UserServiceTest {
     verify(this.passwordEncoder, never()).encode(anyString());
     verify(this.userRepository, times(1)).findByEmail(userData.email());
     verify(this.userRepository, never()).save(any(User.class));
+  }
+
+  @Test
+  @DisplayName("loadUserByUsername - Should successfully return a UserDetails instance when the user's email is provided")
+  void loadUserByUsernameSuccess() {
+    User user = new User();
+    user.setId("01");
+    user.setName("User 1");
+    user.setEmail("user1@email.com");
+    user.setPassword("123456");
+    user.setRole(Role.WRITE_READ);
+
+    when(this.userRepository.findByEmail(user.getEmail())).thenReturn(Optional.of(user));
+
+    UserDetails userPrincipal = this.userService.loadUserByUsername(user.getEmail());
+
+    assertThat(userPrincipal.getUsername()).isEqualTo(user.getEmail());
+    assertThat(userPrincipal.getPassword()).isEqualTo(user.getPassword());
+
+    verify(this.userRepository, times(1)).findByEmail(user.getEmail());
+  }
+
+  @Test
+  @DisplayName("loadUserByUsername - Should throw a UsernameNotFoundException if a user with the provided email is not found")
+  void loadUserByUsernameFailsByUserNotFound() {
+    User user = new User(
+      "01",
+      "User 1",
+      "user1@email.com",
+      "123456",
+      Role.READ_ONLY
+    );
+
+    when(this.userRepository.findByEmail(user.getEmail())).thenReturn(Optional.empty());
+
+    Exception thrown = catchException(() -> this.userService.loadUserByUsername(user.getEmail()));
+
+    assertThat(thrown)
+      .isExactlyInstanceOf(UsernameNotFoundException.class)
+      .hasMessage("Usuário '" + user.getEmail() + "' não encontrado.");
+
+    verify(this.userRepository, times(1)).findByEmail(user.getEmail());
   }
 
 }
