@@ -1,30 +1,44 @@
 package com.felipe.projectmanagerapi.services;
 
+import com.felipe.projectmanagerapi.dtos.LoginDTO;
 import com.felipe.projectmanagerapi.dtos.UserRegisterDTO;
 import com.felipe.projectmanagerapi.dtos.UserResponseDTO;
 import com.felipe.projectmanagerapi.dtos.mappers.UserMapper;
+import com.felipe.projectmanagerapi.infra.security.TokenService;
 import com.felipe.projectmanagerapi.infra.security.UserPrincipal;
 import com.felipe.projectmanagerapi.models.User;
 import com.felipe.projectmanagerapi.repositories.UserRepository;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 
 @Service
-public class UserService implements UserDetailsService {
+public class UserService {
 
   private final UserRepository userRepository;
   private final UserMapper userMapper;
   private final PasswordEncoder passwordEncoder;
+  private final AuthenticationManager authenticationManager;
+  private final TokenService tokenService;
 
-  public UserService(UserRepository userRepository, UserMapper userMapper, PasswordEncoder passwordEncoder) {
+  public UserService(
+    UserRepository userRepository,
+    UserMapper userMapper,
+    PasswordEncoder passwordEncoder,
+    AuthenticationManager authenticationManager,
+    TokenService tokenService
+  ) {
     this.userRepository = userRepository;
     this.userMapper = userMapper;
     this.passwordEncoder = passwordEncoder;
+    this.authenticationManager = authenticationManager;
+    this.tokenService = tokenService;
   }
 
   public UserResponseDTO register(UserRegisterDTO data) throws RuntimeException {
@@ -47,10 +61,20 @@ public class UserService implements UserDetailsService {
     return this.userMapper.toDTO(createdUser);
   }
 
-  @Override
-  public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-    return this.userRepository.findByEmail(username)
-      .map(UserPrincipal::new)
-      .orElseThrow(() -> new UsernameNotFoundException("Usuário '" + username + "' não encontrado."));
+  public Map<String, Object> login(LoginDTO login) {
+    Authentication usernameAndPasswordAuth = new UsernamePasswordAuthenticationToken(login.email(), login.password());
+    Authentication authentication = this.authenticationManager.authenticate(usernameAndPasswordAuth);
+    UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
+    String token = this.tokenService.generateToken(userPrincipal);
+
+    UserResponseDTO user = this.userRepository.findByEmail(login.email())
+      .map(this.userMapper::toDTO)
+      .orElseThrow(() -> new RuntimeException("Usuário '" + login.email() + "' não encontrado"));
+
+    Map<String, Object> loginResponse = new HashMap<>();
+    loginResponse.put("userInfo", user);
+    loginResponse.put("token", token);
+
+    return loginResponse;
   }
 }
