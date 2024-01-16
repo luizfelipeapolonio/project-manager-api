@@ -1,9 +1,12 @@
 package com.felipe.projectmanagerapi.services;
 
+import com.felipe.projectmanagerapi.dtos.LoginDTO;
 import com.felipe.projectmanagerapi.dtos.UserRegisterDTO;
 import com.felipe.projectmanagerapi.dtos.UserResponseDTO;
 import com.felipe.projectmanagerapi.dtos.mappers.UserMapper;
 import com.felipe.projectmanagerapi.enums.Role;
+import com.felipe.projectmanagerapi.infra.security.TokenService;
+import com.felipe.projectmanagerapi.infra.security.UserPrincipal;
 import com.felipe.projectmanagerapi.models.User;
 import com.felipe.projectmanagerapi.repositories.UserRepository;
 import org.junit.jupiter.api.AfterEach;
@@ -15,10 +18,12 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.mockito.Spy;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import java.util.Map;
 import java.util.Optional;
 
 import static org.mockito.ArgumentMatchers.anyString;
@@ -44,6 +49,15 @@ public class UserServiceTest {
 
   @Spy
   UserMapper userMapper;
+
+  @Mock
+  TokenService tokenService;
+
+  @Mock
+  AuthenticationManager authenticationManager;
+
+  @Mock
+  Authentication authentication;
 
   private AutoCloseable closeable;
 
@@ -123,45 +137,49 @@ public class UserServiceTest {
   }
 
   @Test
-  @DisplayName("loadUserByUsername - Should successfully return a UserDetails instance when the user's email is provided")
-  void loadUserByUsernameSuccess() {
-    User user = new User();
-    user.setId("01");
-    user.setName("User 1");
-    user.setEmail("user1@email.com");
-    user.setPassword("123456");
-    user.setRole(Role.WRITE_READ);
+  @DisplayName("login - Should successfully log user in and return the user's info and an access token")
+  void userLoginSuccess() {
+    LoginDTO login = new LoginDTO("user1@email.com", "123456");
+    Authentication auth = new UsernamePasswordAuthenticationToken(login.email(), login.password());
 
-    when(this.userRepository.findByEmail(user.getEmail())).thenReturn(Optional.of(user));
-
-    UserDetails userPrincipal = this.userService.loadUserByUsername(user.getEmail());
-
-    assertThat(userPrincipal.getUsername()).isEqualTo(user.getEmail());
-    assertThat(userPrincipal.getPassword()).isEqualTo(user.getPassword());
-
-    verify(this.userRepository, times(1)).findByEmail(user.getEmail());
-  }
-
-  @Test
-  @DisplayName("loadUserByUsername - Should throw a UsernameNotFoundException if a user with the provided email is not found")
-  void loadUserByUsernameFailsByUserNotFound() {
     User user = new User(
       "01",
       "User 1",
-      "user1@email.com",
-      "123456",
-      Role.READ_ONLY
+      login.email(),
+      login.password(),
+      Role.WRITE_READ
     );
 
-    when(this.userRepository.findByEmail(user.getEmail())).thenReturn(Optional.empty());
+    UserPrincipal userPrincipal = new UserPrincipal(user);
+    UserResponseDTO userResponseDTO = new UserResponseDTO(
+      user.getId(),
+      user.getName(),
+      user.getEmail(),
+      user.getRole().toString(),
+      user.getCreatedAt(),
+      user.getUpdatedAt()
+    );
 
-    Exception thrown = catchException(() -> this.userService.loadUserByUsername(user.getEmail()));
+    when(this.authenticationManager.authenticate(auth)).thenReturn(this.authentication);
+    // TODO: rever se esse mock de authentication é o correto
+    when(this.authentication.getPrincipal()).thenReturn(userPrincipal);
+    when(this.tokenService.generateToken(any())).thenReturn("Access Token");
+    when(this.userRepository.findByEmail(userPrincipal.getUsername())).thenReturn(Optional.of(user));
 
-    assertThat(thrown)
-      .isExactlyInstanceOf(UsernameNotFoundException.class)
-      .hasMessage("Usuário '" + user.getEmail() + "' não encontrado.");
+    Map<String, Object> loginResponse = this.userService.login(login);
 
-    verify(this.userRepository, times(1)).findByEmail(user.getEmail());
+    assertThat(loginResponse.containsKey("userInfo")).isTrue();
+    assertThat(loginResponse.containsKey("token")).isTrue();
+    assertThat(loginResponse.get("userInfo"))
+      .extracting("id", "name", "email", "role", "createdAt", "updatedAt")
+      .contains(
+        userResponseDTO.id(),
+        userResponseDTO.name(),
+        userResponseDTO.email(),
+        userResponseDTO.role(),
+        userResponseDTO.createdAt(),
+        userResponseDTO.updatedAt()
+      );
+    assertThat(loginResponse.get("token")).isEqualTo("Access Token");
   }
-
 }
