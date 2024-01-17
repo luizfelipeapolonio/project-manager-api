@@ -5,6 +5,8 @@ import com.felipe.projectmanagerapi.exceptions.RecordNotFoundException;
 import com.felipe.projectmanagerapi.exceptions.UserAlreadyExistsException;
 import com.felipe.projectmanagerapi.utils.CustomResponseBody;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -23,6 +25,16 @@ public class ApplicationControllerAdvice {
     return response;
   }
 
+  @ExceptionHandler({BadCredentialsException.class, UsernameNotFoundException.class})
+  @ResponseStatus(HttpStatus.UNAUTHORIZED)
+  public CustomResponseBody<Void> handleAuthenticationException(Exception e) {
+    CustomResponseBody<Void> response = new CustomResponseBody<>();
+    response.setStatus(ResponseConditionStatus.ERROR);
+    response.setCode(HttpStatus.UNAUTHORIZED);
+    response.setMessage(e.getMessage());
+    response.setData(null);
+    return response;
+  }
 
   @ExceptionHandler(UserAlreadyExistsException.class)
   @ResponseStatus(HttpStatus.CONFLICT)
