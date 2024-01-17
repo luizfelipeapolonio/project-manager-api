@@ -6,6 +6,7 @@ import com.felipe.projectmanagerapi.dtos.UserRegisterDTO;
 import com.felipe.projectmanagerapi.dtos.UserResponseDTO;
 import com.felipe.projectmanagerapi.enums.ResponseConditionStatus;
 import com.felipe.projectmanagerapi.enums.Role;
+import com.felipe.projectmanagerapi.exceptions.RecordNotFoundException;
 import com.felipe.projectmanagerapi.exceptions.UserAlreadyExistsException;
 import com.felipe.projectmanagerapi.services.UserService;
 import org.junit.jupiter.api.AfterEach;
@@ -19,6 +20,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -156,6 +158,46 @@ public class UserControllerTest {
       .andExpect(jsonPath("$.data.userInfo.createdAt").value(userResponseDTO.createdAt().toString()))
       .andExpect(jsonPath("$.data.userInfo.updatedAt").value(userResponseDTO.updatedAt().toString()))
       .andExpect(jsonPath("$.data.token").value(token));
+
+    verify(this.userService, times(1)).login(login);
+  }
+
+  @Test
+  @DisplayName("login - Should return an error response with a not found status code")
+  void userLoginFailsByUserNotFound() throws Exception {
+    LoginDTO login = new LoginDTO("teste1@email.com", "123456");
+    String jsonBody = this.objectMapper.writeValueAsString(login);
+
+    when(this.userService.login(login)).thenThrow(new RecordNotFoundException("Usuário não encontrado"));
+
+    this.mockMvc.perform(post(this.baseUrl + "/auth/login")
+      .contentType(MediaType.APPLICATION_JSON).content(jsonBody)
+      .accept(MediaType.APPLICATION_JSON))
+      .andExpect(status().isNotFound())
+      .andExpect(jsonPath("$.status").value(ResponseConditionStatus.ERROR.getValue()))
+      .andExpect(jsonPath("$.code").value(HttpStatus.NOT_FOUND.value()))
+      .andExpect(jsonPath("$.message").value("Usuário não encontrado"))
+      .andExpect(jsonPath("$.data").doesNotExist());
+
+    verify(this.userService, times(1)).login(login);
+  }
+
+  @Test
+  @DisplayName("login - Should return an error response with an unauthorized status code")
+  void userLoginFailsByBadCredentials() throws Exception {
+    LoginDTO login = new LoginDTO("teste1@email.com", "123456");
+    String jsonBody = this.objectMapper.writeValueAsString(login);
+
+    when(this.userService.login(login)).thenThrow(new BadCredentialsException("Usuário ou senha inválidos"));
+
+    this.mockMvc.perform(post(this.baseUrl + "/auth/login")
+      .contentType(MediaType.APPLICATION_JSON).content(jsonBody)
+      .accept(MediaType.APPLICATION_JSON))
+      .andExpect(status().isUnauthorized())
+      .andExpect(jsonPath("$.status").value(ResponseConditionStatus.ERROR.getValue()))
+      .andExpect(jsonPath("$.code").value(HttpStatus.UNAUTHORIZED.value()))
+      .andExpect(jsonPath("$.message").value("Usuário ou senha inválidos"))
+      .andExpect(jsonPath("$.data").doesNotExist());
 
     verify(this.userService, times(1)).login(login);
   }
