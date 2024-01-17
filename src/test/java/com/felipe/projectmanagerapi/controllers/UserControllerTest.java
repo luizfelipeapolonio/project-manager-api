@@ -6,6 +6,7 @@ import com.felipe.projectmanagerapi.dtos.UserRegisterDTO;
 import com.felipe.projectmanagerapi.dtos.UserResponseDTO;
 import com.felipe.projectmanagerapi.enums.ResponseConditionStatus;
 import com.felipe.projectmanagerapi.enums.Role;
+import com.felipe.projectmanagerapi.exceptions.UserAlreadyExistsException;
 import com.felipe.projectmanagerapi.services.UserService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -98,6 +99,26 @@ public class UserControllerTest {
       .andExpect(jsonPath("$.data.updatedAt").value(createdUser.updatedAt().toString()));
 
     verify(this.userService, times(1)).register(data);
+  }
+
+  @Test
+  @DisplayName("register - Should return an error response with a conflict status code if user already exists")
+  void userRegisterFailsByExistingUser() throws Exception {
+    UserRegisterDTO registerDTO = new UserRegisterDTO("User 1", "teste1@email.com", "123456", "WRITE_READ");
+    String jsonBody = this.objectMapper.writeValueAsString(registerDTO);
+
+    when(this.userService.register(registerDTO)).thenThrow(new UserAlreadyExistsException());
+
+    this.mockMvc.perform(post(this.baseUrl + "/auth/register")
+      .contentType(MediaType.APPLICATION_JSON).content(jsonBody)
+      .accept(MediaType.APPLICATION_JSON))
+      .andExpect(status().isConflict())
+      .andExpect(jsonPath("$.status").value(ResponseConditionStatus.ERROR.getValue()))
+      .andExpect(jsonPath("$.code").value(HttpStatus.CONFLICT.value()))
+      .andExpect(jsonPath("$.message").value("Usuário já cadastrado"))
+      .andExpect(jsonPath("$.data").doesNotExist());
+
+    verify(this.userService, times(1)).register(registerDTO);
   }
 
   @Test
