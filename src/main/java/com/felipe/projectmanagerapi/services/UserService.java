@@ -4,11 +4,14 @@ import com.felipe.projectmanagerapi.dtos.LoginDTO;
 import com.felipe.projectmanagerapi.dtos.UserRegisterDTO;
 import com.felipe.projectmanagerapi.dtos.UserResponseDTO;
 import com.felipe.projectmanagerapi.dtos.mappers.UserMapper;
+import com.felipe.projectmanagerapi.exceptions.RecordNotFoundException;
+import com.felipe.projectmanagerapi.exceptions.UserAlreadyExistsException;
 import com.felipe.projectmanagerapi.infra.security.TokenService;
 import com.felipe.projectmanagerapi.infra.security.UserPrincipal;
 import com.felipe.projectmanagerapi.models.User;
 import com.felipe.projectmanagerapi.repositories.UserRepository;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -41,11 +44,11 @@ public class UserService {
     this.tokenService = tokenService;
   }
 
-  public UserResponseDTO register(UserRegisterDTO data) throws RuntimeException {
+  public UserResponseDTO register(UserRegisterDTO data) {
     Optional<User> existingUser = this.userRepository.findByEmail(data.email());
 
     if(existingUser.isPresent()) {
-      throw new RuntimeException("Usuário já cadastrado");
+      throw new UserAlreadyExistsException();
     }
 
     String encodedPassword = this.passwordEncoder.encode(data.password());
@@ -62,19 +65,24 @@ public class UserService {
   }
 
   public Map<String, Object> login(LoginDTO login) {
-    Authentication usernameAndPasswordAuth = new UsernamePasswordAuthenticationToken(login.email(), login.password());
-    Authentication authentication = this.authenticationManager.authenticate(usernameAndPasswordAuth);
-    UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
-    String token = this.tokenService.generateToken(userPrincipal);
+    try {
+      Authentication usernameAndPasswordAuth = new UsernamePasswordAuthenticationToken(login.email(), login.password());
+      Authentication authentication = this.authenticationManager.authenticate(usernameAndPasswordAuth);
+      UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
+      String token = this.tokenService.generateToken(userPrincipal);
 
-    UserResponseDTO user = this.userRepository.findByEmail(login.email())
-      .map(this.userMapper::toDTO)
-      .orElseThrow(() -> new RuntimeException("Usuário '" + login.email() + "' não encontrado"));
+      UserResponseDTO user = this.userRepository.findByEmail(login.email())
+        .map(this.userMapper::toDTO)
+        .orElseThrow(() -> new RecordNotFoundException("Usuário '" + login.email() + "' não encontrado"));
 
-    Map<String, Object> loginResponse = new HashMap<>();
-    loginResponse.put("userInfo", user);
-    loginResponse.put("token", token);
+      Map<String, Object> loginResponse = new HashMap<>();
+      loginResponse.put("userInfo", user);
+      loginResponse.put("token", token);
 
-    return loginResponse;
+      return loginResponse;
+
+    } catch(BadCredentialsException e) {
+      throw new BadCredentialsException("Usuário ou senha inválidos", e);
+    }
   }
 }
