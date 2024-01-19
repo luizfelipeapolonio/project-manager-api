@@ -1,18 +1,22 @@
 package com.felipe.projectmanagerapi.controllers;
 
+import com.auth0.jwt.exceptions.JWTCreationException;
+import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.felipe.projectmanagerapi.enums.ResponseConditionStatus;
 import com.felipe.projectmanagerapi.exceptions.RecordNotFoundException;
 import com.felipe.projectmanagerapi.exceptions.UserAlreadyExistsException;
 import com.felipe.projectmanagerapi.utils.CustomResponseBody;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.InsufficientAuthenticationException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 @RestControllerAdvice
-public class ApplicationControllerAdvice {
+public class ExceptionControllerAdvice {
 
   @ExceptionHandler(RecordNotFoundException.class)
   @ResponseStatus(HttpStatus.NOT_FOUND)
@@ -32,6 +36,50 @@ public class ApplicationControllerAdvice {
     response.setStatus(ResponseConditionStatus.ERROR);
     response.setCode(HttpStatus.UNAUTHORIZED);
     response.setMessage(e.getMessage());
+    response.setData(null);
+    return response;
+  }
+
+  @ExceptionHandler(InsufficientAuthenticationException.class)
+  @ResponseStatus(HttpStatus.UNAUTHORIZED)
+  public CustomResponseBody<Void> handleInsufficientAuthenticationException() {
+    CustomResponseBody<Void> response = new CustomResponseBody<>();
+    response.setStatus(ResponseConditionStatus.ERROR);
+    response.setCode(HttpStatus.UNAUTHORIZED);
+    response.setMessage("Autenticação é necessária para acessar este recurso");
+    response.setData(null);
+    return response;
+  }
+
+  @ExceptionHandler(AccessDeniedException.class)
+  @ResponseStatus(HttpStatus.FORBIDDEN)
+  public CustomResponseBody<Void> handleAccessDeniedException() {
+    CustomResponseBody<Void> response = new CustomResponseBody<>();
+    response.setStatus(ResponseConditionStatus.ERROR);
+    response.setCode(HttpStatus.FORBIDDEN);
+    response.setMessage("Acesso negado");
+    response.setData(null);
+    return response;
+  }
+
+  @ExceptionHandler(JWTVerificationException.class)
+  @ResponseStatus(HttpStatus.UNAUTHORIZED)
+  public CustomResponseBody<Void> handleJWTVerificationException(JWTVerificationException e) {
+    CustomResponseBody<Void> response = new CustomResponseBody<>();
+    response.setStatus(ResponseConditionStatus.ERROR);
+    response.setCode(HttpStatus.UNAUTHORIZED);
+    response.setMessage(e.getMessage());
+    response.setData(null);
+    return response;
+  }
+
+  @ExceptionHandler(JWTCreationException.class)
+  @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+  public CustomResponseBody<Void> handleJWTCreationException() {
+    CustomResponseBody<Void> response = new CustomResponseBody<>();
+    response.setStatus(ResponseConditionStatus.ERROR);
+    response.setCode(HttpStatus.INTERNAL_SERVER_ERROR);
+    response.setMessage("Ocorreu um erro interno do servidor");
     response.setData(null);
     return response;
   }
