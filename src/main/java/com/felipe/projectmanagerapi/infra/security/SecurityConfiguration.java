@@ -19,9 +19,17 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 public class SecurityConfiguration {
 
   private final SecurityFilter securityFilter;
+  private final CustomAuthenticationEntryPoint customAuthenticationEntryPoint;
+  private final CustomAccessDeniedHandler customAccessDeniedHandler;
 
-  public SecurityConfiguration(SecurityFilter securityFilter) {
+  public SecurityConfiguration(
+    SecurityFilter securityFilter,
+    CustomAuthenticationEntryPoint customAuthenticationEntryPoint,
+    CustomAccessDeniedHandler customAccessDeniedHandler
+  ) {
     this.securityFilter = securityFilter;
+    this.customAuthenticationEntryPoint = customAuthenticationEntryPoint;
+    this.customAccessDeniedHandler = customAccessDeniedHandler;
   }
 
   @Bean
@@ -32,9 +40,12 @@ public class SecurityConfiguration {
       .authorizeHttpRequests(authorizeHttpRequests -> authorizeHttpRequests
         .requestMatchers(HttpMethod.POST, "/api/auth/register").permitAll()
         .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
-        .requestMatchers(HttpMethod.GET, "/api/auth/test").hasRole("READ_ONLY")
+        .requestMatchers(HttpMethod.GET, "/api/auth/test").hasRole("WRITE_READ")
         .anyRequest().authenticated())
       .addFilterBefore(this.securityFilter, UsernamePasswordAuthenticationFilter.class)
+      .exceptionHandling(exceptionHandling -> exceptionHandling
+        .authenticationEntryPoint(this.customAuthenticationEntryPoint)
+        .accessDeniedHandler(this.customAccessDeniedHandler))
       .build();
   }
 
