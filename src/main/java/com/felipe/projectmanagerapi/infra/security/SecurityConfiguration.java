@@ -38,9 +38,9 @@ public class SecurityConfiguration {
       .csrf(AbstractHttpConfigurer::disable)
       .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
       .authorizeHttpRequests(authorizeHttpRequests -> authorizeHttpRequests
-        .requestMatchers(HttpMethod.POST, "/api/auth/register").permitAll()
+        .requestMatchers(HttpMethod.POST, "/api/auth/register").hasRole("ADMIN")
         .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
-        .requestMatchers(HttpMethod.GET, "/api/auth/test").hasRole("WRITE_READ")
+        .requestMatchers(HttpMethod.GET, "/api/auth/test").hasAnyRole("ADMIN", "WRITE_READ")
         .anyRequest().authenticated())
       .addFilterBefore(this.securityFilter, UsernamePasswordAuthenticationFilter.class)
       .exceptionHandling(exceptionHandling -> exceptionHandling
