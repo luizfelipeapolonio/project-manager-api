@@ -6,14 +6,18 @@ import com.felipe.projectmanagerapi.enums.ResponseConditionStatus;
 import com.felipe.projectmanagerapi.exceptions.RecordNotFoundException;
 import com.felipe.projectmanagerapi.exceptions.UserAlreadyExistsException;
 import com.felipe.projectmanagerapi.utils.CustomResponseBody;
+import com.felipe.projectmanagerapi.utils.CustomValidationErrors;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.InsufficientAuthenticationException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+
+import java.util.List;
 
 @RestControllerAdvice
 public class ExceptionControllerAdvice {
@@ -92,6 +96,26 @@ public class ExceptionControllerAdvice {
     response.setCode(HttpStatus.CONFLICT);
     response.setMessage(e.getMessage());
     response.setData(null);
+    return response;
+  }
+
+  @ExceptionHandler(MethodArgumentNotValidException.class)
+  @ResponseStatus(HttpStatus.UNPROCESSABLE_ENTITY)
+  public CustomResponseBody<List<CustomValidationErrors>> handleMethodArgumentNotValidException(MethodArgumentNotValidException e) {
+    List<CustomValidationErrors> errors = e.getBindingResult()
+      .getFieldErrors()
+      .stream()
+      .map(fieldError -> new CustomValidationErrors(
+        fieldError.getField(),
+        fieldError.getField().equalsIgnoreCase("password") ? "" : fieldError.getRejectedValue(),
+        fieldError.getDefaultMessage()
+      )).toList();
+
+    CustomResponseBody<List<CustomValidationErrors>> response = new CustomResponseBody<>();
+    response.setStatus(ResponseConditionStatus.ERROR);
+    response.setCode(HttpStatus.UNPROCESSABLE_ENTITY);
+    response.setMessage("Erros de validação");
+    response.setData(errors);
     return response;
   }
 
