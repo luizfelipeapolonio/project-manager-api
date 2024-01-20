@@ -34,8 +34,8 @@ public class User {
   private String password;
 
   @Convert(converter = RoleConverter.class)
-  @Column(length = 30, nullable = false)
-  private Role role = Role.READ_ONLY;
+  @Column(length = 10 , nullable = false)
+  private Role role;
 
   @CreationTimestamp
   @Column(name = "created_at", columnDefinition = "TIMESTAMP(2)", nullable = false)
