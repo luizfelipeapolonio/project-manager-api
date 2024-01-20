@@ -6,6 +6,8 @@ import com.felipe.projectmanagerapi.dtos.UserResponseDTO;
 import com.felipe.projectmanagerapi.enums.ResponseConditionStatus;
 import com.felipe.projectmanagerapi.services.UserService;
 import com.felipe.projectmanagerapi.utils.CustomResponseBody;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -33,7 +35,7 @@ public class UserController {
 
   @PostMapping("/auth/register")
   @ResponseStatus(HttpStatus.CREATED)
-  public CustomResponseBody<UserResponseDTO> register(@RequestBody UserRegisterDTO data) {
+  public CustomResponseBody<UserResponseDTO> register(@RequestBody @Valid @NotNull UserRegisterDTO data) {
     UserResponseDTO registerResponseDTO = this.userService.register(data);
 
     CustomResponseBody<UserResponseDTO> response = new CustomResponseBody<>();
@@ -47,7 +49,7 @@ public class UserController {
 
   @PostMapping("/auth/login")
   @ResponseStatus(HttpStatus.OK)
-  public CustomResponseBody<Map<String, Object>> login(@RequestBody LoginDTO login) {
+  public CustomResponseBody<Map<String, Object>> login(@RequestBody @Valid @NotNull LoginDTO login) {
     Map<String, Object> loginResponseMap = this.userService.login(login);
 
     CustomResponseBody<Map<String, Object>> response = new CustomResponseBody<>();

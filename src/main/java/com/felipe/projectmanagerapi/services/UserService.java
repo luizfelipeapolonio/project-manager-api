@@ -10,6 +10,8 @@ import com.felipe.projectmanagerapi.infra.security.TokenService;
 import com.felipe.projectmanagerapi.infra.security.UserPrincipal;
 import com.felipe.projectmanagerapi.models.User;
 import com.felipe.projectmanagerapi.repositories.UserRepository;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -44,7 +46,7 @@ public class UserService {
     this.tokenService = tokenService;
   }
 
-  public UserResponseDTO register(UserRegisterDTO data) {
+  public UserResponseDTO register(@Valid @NotNull UserRegisterDTO data) {
     Optional<User> existingUser = this.userRepository.findByEmail(data.email());
 
     if(existingUser.isPresent()) {
@@ -64,7 +66,7 @@ public class UserService {
     return this.userMapper.toDTO(createdUser);
   }
 
-  public Map<String, Object> login(LoginDTO login) {
+  public Map<String, Object> login(@Valid @NotNull LoginDTO login) {
     try {
       Authentication usernameAndPasswordAuth = new UsernamePasswordAuthenticationToken(login.email(), login.password());
       Authentication authentication = this.authenticationManager.authenticate(usernameAndPasswordAuth);
