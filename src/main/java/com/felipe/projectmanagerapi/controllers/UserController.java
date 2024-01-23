@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -43,7 +44,6 @@ public class UserController {
     response.setCode(HttpStatus.CREATED);
     response.setMessage("Usuário criado com sucesso");
     response.setData(registerResponseDTO);
-
     return response;
   }
 
@@ -57,7 +57,19 @@ public class UserController {
     response.setCode(HttpStatus.OK);
     response.setMessage("Usuário logado");
     response.setData(loginResponseMap);
+    return response;
+  }
 
+  @GetMapping("/users")
+  @ResponseStatus(HttpStatus.OK)
+  public CustomResponseBody<List<UserResponseDTO>> getAllUsers() {
+    List<UserResponseDTO> users = this.userService.getAllUsers();
+
+    CustomResponseBody<List<UserResponseDTO>> response = new CustomResponseBody<>();
+    response.setStatus(ResponseConditionStatus.SUCCESS);
+    response.setCode(HttpStatus.OK);
+    response.setMessage("Todos os usuários");
+    response.setData(users);
     return response;
   }
 }

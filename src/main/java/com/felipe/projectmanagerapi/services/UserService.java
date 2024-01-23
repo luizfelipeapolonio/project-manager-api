@@ -20,6 +20,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -86,5 +87,12 @@ public class UserService {
     } catch(BadCredentialsException e) {
       throw new BadCredentialsException("Usuário ou senha inválidos", e);
     }
+  }
+
+  public List<UserResponseDTO> getAllUsers() {
+    return this.userRepository.findAll()
+      .stream()
+      .map(this.userMapper::toDTO)
+      .toList();
   }
 }
