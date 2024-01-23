@@ -11,9 +11,13 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -31,16 +35,25 @@ public class AuthorizationServiceTest {
   @Mock
   UserRepository userRepository;
 
+  @Mock
+  Authentication authentication;
+
+  @Mock
+  SecurityContext securityContext;
+
   private AutoCloseable closeable;
+  private LocalDateTime mockDateTime;
 
   @BeforeEach
   void setUp() {
     this.closeable = MockitoAnnotations.openMocks(this);
+    this.mockDateTime = LocalDateTime.parse("2024-01-01T12:00:00.123456");
   }
 
   @AfterEach
   void tearDown() throws Exception {
     this.closeable.close();
+    SecurityContextHolder.clearContext();
   }
 
   @Test
@@ -85,4 +98,36 @@ public class AuthorizationServiceTest {
     verify(this.userRepository, times(1)).findByEmail(user.getEmail());
   }
 
+  @Test
+  @DisplayName("getAuthentication - Should return an Authentication object with UserPrincipal that represents the current authenticated user")
+  void getAuthenticationSuccess() {
+    User user = new User();
+    user.setId("01");
+    user.setName("User 1");
+    user.setEmail("teste1@email.com");
+    user.setPassword("123456");
+    user.setRole(Role.WRITE_READ);
+    user.setCreatedAt(this.mockDateTime);
+    user.setUpdatedAt(this.mockDateTime);
+    UserPrincipal userPrincipal = new UserPrincipal(user);
+
+    this.mockAuthentication(userPrincipal);
+
+    Authentication authentication = this.authorizationService.getAuthentication();
+    UserPrincipal authUser = (UserPrincipal) authentication.getPrincipal();
+
+    assertThat(authUser.getUser().getId()).isEqualTo(userPrincipal.getUser().getId());
+    assertThat(authUser.getUser().getName()).isEqualTo(userPrincipal.getUser().getName());
+    assertThat(authUser.getUsername()).isEqualTo(userPrincipal.getUsername());
+    assertThat(authUser.getPassword()).isEqualTo(userPrincipal.getPassword());
+    assertThat(authUser.getUser().getRole()).isEqualTo(userPrincipal.getUser().getRole());
+    assertThat(authUser.getUser().getCreatedAt()).isEqualTo(userPrincipal.getUser().getCreatedAt());
+    assertThat(authUser.getUser().getUpdatedAt()).isEqualTo(userPrincipal.getUser().getUpdatedAt());
+  }
+
+  private void mockAuthentication(UserPrincipal authUser) {
+    when(this.authentication.getPrincipal()).thenReturn(authUser);
+    when(this.securityContext.getAuthentication()).thenReturn(this.authentication);
+    SecurityContextHolder.setContext(this.securityContext);
+  }
 }
