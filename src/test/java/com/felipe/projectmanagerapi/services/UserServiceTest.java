@@ -6,6 +6,7 @@ import com.felipe.projectmanagerapi.dtos.UserResponseDTO;
 import com.felipe.projectmanagerapi.dtos.mappers.UserMapper;
 import com.felipe.projectmanagerapi.exceptions.RecordNotFoundException;
 import com.felipe.projectmanagerapi.exceptions.UserAlreadyExistsException;
+import com.felipe.projectmanagerapi.infra.security.AuthorizationService;
 import com.felipe.projectmanagerapi.infra.security.TokenService;
 import com.felipe.projectmanagerapi.infra.security.UserPrincipal;
 import com.felipe.projectmanagerapi.models.User;
@@ -62,6 +63,9 @@ public class UserServiceTest {
 
   @Mock
   Authentication authentication;
+
+  @Mock
+  AuthorizationService authorizationService;
 
   private AutoCloseable closeable;
   private GenerateMocks dataMock;
@@ -236,5 +240,27 @@ public class UserServiceTest {
 
     verify(this.userRepository, times(1)).findAll();
     verify(this.userMapper, times(3)).toDTO(any(User.class));
+  }
+
+  @Test
+  @DisplayName("getAuthenticatedUserProfile - Should successfully return the authenticated user's profile")
+  void getAuthenticatedUserProfileSuccess() {
+    User user = this.dataMock.getUsers().get(0);
+    UserPrincipal userPrincipal = new UserPrincipal(user);
+
+    when(this.authorizationService.getAuthentication()).thenReturn(this.authentication);
+    when(this.authentication.getPrincipal()).thenReturn(userPrincipal);
+
+    UserResponseDTO authenticatedUser = this.userService.getAuthenticatedUserProfile();
+
+    assertThat(authenticatedUser.id()).isEqualTo(userPrincipal.getUser().getId());
+    assertThat(authenticatedUser.name()).isEqualTo(userPrincipal.getUser().getName());
+    assertThat(authenticatedUser.email()).isEqualTo(userPrincipal.getUsername());
+    assertThat(authenticatedUser.role()).isEqualTo(userPrincipal.getUser().getRole().getName());
+    assertThat(authenticatedUser.createdAt()).isEqualTo(userPrincipal.getUser().getCreatedAt());
+    assertThat(authenticatedUser.updatedAt()).isEqualTo(userPrincipal.getUser().getUpdatedAt());
+
+    verify(this.authentication, times(1)).getPrincipal();
+    verify(this.userMapper, times(1)).toDTO(userPrincipal.getUser());
   }
 }

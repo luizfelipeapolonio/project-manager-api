@@ -11,6 +11,7 @@ import com.felipe.projectmanagerapi.exceptions.RecordNotFoundException;
 import com.felipe.projectmanagerapi.exceptions.UserAlreadyExistsException;
 import com.felipe.projectmanagerapi.models.User;
 import com.felipe.projectmanagerapi.services.UserService;
+import com.felipe.projectmanagerapi.utils.CustomResponseBody;
 import com.felipe.projectmanagerapi.utils.GenerateMocks;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -34,11 +35,12 @@ import java.util.Map;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.times;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 
 @SpringBootTest
 @AutoConfigureMockMvc(addFilters = false)
@@ -60,12 +62,14 @@ public class UserControllerTest {
   private AutoCloseable closeable;
   private String baseUrl;
   private LocalDateTime mockDateTime;
+  private GenerateMocks dataMock;
 
   @BeforeEach
   void setUp() {
     this.closeable = MockitoAnnotations.openMocks(this);
     this.baseUrl = "/api";
     this.mockDateTime = LocalDateTime.parse("2024-01-01T12:00:00.123456");
+    this.dataMock = new GenerateMocks();
   }
 
   @AfterEach
@@ -213,29 +217,46 @@ public class UserControllerTest {
   @Test
   @DisplayName("getAllUsers - Should return a success response with OK status code and a list of UserResponseDTO")
   void getAllUsersSuccess() throws Exception {
-    List<User> users = new GenerateMocks().getUsers();
+    List<User> users = this.dataMock.getUsers();
     List<UserResponseDTO> usersResponse = users.stream().map(this.userMapper::toDTO).toList();
+
+    CustomResponseBody<List<UserResponseDTO>> response = new CustomResponseBody<>();
+    response.setStatus(ResponseConditionStatus.SUCCESS);
+    response.setCode(HttpStatus.OK);
+    response.setMessage("Todos os usuários");
+    response.setData(usersResponse);
+
+    String jsonResponseBody = this.objectMapper.writeValueAsString(response);
 
     when(this.userService.getAllUsers()).thenReturn(usersResponse);
 
     this.mockMvc.perform(get(this.baseUrl + "/users").accept(MediaType.APPLICATION_JSON))
       .andExpect(status().isOk())
-      .andExpect(jsonPath("$.status").value(ResponseConditionStatus.SUCCESS.getValue()))
-      .andExpect(jsonPath("$.code").value(HttpStatus.OK.value()))
-      .andExpect(jsonPath("$.message").value("Todos os usuários"))
-      .andExpect(jsonPath("$.data[0].id").value(usersResponse.get(0).id()))
-      .andExpect(jsonPath("$.data[0].name").value(usersResponse.get(0).name()))
-      .andExpect(jsonPath("$.data[0].email").value(usersResponse.get(0).email()))
-      .andExpect(jsonPath("$.data[0].role").value(usersResponse.get(0).role()))
-      .andExpect(jsonPath("$.data[0].createdAt").value(usersResponse.get(0).createdAt().toString()))
-      .andExpect(jsonPath("$.data[0].updatedAt").value(usersResponse.get(0).updatedAt().toString()))
-      .andExpect(jsonPath("$.data[1].id").value(usersResponse.get(1).id()))
-      .andExpect(jsonPath("$.data[1].name").value(usersResponse.get(1).name()))
-      .andExpect(jsonPath("$.data[1].email").value(usersResponse.get(1).email()))
-      .andExpect(jsonPath("$.data[1].role").value(usersResponse.get(1).role()))
-      .andExpect(jsonPath("$.data[1].createdAt").value(usersResponse.get(1).createdAt().toString()))
-      .andExpect(jsonPath("$.data[1].updatedAt").value(usersResponse.get(1).updatedAt().toString()));
+      .andExpect(content().json(jsonResponseBody));
 
     verify(this.userService, times(1)).getAllUsers();
+  }
+
+  @Test
+  @DisplayName("getAuthenticatedUserProfile - Should return a success response with OK status code and the authenticated user's info")
+  void getAuthenticatedUserProfileSuccess() throws Exception {
+    UserResponseDTO userDTO = this.userMapper.toDTO(this.dataMock.getUsers().get(1));
+
+    when(this.userService.getAuthenticatedUserProfile()).thenReturn(userDTO);
+
+    this.mockMvc.perform(get(this.baseUrl + "/users/profile")
+      .accept(MediaType.APPLICATION_JSON))
+      .andExpect(status().isOk())
+      .andExpect(jsonPath("$.status").value(ResponseConditionStatus.SUCCESS.getValue()))
+      .andExpect(jsonPath("$.code").value(HttpStatus.OK.value()))
+      .andExpect(jsonPath("$.message").value("Usuário autenticado"))
+      .andExpect(jsonPath("$.data.id").value(userDTO.id()))
+      .andExpect(jsonPath("$.data.name").value(userDTO.name()))
+      .andExpect(jsonPath("$.data.email").value(userDTO.email()))
+      .andExpect(jsonPath("$.data.role").value(userDTO.role()))
+      .andExpect(jsonPath("$.data.createdAt").value(userDTO.createdAt().toString()))
+      .andExpect(jsonPath("$.data.updatedAt").value(userDTO.updatedAt().toString()));
+
+    verify(this.userService, times(1)).getAuthenticatedUserProfile();
   }
 }
