@@ -4,11 +4,14 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.felipe.projectmanagerapi.dtos.LoginDTO;
 import com.felipe.projectmanagerapi.dtos.UserRegisterDTO;
 import com.felipe.projectmanagerapi.dtos.UserResponseDTO;
+import com.felipe.projectmanagerapi.dtos.mappers.UserMapper;
 import com.felipe.projectmanagerapi.enums.ResponseConditionStatus;
 import com.felipe.projectmanagerapi.enums.Role;
 import com.felipe.projectmanagerapi.exceptions.RecordNotFoundException;
 import com.felipe.projectmanagerapi.exceptions.UserAlreadyExistsException;
+import com.felipe.projectmanagerapi.models.User;
 import com.felipe.projectmanagerapi.services.UserService;
+import com.felipe.projectmanagerapi.utils.GenerateMocks;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -26,9 +29,11 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.mockito.Mockito.when;
@@ -48,6 +53,9 @@ public class UserControllerTest {
 
   @MockBean
   UserService userService;
+
+  @Autowired
+  UserMapper userMapper;
 
   private AutoCloseable closeable;
   private String baseUrl;
@@ -200,5 +208,34 @@ public class UserControllerTest {
       .andExpect(jsonPath("$.data").doesNotExist());
 
     verify(this.userService, times(1)).login(login);
+  }
+
+  @Test
+  @DisplayName("getAllUsers - Should return a success response with OK status code and a list of UserResponseDTO")
+  void getAllUsersSuccess() throws Exception {
+    List<User> users = new GenerateMocks().getUsers();
+    List<UserResponseDTO> usersResponse = users.stream().map(this.userMapper::toDTO).toList();
+
+    when(this.userService.getAllUsers()).thenReturn(usersResponse);
+
+    this.mockMvc.perform(get(this.baseUrl + "/users").accept(MediaType.APPLICATION_JSON))
+      .andExpect(status().isOk())
+      .andExpect(jsonPath("$.status").value(ResponseConditionStatus.SUCCESS.getValue()))
+      .andExpect(jsonPath("$.code").value(HttpStatus.OK.value()))
+      .andExpect(jsonPath("$.message").value("Todos os usuários"))
+      .andExpect(jsonPath("$.data[0].id").value(usersResponse.get(0).id()))
+      .andExpect(jsonPath("$.data[0].name").value(usersResponse.get(0).name()))
+      .andExpect(jsonPath("$.data[0].email").value(usersResponse.get(0).email()))
+      .andExpect(jsonPath("$.data[0].role").value(usersResponse.get(0).role()))
+      .andExpect(jsonPath("$.data[0].createdAt").value(usersResponse.get(0).createdAt().toString()))
+      .andExpect(jsonPath("$.data[0].updatedAt").value(usersResponse.get(0).updatedAt().toString()))
+      .andExpect(jsonPath("$.data[1].id").value(usersResponse.get(1).id()))
+      .andExpect(jsonPath("$.data[1].name").value(usersResponse.get(1).name()))
+      .andExpect(jsonPath("$.data[1].email").value(usersResponse.get(1).email()))
+      .andExpect(jsonPath("$.data[1].role").value(usersResponse.get(1).role()))
+      .andExpect(jsonPath("$.data[1].createdAt").value(usersResponse.get(1).createdAt().toString()))
+      .andExpect(jsonPath("$.data[1].updatedAt").value(usersResponse.get(1).updatedAt().toString()));
+
+    verify(this.userService, times(1)).getAllUsers();
   }
 }

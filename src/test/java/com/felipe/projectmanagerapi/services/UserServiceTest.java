@@ -4,13 +4,13 @@ import com.felipe.projectmanagerapi.dtos.LoginDTO;
 import com.felipe.projectmanagerapi.dtos.UserRegisterDTO;
 import com.felipe.projectmanagerapi.dtos.UserResponseDTO;
 import com.felipe.projectmanagerapi.dtos.mappers.UserMapper;
-import com.felipe.projectmanagerapi.enums.Role;
 import com.felipe.projectmanagerapi.exceptions.RecordNotFoundException;
 import com.felipe.projectmanagerapi.exceptions.UserAlreadyExistsException;
 import com.felipe.projectmanagerapi.infra.security.TokenService;
 import com.felipe.projectmanagerapi.infra.security.UserPrincipal;
 import com.felipe.projectmanagerapi.models.User;
 import com.felipe.projectmanagerapi.repositories.UserRepository;
+import com.felipe.projectmanagerapi.utils.GenerateMocks;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -26,8 +26,6 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
-import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -66,44 +64,12 @@ public class UserServiceTest {
   Authentication authentication;
 
   private AutoCloseable closeable;
-  private List<User> users;
+  private GenerateMocks dataMock;
 
   @BeforeEach
   void setUp() {
     this.closeable = MockitoAnnotations.openMocks(this);
-    this.users = new ArrayList<>();
-    LocalDateTime mockDateTime = LocalDateTime.parse("2024-01-01T12:00:00.123456");
-
-    User u1 = new User();
-    u1.setId("01");
-    u1.setName("User 1");
-    u1.setEmail("teste1@email.com");
-    u1.setPassword("123456");
-    u1.setRole(Role.ADMIN);
-    u1.setCreatedAt(mockDateTime);
-    u1.setUpdatedAt(mockDateTime);
-
-    User u2 = new User();
-    u2.setId("02");
-    u2.setName("User 2");
-    u2.setEmail("teste2@email.com");
-    u2.setPassword("123456");
-    u2.setRole(Role.WRITE_READ);
-    u2.setCreatedAt(mockDateTime);
-    u2.setUpdatedAt(mockDateTime);
-
-    User u3 = new User();
-    u3.setId("03");
-    u3.setName("User 3");
-    u3.setEmail("teste3@email.com");
-    u3.setPassword("123456");
-    u3.setRole(Role.READ_ONLY);
-    u3.setCreatedAt(mockDateTime);
-    u3.setUpdatedAt(mockDateTime);
-
-    this.users.add(u1);
-    this.users.add(u2);
-    this.users.add(u3);
+    this.dataMock = new GenerateMocks();
   }
 
   @AfterEach
@@ -120,7 +86,7 @@ public class UserServiceTest {
       "123456",
       "WRITE_READ"
     );
-    User user = this.users.get(1);
+    User user = this.dataMock.getUsers().get(1);
 
     when(this.passwordEncoder.encode(userData.password())).thenReturn("Encoded Password");
     when(this.userRepository.findByEmail(userData.email())).thenReturn(Optional.empty());
@@ -149,7 +115,7 @@ public class UserServiceTest {
       "123456",
       "WRITE_READ"
     );
-    User user = this.users.get(1);
+    User user = this.dataMock.getUsers().get(1);
 
     when(this.userRepository.findByEmail(userData.email())).thenReturn(Optional.of(user));
 
@@ -169,7 +135,7 @@ public class UserServiceTest {
   void userLoginSuccess() {
     LoginDTO login = new LoginDTO("teste1@email.com", "123456");
     Authentication auth = new UsernamePasswordAuthenticationToken(login.email(), login.password());
-    User user = this.users.get(0);
+    User user = this.dataMock.getUsers().get(0);
     UserPrincipal userPrincipal = new UserPrincipal(user);
     UserResponseDTO userResponseDTO = new UserResponseDTO(
       user.getId(),
@@ -212,7 +178,7 @@ public class UserServiceTest {
   void userLoginFailsByUserNotFound() {
     LoginDTO login = new LoginDTO("teste1@email.com", "123456");
     Authentication auth = new UsernamePasswordAuthenticationToken(login.email(), login.password());
-    UserPrincipal userPrincipal = new UserPrincipal(this.users.get(0));
+    UserPrincipal userPrincipal = new UserPrincipal(this.dataMock.getUsers().get(0));
 
     when(this.authenticationManager.authenticate(auth)).thenReturn(this.authentication);
     when(this.authentication.getPrincipal()).thenReturn(userPrincipal);
@@ -246,5 +212,29 @@ public class UserServiceTest {
     verify(this.userRepository, never()).findByEmail(login.email());
     verify(this.authenticationManager, times(1)).authenticate(any(Authentication.class));
     verify(this.tokenService, never()).generateToken(any());
+  }
+
+  @Test
+  @DisplayName("getAllUsers - Should successfully return a list with all users")
+  void getAllUsersSuccess() {
+    List<User> users = this.dataMock.getUsers();
+
+    when(this.userRepository.findAll()).thenReturn(users);
+
+    List<UserResponseDTO> allUsers = this.userService.getAllUsers();
+
+    assertThat(allUsers).hasSize(3);
+    assertThat(allUsers.get(0).id()).isEqualTo(users.get(0).getId());
+    assertThat(allUsers.get(0).name()).isEqualTo(users.get(0).getName());
+    assertThat(allUsers.get(0).email()).isEqualTo(users.get(0).getEmail());
+    assertThat(allUsers.get(1).id()).isEqualTo(users.get(1).getId());
+    assertThat(allUsers.get(1).name()).isEqualTo(users.get(1).getName());
+    assertThat(allUsers.get(1).email()).isEqualTo(users.get(1).getEmail());
+    assertThat(allUsers.get(2).id()).isEqualTo(users.get(2).getId());
+    assertThat(allUsers.get(2).name()).isEqualTo(users.get(2).getName());
+    assertThat(allUsers.get(2).email()).isEqualTo(users.get(2).getEmail());
+
+    verify(this.userRepository, times(1)).findAll();
+    verify(this.userMapper, times(3)).toDTO(any(User.class));
   }
 }
