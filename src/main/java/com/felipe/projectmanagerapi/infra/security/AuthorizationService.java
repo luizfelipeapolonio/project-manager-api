@@ -1,6 +1,8 @@
 package com.felipe.projectmanagerapi.infra.security;
 
 import com.felipe.projectmanagerapi.repositories.UserRepository;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -20,5 +22,9 @@ public class AuthorizationService implements UserDetailsService {
     return this.userRepository.findByEmail(username)
       .map(UserPrincipal::new)
       .orElseThrow(() -> new UsernameNotFoundException("Usuário '" + username + "' não encontrado."));
+  }
+
+  public Authentication getAuthentication() {
+    return SecurityContextHolder.getContext().getAuthentication();
   }
 }
