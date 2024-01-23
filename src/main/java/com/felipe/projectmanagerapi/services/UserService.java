@@ -6,6 +6,7 @@ import com.felipe.projectmanagerapi.dtos.UserResponseDTO;
 import com.felipe.projectmanagerapi.dtos.mappers.UserMapper;
 import com.felipe.projectmanagerapi.exceptions.RecordNotFoundException;
 import com.felipe.projectmanagerapi.exceptions.UserAlreadyExistsException;
+import com.felipe.projectmanagerapi.infra.security.AuthorizationService;
 import com.felipe.projectmanagerapi.infra.security.TokenService;
 import com.felipe.projectmanagerapi.infra.security.UserPrincipal;
 import com.felipe.projectmanagerapi.models.User;
@@ -32,19 +33,22 @@ public class UserService {
   private final PasswordEncoder passwordEncoder;
   private final AuthenticationManager authenticationManager;
   private final TokenService tokenService;
+  private final AuthorizationService authorizationService;
 
   public UserService(
     UserRepository userRepository,
     UserMapper userMapper,
     PasswordEncoder passwordEncoder,
     AuthenticationManager authenticationManager,
-    TokenService tokenService
+    TokenService tokenService,
+    AuthorizationService authorizationService
   ) {
     this.userRepository = userRepository;
     this.userMapper = userMapper;
     this.passwordEncoder = passwordEncoder;
     this.authenticationManager = authenticationManager;
     this.tokenService = tokenService;
+    this.authorizationService = authorizationService;
   }
 
   public UserResponseDTO register(@Valid @NotNull UserRegisterDTO data) {
@@ -94,5 +98,11 @@ public class UserService {
       .stream()
       .map(this.userMapper::toDTO)
       .toList();
+  }
+
+  public UserResponseDTO getAuthenticatedUserProfile() {
+    Authentication authentication = this.authorizationService.getAuthentication();
+    UserPrincipal authenticatedUser = (UserPrincipal) authentication.getPrincipal();
+    return this.userMapper.toDTO(authenticatedUser.getUser());
   }
 }

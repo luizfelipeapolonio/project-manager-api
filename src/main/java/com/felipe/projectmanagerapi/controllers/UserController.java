@@ -72,4 +72,17 @@ public class UserController {
     response.setData(users);
     return response;
   }
+
+  @GetMapping("/users/profile")
+  @ResponseStatus(HttpStatus.OK)
+  public CustomResponseBody<UserResponseDTO> getAuthenticatedUserProfile() {
+    UserResponseDTO user = this.userService.getAuthenticatedUserProfile();
+
+    CustomResponseBody<UserResponseDTO> response = new CustomResponseBody<>();
+    response.setStatus(ResponseConditionStatus.SUCCESS);
+    response.setCode(HttpStatus.OK);
+    response.setMessage("Usuário autenticado");
+    response.setData(user);
+    return response;
+  }
 }
