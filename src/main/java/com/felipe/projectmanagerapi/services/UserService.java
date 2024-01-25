@@ -1,9 +1,6 @@
 package com.felipe.projectmanagerapi.services;
 
-import com.felipe.projectmanagerapi.dtos.LoginDTO;
-import com.felipe.projectmanagerapi.dtos.UserRegisterDTO;
-import com.felipe.projectmanagerapi.dtos.UserResponseDTO;
-import com.felipe.projectmanagerapi.dtos.UserUpdateDTO;
+import com.felipe.projectmanagerapi.dtos.*;
 import com.felipe.projectmanagerapi.dtos.mappers.UserMapper;
 import com.felipe.projectmanagerapi.exceptions.RecordNotFoundException;
 import com.felipe.projectmanagerapi.exceptions.UserAlreadyExistsException;
@@ -107,7 +104,7 @@ public class UserService {
     return this.userMapper.toDTO(authenticatedUser.getUser());
   }
 
-  public UserResponseDTO updateAuthenticatedUser(UserUpdateDTO userData) {
+  public UserResponseDTO updateAuthenticatedUser(@Valid @NotNull UserUpdateDTO userData) {
     Authentication authentication = this.authorizationService.getAuthentication();
     UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
 
@@ -119,6 +116,16 @@ public class UserService {
         if(userData.password() != null) {
           user.setPassword(this.passwordEncoder.encode(userData.password()));
         }
+        User updatedUser = this.userRepository.save(user);
+        return this.userMapper.toDTO(updatedUser);
+      })
+      .orElseThrow(() -> new RecordNotFoundException("Usuário não encontrado"));
+  }
+
+  public UserResponseDTO updateRole(@NotNull String userId, @Valid @NotNull UserRoleUpdateDTO roleDTO) {
+    return this.userRepository.findById(userId)
+      .map(user -> {
+        user.setRole(this.userMapper.convertValueToRole(roleDTO.role()));
         User updatedUser = this.userRepository.save(user);
         return this.userMapper.toDTO(updatedUser);
       })

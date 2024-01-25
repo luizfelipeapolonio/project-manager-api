@@ -1,19 +1,18 @@
 package com.felipe.projectmanagerapi.controllers;
 
-import com.felipe.projectmanagerapi.dtos.LoginDTO;
-import com.felipe.projectmanagerapi.dtos.UserRegisterDTO;
-import com.felipe.projectmanagerapi.dtos.UserResponseDTO;
-import com.felipe.projectmanagerapi.dtos.UserUpdateDTO;
+import com.felipe.projectmanagerapi.dtos.*;
 import com.felipe.projectmanagerapi.enums.ResponseConditionStatus;
 import com.felipe.projectmanagerapi.services.UserService;
 import com.felipe.projectmanagerapi.utils.CustomResponseBody;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -90,13 +89,29 @@ public class UserController {
 
   @PatchMapping("/users/profile")
   @ResponseStatus(HttpStatus.OK)
-  public CustomResponseBody<UserResponseDTO> updateAuthenticatedUser(@RequestBody UserUpdateDTO userData) {
+  public CustomResponseBody<UserResponseDTO> updateAuthenticatedUser(@RequestBody @Valid @NotNull UserUpdateDTO userData) {
     UserResponseDTO updatedUser = this.userService.updateAuthenticatedUser(userData);
 
     CustomResponseBody<UserResponseDTO> response = new CustomResponseBody<>();
     response.setStatus(ResponseConditionStatus.SUCCESS);
     response.setCode(HttpStatus.OK);
     response.setMessage("Usuário atualizado com sucesso");
+    response.setData(updatedUser);
+    return response;
+  }
+
+  @PatchMapping("/users/{userId}/role")
+  @ResponseStatus(HttpStatus.OK)
+  public CustomResponseBody<UserResponseDTO> updateRole(
+    @PathVariable @NotNull @NotBlank String userId,
+    @RequestBody @Valid @NotNull UserRoleUpdateDTO roleData
+  ) {
+    UserResponseDTO updatedUser = this.userService.updateRole(userId, roleData);
+
+    CustomResponseBody<UserResponseDTO> response = new CustomResponseBody<>();
+    response.setStatus(ResponseConditionStatus.SUCCESS);
+    response.setCode(HttpStatus.OK);
+    response.setMessage("Role atualizada com sucesso");
     response.setData(updatedUser);
     return response;
   }
