@@ -1,10 +1,7 @@
 package com.felipe.projectmanagerapi.controllers;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.felipe.projectmanagerapi.dtos.LoginDTO;
-import com.felipe.projectmanagerapi.dtos.UserRegisterDTO;
-import com.felipe.projectmanagerapi.dtos.UserResponseDTO;
-import com.felipe.projectmanagerapi.dtos.UserUpdateDTO;
+import com.felipe.projectmanagerapi.dtos.*;
 import com.felipe.projectmanagerapi.dtos.mappers.UserMapper;
 import com.felipe.projectmanagerapi.enums.ResponseConditionStatus;
 import com.felipe.projectmanagerapi.enums.Role;
@@ -307,5 +304,54 @@ public class UserControllerTest {
       .andExpect(jsonPath("$.data").doesNotExist());
 
     verify(this.userService, times(1)).updateAuthenticatedUser(userData);
+  }
+
+  @Test
+  @DisplayName("updateRole - Should return a success response with OK status code and user's info")
+  void updateUserRoleSuccess() throws Exception {
+    UserRoleUpdateDTO roleData = new UserRoleUpdateDTO("WRITE_READ");
+    User user = this.dataMock.getUsers().get(2);
+    user.setRole(this.userMapper.convertValueToRole(roleData.role()));
+
+    UserResponseDTO userResponse = this.userMapper.toDTO(user);
+    String jsonBody = this.objectMapper.writeValueAsString(roleData);
+
+    when(this.userService.updateRole("03", roleData)).thenReturn(userResponse);
+
+    this.mockMvc.perform(patch(this.baseUrl + "/users/03/role")
+      .contentType(MediaType.APPLICATION_JSON).content(jsonBody)
+      .accept(MediaType.APPLICATION_JSON))
+      .andExpect(status().isOk())
+      .andExpect(jsonPath("$.status").value(ResponseConditionStatus.SUCCESS.getValue()))
+      .andExpect(jsonPath("$.code").value(HttpStatus.OK.value()))
+      .andExpect(jsonPath("$.message").value("Role atualizada com sucesso"))
+      .andExpect(jsonPath("$.data.id").value(userResponse.id()))
+      .andExpect(jsonPath("$.data.name").value(userResponse.name()))
+      .andExpect(jsonPath("$.data.email").value(userResponse.email()))
+      .andExpect(jsonPath("$.data.role").value(userResponse.role()))
+      .andExpect(jsonPath("$.data.createdAt").value(userResponse.createdAt().toString()))
+      .andExpect(jsonPath("$.data.updatedAt").value(userResponse.createdAt().toString()));
+
+    verify(this.userService, times(1)).updateRole("03", roleData);
+  }
+
+  @Test
+  @DisplayName("updateRole - Should return an error response with not found status code if user is not found")
+  void updateUserRoleFailsByUserNotFound() throws Exception {
+    UserRoleUpdateDTO roleData = new UserRoleUpdateDTO("WRITE_READ");
+    String jsonBody = this.objectMapper.writeValueAsString(roleData);
+
+    when(this.userService.updateRole("03", roleData)).thenThrow(new RecordNotFoundException("Usuário não encontrado"));
+
+    this.mockMvc.perform(patch(this.baseUrl + "/users/03/role")
+      .contentType(MediaType.APPLICATION_JSON).content(jsonBody)
+      .accept(MediaType.APPLICATION_JSON))
+      .andExpect(status().isNotFound())
+      .andExpect(jsonPath("$.status").value(ResponseConditionStatus.ERROR.getValue()))
+      .andExpect(jsonPath("$.code").value(HttpStatus.NOT_FOUND.value()))
+      .andExpect(jsonPath("$.message").value("Usuário não encontrado"))
+      .andExpect(jsonPath("$.data").doesNotExist());
+
+    verify(this.userService, times(1)).updateRole("03", roleData);
   }
 }

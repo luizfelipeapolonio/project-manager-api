@@ -1,10 +1,8 @@
 package com.felipe.projectmanagerapi.services;
 
-import com.felipe.projectmanagerapi.dtos.LoginDTO;
-import com.felipe.projectmanagerapi.dtos.UserRegisterDTO;
-import com.felipe.projectmanagerapi.dtos.UserResponseDTO;
-import com.felipe.projectmanagerapi.dtos.UserUpdateDTO;
+import com.felipe.projectmanagerapi.dtos.*;
 import com.felipe.projectmanagerapi.dtos.mappers.UserMapper;
+import com.felipe.projectmanagerapi.enums.Role;
 import com.felipe.projectmanagerapi.exceptions.RecordNotFoundException;
 import com.felipe.projectmanagerapi.exceptions.UserAlreadyExistsException;
 import com.felipe.projectmanagerapi.infra.security.AuthorizationService;
@@ -325,5 +323,47 @@ public class UserServiceTest {
     verify(this.userRepository, never()).save(any(User.class));
     verify(this.passwordEncoder, never()).encode(anyString());
     verify(this.userMapper, never()).toDTO(any(User.class));
+  }
+
+  @Test
+  @DisplayName("updateRole - Should successfully update the user role")
+  void updateUserRoleSuccess() {
+    User user = this.dataMock.getUsers().get(2);
+    UserRoleUpdateDTO updateRoleDTO = new UserRoleUpdateDTO("WRITE_READ");
+
+    User updatedUser = this.dataMock.getUsers().get(2);
+    updatedUser.setRole(Role.WRITE_READ);
+
+    UserResponseDTO userResponse = this.userMapper.toDTO(updatedUser);
+
+    when(this.userRepository.findById("03")).thenReturn(Optional.of(user));
+    when(this.userRepository.save(any(User.class))).thenReturn(updatedUser);
+
+    UserResponseDTO updatedUserResponse = this.userService.updateRole("03", updateRoleDTO);
+
+    assertThat(updatedUserResponse.id()).isEqualTo(userResponse.id());
+    assertThat(updatedUserResponse.name()).isEqualTo(userResponse.name());
+    assertThat(updatedUserResponse.email()).isEqualTo(userResponse.email());
+    assertThat(updatedUserResponse.role()).isEqualTo(userResponse.role());
+    assertThat(updatedUserResponse.createdAt()).isEqualTo(userResponse.createdAt());
+    assertThat(updatedUserResponse.updatedAt()).isEqualTo(userResponse.updatedAt());
+
+    verify(this.userRepository, times(1)).findById("03");
+    verify(this.userRepository, times(1)).save(any(User.class));
+  }
+
+  @Test
+  @DisplayName("updateRole - Should throw a RecordNotFoundException if the user does not exist")
+  void updateUserRoleFailsByUserNotFound() {
+    when(this.userRepository.findById("03")).thenReturn(Optional.empty());
+
+    Exception thrown = catchException(() -> this.userService.updateRole("03", new UserRoleUpdateDTO("READ_ONLY")));
+
+    assertThat(thrown)
+      .isExactlyInstanceOf(RecordNotFoundException.class)
+      .hasMessage("Usuário não encontrado");
+
+    verify(this.userRepository, times(1)).findById("03");
+    verify(this.userRepository, never()).save(any(User.class));
   }
 }
