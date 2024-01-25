@@ -3,6 +3,7 @@ package com.felipe.projectmanagerapi.controllers;
 import com.felipe.projectmanagerapi.dtos.LoginDTO;
 import com.felipe.projectmanagerapi.dtos.UserRegisterDTO;
 import com.felipe.projectmanagerapi.dtos.UserResponseDTO;
+import com.felipe.projectmanagerapi.dtos.UserUpdateDTO;
 import com.felipe.projectmanagerapi.enums.ResponseConditionStatus;
 import com.felipe.projectmanagerapi.services.UserService;
 import com.felipe.projectmanagerapi.utils.CustomResponseBody;
@@ -11,10 +12,11 @@ import jakarta.validation.constraints.NotNull;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.bind.annotation.PatchMapping;
 
 import java.util.List;
 import java.util.Map;
@@ -83,6 +85,19 @@ public class UserController {
     response.setCode(HttpStatus.OK);
     response.setMessage("Usuário autenticado");
     response.setData(user);
+    return response;
+  }
+
+  @PatchMapping("/users/profile")
+  @ResponseStatus(HttpStatus.OK)
+  public CustomResponseBody<UserResponseDTO> updateAuthenticatedUser(@RequestBody UserUpdateDTO userData) {
+    UserResponseDTO updatedUser = this.userService.updateAuthenticatedUser(userData);
+
+    CustomResponseBody<UserResponseDTO> response = new CustomResponseBody<>();
+    response.setStatus(ResponseConditionStatus.SUCCESS);
+    response.setCode(HttpStatus.OK);
+    response.setMessage("Usuário atualizado com sucesso");
+    response.setData(updatedUser);
     return response;
   }
 }

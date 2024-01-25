@@ -3,6 +3,7 @@ package com.felipe.projectmanagerapi.services;
 import com.felipe.projectmanagerapi.dtos.LoginDTO;
 import com.felipe.projectmanagerapi.dtos.UserRegisterDTO;
 import com.felipe.projectmanagerapi.dtos.UserResponseDTO;
+import com.felipe.projectmanagerapi.dtos.UserUpdateDTO;
 import com.felipe.projectmanagerapi.dtos.mappers.UserMapper;
 import com.felipe.projectmanagerapi.exceptions.RecordNotFoundException;
 import com.felipe.projectmanagerapi.exceptions.UserAlreadyExistsException;
@@ -104,5 +105,23 @@ public class UserService {
     Authentication authentication = this.authorizationService.getAuthentication();
     UserPrincipal authenticatedUser = (UserPrincipal) authentication.getPrincipal();
     return this.userMapper.toDTO(authenticatedUser.getUser());
+  }
+
+  public UserResponseDTO updateAuthenticatedUser(UserUpdateDTO userData) {
+    Authentication authentication = this.authorizationService.getAuthentication();
+    UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
+
+    return this.userRepository.findByEmail(userPrincipal.getUsername())
+      .map(user -> {
+        if(userData.name() != null) {
+          user.setName(userData.name());
+        }
+        if(userData.password() != null) {
+          user.setPassword(this.passwordEncoder.encode(userData.password()));
+        }
+        User updatedUser = this.userRepository.save(user);
+        return this.userMapper.toDTO(updatedUser);
+      })
+      .orElseThrow(() -> new RecordNotFoundException("Usuário não encontrado"));
   }
 }
