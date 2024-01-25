@@ -3,6 +3,7 @@ package com.felipe.projectmanagerapi.services;
 import com.felipe.projectmanagerapi.dtos.LoginDTO;
 import com.felipe.projectmanagerapi.dtos.UserRegisterDTO;
 import com.felipe.projectmanagerapi.dtos.UserResponseDTO;
+import com.felipe.projectmanagerapi.dtos.UserUpdateDTO;
 import com.felipe.projectmanagerapi.dtos.mappers.UserMapper;
 import com.felipe.projectmanagerapi.exceptions.RecordNotFoundException;
 import com.felipe.projectmanagerapi.exceptions.UserAlreadyExistsException;
@@ -262,5 +263,67 @@ public class UserServiceTest {
 
     verify(this.authentication, times(1)).getPrincipal();
     verify(this.userMapper, times(1)).toDTO(userPrincipal.getUser());
+  }
+
+  @Test
+  @DisplayName("updateAuthenticatedUser - Should successfully update authenticated user's info")
+  void updateAuthenticatedUserSuccess() {
+    User user = this.dataMock.getUsers().get(1);
+    UserPrincipal userPrincipal = new UserPrincipal(user);
+    UserUpdateDTO updateDTO = new UserUpdateDTO("Updated name", "654321");
+
+    User updatedUserEntity = new User();
+    updatedUserEntity.setId(user.getId());
+    updatedUserEntity.setName(updateDTO.name());
+    updatedUserEntity.setEmail(user.getEmail());
+    updatedUserEntity.setPassword(updateDTO.password());
+    updatedUserEntity.setRole(user.getRole());
+    updatedUserEntity.setCreatedAt(user.getCreatedAt());
+    updatedUserEntity.setUpdatedAt(user.getUpdatedAt());
+    UserResponseDTO updatedUserResponse = this.userMapper.toDTO(updatedUserEntity);
+
+    when(this.authorizationService.getAuthentication()).thenReturn(this.authentication);
+    when(this.authentication.getPrincipal()).thenReturn(userPrincipal);
+    when(this.userRepository.findByEmail(userPrincipal.getUsername())).thenReturn(Optional.of(user));
+    when(this.userRepository.save(any(User.class))).thenReturn(updatedUserEntity);
+
+    UserResponseDTO updatedUser = this.userService.updateAuthenticatedUser(updateDTO);
+
+    assertThat(updatedUser.id()).isEqualTo(user.getId());
+    assertThat(updatedUser.name()).isEqualTo(updatedUserResponse.name());
+    assertThat(updatedUser.email()).isEqualTo(updatedUserResponse.email());
+    assertThat(updatedUser.role()).isEqualTo(updatedUserResponse.role());
+    assertThat(updatedUser.createdAt()).isEqualTo(updatedUserResponse.createdAt());
+    assertThat(updatedUser.updatedAt()).isEqualTo(updatedUserResponse.updatedAt());
+
+    verify(this.authorizationService, times(1)).getAuthentication();
+    verify(this.authentication, times(1)).getPrincipal();
+    verify(this.userRepository, times(1)).findByEmail(userPrincipal.getUsername());
+    verify(this.passwordEncoder, times(1)).encode(updateDTO.password());
+    verify(this.userRepository, times(1)).save(any(User.class));
+  }
+
+  @Test
+  @DisplayName("updateAuthenticatedUser - Should throw a RecordNotFoundException if the user is not found")
+  void updateAuthenticatedUserFailsByUserNotFound() {
+    UserPrincipal userPrincipal = new UserPrincipal(this.dataMock.getUsers().get(1));
+    UserUpdateDTO updateDTO = new UserUpdateDTO("Updated Name", "654321");
+
+    when(this.authorizationService.getAuthentication()).thenReturn(this.authentication);
+    when(this.authentication.getPrincipal()).thenReturn(userPrincipal);
+    when(this.userRepository.findByEmail(userPrincipal.getUsername())).thenReturn(Optional.empty());
+
+    Exception thrown = catchException(() -> this.userService.updateAuthenticatedUser(updateDTO));
+
+    assertThat(thrown)
+      .isExactlyInstanceOf(RecordNotFoundException.class)
+      .hasMessage("Usuário não encontrado");
+
+    verify(this.authorizationService, times(1)).getAuthentication();
+    verify(this.authentication, times(1)).getPrincipal();
+    verify(this.userRepository, times(1)).findByEmail(userPrincipal.getUsername());
+    verify(this.userRepository, never()).save(any(User.class));
+    verify(this.passwordEncoder, never()).encode(anyString());
+    verify(this.userMapper, never()).toDTO(any(User.class));
   }
 }

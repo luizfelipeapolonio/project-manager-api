@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.felipe.projectmanagerapi.dtos.LoginDTO;
 import com.felipe.projectmanagerapi.dtos.UserRegisterDTO;
 import com.felipe.projectmanagerapi.dtos.UserResponseDTO;
+import com.felipe.projectmanagerapi.dtos.UserUpdateDTO;
 import com.felipe.projectmanagerapi.dtos.mappers.UserMapper;
 import com.felipe.projectmanagerapi.enums.ResponseConditionStatus;
 import com.felipe.projectmanagerapi.enums.Role;
@@ -35,6 +36,7 @@ import java.util.Map;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.times;
@@ -258,5 +260,52 @@ public class UserControllerTest {
       .andExpect(jsonPath("$.data.updatedAt").value(userDTO.updatedAt().toString()));
 
     verify(this.userService, times(1)).getAuthenticatedUserProfile();
+  }
+
+  @Test
+  @DisplayName("updateAuthenticatedUser - Should return a success response with OK status code and the updated user")
+  void updateAuthenticatedUserSuccess() throws Exception {
+    User user = this.dataMock.getUsers().get(1);
+    UserResponseDTO updatedUser = this.userMapper.toDTO(user);
+    UserUpdateDTO userData = new UserUpdateDTO("User 2", "123456");
+    String jsonBody = this.objectMapper.writeValueAsString(userData);
+
+    when(this.userService.updateAuthenticatedUser(userData)).thenReturn(updatedUser);
+
+    this.mockMvc.perform(patch(this.baseUrl + "/users/profile")
+      .contentType(MediaType.APPLICATION_JSON).content(jsonBody)
+      .accept(MediaType.APPLICATION_JSON))
+      .andExpect(status().isOk())
+      .andExpect(jsonPath("$.status").value(ResponseConditionStatus.SUCCESS.getValue()))
+      .andExpect(jsonPath("$.code").value(HttpStatus.OK.value()))
+      .andExpect(jsonPath("$.message").value("Usuário atualizado com sucesso"))
+      .andExpect(jsonPath("$.data.id").value(updatedUser.id()))
+      .andExpect(jsonPath("$.data.name").value(updatedUser.name()))
+      .andExpect(jsonPath("$.data.email").value(updatedUser.email()))
+      .andExpect(jsonPath("$.data.role").value(updatedUser.role()))
+      .andExpect(jsonPath("$.data.createdAt").value(updatedUser.createdAt().toString()))
+      .andExpect(jsonPath("$.data.updatedAt").value(updatedUser.updatedAt().toString()));
+
+    verify(this.userService, times(1)).updateAuthenticatedUser(userData);
+  }
+
+  @Test
+  @DisplayName("updateAuthenticatedUser - Should return an error response with not found status code")
+  void updateAuthenticatedUserFailsByUserNotFound() throws Exception {
+    UserUpdateDTO userData = new UserUpdateDTO("User", "123456");
+    String jsonBody = this.objectMapper.writeValueAsString(userData);
+
+    when(this.userService.updateAuthenticatedUser(userData)).thenThrow(new RecordNotFoundException("Usuário não encontrado"));
+
+    this.mockMvc.perform(patch(this.baseUrl + "/users/profile")
+      .contentType(MediaType.APPLICATION_JSON).content(jsonBody)
+      .accept(MediaType.APPLICATION_JSON))
+      .andExpect(status().isNotFound())
+      .andExpect(jsonPath("$.status").value(ResponseConditionStatus.ERROR.getValue()))
+      .andExpect(jsonPath("$.code").value(HttpStatus.NOT_FOUND.value()))
+      .andExpect(jsonPath("$.message").value("Usuário não encontrado"))
+      .andExpect(jsonPath("$.data").doesNotExist());
+
+    verify(this.userService, times(1)).updateAuthenticatedUser(userData);
   }
 }
