@@ -22,6 +22,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
@@ -267,9 +268,9 @@ public class UserControllerTest {
     UserUpdateDTO userData = new UserUpdateDTO("User 2", "123456");
     String jsonBody = this.objectMapper.writeValueAsString(userData);
 
-    when(this.userService.updateAuthenticatedUser(userData)).thenReturn(updatedUser);
+    when(this.userService.updateAuthenticatedUser("02", userData)).thenReturn(updatedUser);
 
-    this.mockMvc.perform(patch(this.baseUrl + "/users/profile")
+    this.mockMvc.perform(patch(this.baseUrl + "/users/02/profile")
       .contentType(MediaType.APPLICATION_JSON).content(jsonBody)
       .accept(MediaType.APPLICATION_JSON))
       .andExpect(status().isOk())
@@ -283,7 +284,27 @@ public class UserControllerTest {
       .andExpect(jsonPath("$.data.createdAt").value(updatedUser.createdAt().toString()))
       .andExpect(jsonPath("$.data.updatedAt").value(updatedUser.updatedAt().toString()));
 
-    verify(this.userService, times(1)).updateAuthenticatedUser(userData);
+    verify(this.userService, times(1)).updateAuthenticatedUser("02", userData);
+  }
+
+  @Test
+  @DisplayName("updateAuthenticatedUser - Should return an error response with forbidden status code")
+  void updateAuthenticatedUserFailsByDifferentUserId() throws Exception {
+    UserUpdateDTO updateDTO = new UserUpdateDTO("Updated User", "123456");
+    String jsonBody = this.objectMapper.writeValueAsString(updateDTO);
+
+    when(this.userService.updateAuthenticatedUser("01", updateDTO)).thenThrow(new AccessDeniedException("Acesso negaod"));
+
+    this.mockMvc.perform(patch(this.baseUrl + "/users/01/profile")
+      .contentType(MediaType.APPLICATION_JSON).content(jsonBody)
+      .accept(MediaType.APPLICATION_JSON))
+      .andExpect(status().isForbidden())
+      .andExpect(jsonPath("$.status").value(ResponseConditionStatus.ERROR.getValue()))
+      .andExpect(jsonPath("$.code").value(HttpStatus.FORBIDDEN.value()))
+      .andExpect(jsonPath("$.message").value("Acesso negado"))
+      .andExpect(jsonPath("$.data").doesNotExist());
+
+    verify(this.userService, times(1)).updateAuthenticatedUser("01", updateDTO);
   }
 
   @Test
@@ -292,9 +313,9 @@ public class UserControllerTest {
     UserUpdateDTO userData = new UserUpdateDTO("User", "123456");
     String jsonBody = this.objectMapper.writeValueAsString(userData);
 
-    when(this.userService.updateAuthenticatedUser(userData)).thenThrow(new RecordNotFoundException("Usuário não encontrado"));
+    when(this.userService.updateAuthenticatedUser("01", userData)).thenThrow(new RecordNotFoundException("Usuário não encontrado"));
 
-    this.mockMvc.perform(patch(this.baseUrl + "/users/profile")
+    this.mockMvc.perform(patch(this.baseUrl + "/users/01/profile")
       .contentType(MediaType.APPLICATION_JSON).content(jsonBody)
       .accept(MediaType.APPLICATION_JSON))
       .andExpect(status().isNotFound())
@@ -303,7 +324,7 @@ public class UserControllerTest {
       .andExpect(jsonPath("$.message").value("Usuário não encontrado"))
       .andExpect(jsonPath("$.data").doesNotExist());
 
-    verify(this.userService, times(1)).updateAuthenticatedUser(userData);
+    verify(this.userService, times(1)).updateAuthenticatedUser("01", userData);
   }
 
   @Test

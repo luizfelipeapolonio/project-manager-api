@@ -20,6 +20,7 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.mockito.Spy;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -285,7 +286,7 @@ public class UserServiceTest {
     when(this.userRepository.findByEmail(userPrincipal.getUsername())).thenReturn(Optional.of(user));
     when(this.userRepository.save(any(User.class))).thenReturn(updatedUserEntity);
 
-    UserResponseDTO updatedUser = this.userService.updateAuthenticatedUser(updateDTO);
+    UserResponseDTO updatedUser = this.userService.updateAuthenticatedUser("02", updateDTO);
 
     assertThat(updatedUser.id()).isEqualTo(user.getId());
     assertThat(updatedUser.name()).isEqualTo(updatedUserResponse.name());
@@ -302,6 +303,28 @@ public class UserServiceTest {
   }
 
   @Test
+  @DisplayName("updateAuthenticatedUser - Should throw an AccessDeniedException if user id is different from authenticated user id")
+  void updateAuthenticatedUserFailsByDifferentUserId() {
+    UserPrincipal userPrincipal = new UserPrincipal(this.dataMock.getUsers().get(1));
+    UserUpdateDTO updateDTO = new UserUpdateDTO("User Update", "654321");
+
+    when(this.authorizationService.getAuthentication()).thenReturn(this.authentication);
+    when(this.authentication.getPrincipal()).thenReturn(userPrincipal);
+
+    Exception thrown = catchException(() -> this.userService.updateAuthenticatedUser("03", updateDTO));
+
+    assertThat(thrown)
+      .isExactlyInstanceOf(AccessDeniedException.class)
+      .hasMessage("Acesso negado");
+
+    verify(this.authorizationService, times(1)).getAuthentication();
+    verify(this.authentication, times(1)).getPrincipal();
+    verify(this.userRepository, never()).findByEmail(anyString());
+    verify(this.userRepository, never()).save(any(User.class));
+    verify(this.userMapper, never()).toDTO(any(User.class));
+  }
+
+  @Test
   @DisplayName("updateAuthenticatedUser - Should throw a RecordNotFoundException if the user is not found")
   void updateAuthenticatedUserFailsByUserNotFound() {
     UserPrincipal userPrincipal = new UserPrincipal(this.dataMock.getUsers().get(1));
@@ -311,7 +334,7 @@ public class UserServiceTest {
     when(this.authentication.getPrincipal()).thenReturn(userPrincipal);
     when(this.userRepository.findByEmail(userPrincipal.getUsername())).thenReturn(Optional.empty());
 
-    Exception thrown = catchException(() -> this.userService.updateAuthenticatedUser(updateDTO));
+    Exception thrown = catchException(() -> this.userService.updateAuthenticatedUser("02", updateDTO));
 
     assertThat(thrown)
       .isExactlyInstanceOf(RecordNotFoundException.class)
