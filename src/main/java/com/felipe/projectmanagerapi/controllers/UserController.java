@@ -87,10 +87,13 @@ public class UserController {
     return response;
   }
 
-  @PatchMapping("/users/profile")
+  @PatchMapping("/users/{userId}/profile")
   @ResponseStatus(HttpStatus.OK)
-  public CustomResponseBody<UserResponseDTO> updateAuthenticatedUser(@RequestBody @Valid @NotNull UserUpdateDTO userData) {
-    UserResponseDTO updatedUser = this.userService.updateAuthenticatedUser(userData);
+  public CustomResponseBody<UserResponseDTO> updateAuthenticatedUser(
+    @PathVariable @NotNull @NotBlank String userId,
+    @RequestBody @Valid @NotNull UserUpdateDTO userData
+  ) {
+    UserResponseDTO updatedUser = this.userService.updateAuthenticatedUser(userId, userData);
 
     CustomResponseBody<UserResponseDTO> response = new CustomResponseBody<>();
     response.setStatus(ResponseConditionStatus.SUCCESS);

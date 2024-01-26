@@ -11,6 +11,7 @@ import com.felipe.projectmanagerapi.models.User;
 import com.felipe.projectmanagerapi.repositories.UserRepository;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -104,9 +105,13 @@ public class UserService {
     return this.userMapper.toDTO(authenticatedUser.getUser());
   }
 
-  public UserResponseDTO updateAuthenticatedUser(@Valid @NotNull UserUpdateDTO userData) {
+  public UserResponseDTO updateAuthenticatedUser(@NotNull String userId, @Valid @NotNull UserUpdateDTO userData) {
     Authentication authentication = this.authorizationService.getAuthentication();
     UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
+
+    if(!userId.equals(userPrincipal.getUser().getId())) {
+      throw new AccessDeniedException("Acesso negado");
+    }
 
     return this.userRepository.findByEmail(userPrincipal.getUsername())
       .map(user -> {
