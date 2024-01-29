@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.DeleteMapping;
 
 import java.util.List;
 import java.util.Map;
@@ -129,6 +130,19 @@ public class UserController {
     response.setCode(HttpStatus.OK);
     response.setMessage("Role atualizada com sucesso");
     response.setData(updatedUser);
+    return response;
+  }
+
+  @DeleteMapping("/users/{userId}")
+  @ResponseStatus(HttpStatus.OK)
+  public CustomResponseBody<Map<String, UserResponseDTO>> delete(@PathVariable @NotBlank @NotNull String userId) {
+    Map<String, UserResponseDTO> deletedUser = this.userService.delete(userId);
+
+    CustomResponseBody<Map<String, UserResponseDTO>> response = new CustomResponseBody<>();
+    response.setStatus(ResponseConditionStatus.SUCCESS);
+    response.setCode(HttpStatus.OK);
+    response.setMessage("Usuário deletado com sucesso");
+    response.setData(deletedUser);
     return response;
   }
 }

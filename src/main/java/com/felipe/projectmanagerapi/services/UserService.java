@@ -142,4 +142,16 @@ public class UserService {
       })
       .orElseThrow(() -> new RecordNotFoundException("Usuário não encontrado"));
   }
+
+  public Map<String, UserResponseDTO> delete(@NotNull String userId) {
+    UserResponseDTO user = this.userRepository.findById(userId)
+      .map(this.userMapper::toDTO)
+      .orElseThrow(() -> new RecordNotFoundException("Usuário não encontrado"));
+
+    this.userRepository.deleteById(user.id());
+
+    Map<String, UserResponseDTO> deletedUser = new HashMap<>();
+    deletedUser.put("deletedUser", user);
+    return deletedUser;
+  }
 }
