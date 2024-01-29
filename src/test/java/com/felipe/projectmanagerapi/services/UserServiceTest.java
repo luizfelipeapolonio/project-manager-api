@@ -265,6 +265,41 @@ public class UserServiceTest {
   }
 
   @Test
+  @DisplayName("getProfile - Should successfully return a user profile")
+  void getProfileSuccess() {
+    User user = this.dataMock.getUsers().get(1);
+    UserResponseDTO userResponse = this.userMapper.toDTO(user);
+
+    when(this.userRepository.findById("02")).thenReturn(Optional.of(user));
+
+    UserResponseDTO userProfile = this.userService.getProfile("02");
+
+    assertThat(userProfile.id()).isEqualTo(userResponse.id());
+    assertThat(userProfile.name()).isEqualTo(userResponse.name());
+    assertThat(userProfile.email()).isEqualTo(userResponse.email());
+    assertThat(userProfile.role()).isEqualTo(userResponse.role());
+    assertThat(userProfile.createdAt()).isEqualTo(userResponse.createdAt());
+    assertThat(userProfile.updatedAt()).isEqualTo(userResponse.updatedAt());
+
+    verify(this.userRepository, times(1)).findById("02");
+  }
+
+  @Test
+  @DisplayName("getProfile - Should throw a RecordNotFoundException if user is not found")
+  void getProfileFailsByUserNotFound() {
+    when(this.userRepository.findById("02")).thenReturn(Optional.empty());
+
+    Exception thrown = catchException(() -> this.userService.getProfile("02"));
+
+    assertThat(thrown)
+      .isExactlyInstanceOf(RecordNotFoundException.class)
+      .hasMessage("Usuário não encontrado");
+
+    verify(this.userRepository, times(1)).findById("02");
+    verify(this.userMapper, never()).toDTO(any(User.class));
+  }
+
+  @Test
   @DisplayName("updateAuthenticatedUser - Should successfully update authenticated user's info")
   void updateAuthenticatedUserSuccess() {
     User user = this.dataMock.getUsers().get(1);

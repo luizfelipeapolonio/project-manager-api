@@ -244,7 +244,7 @@ public class UserControllerTest {
 
     when(this.userService.getAuthenticatedUserProfile()).thenReturn(userDTO);
 
-    this.mockMvc.perform(get(this.baseUrl + "/users/profile")
+    this.mockMvc.perform(get(this.baseUrl + "/users/me")
       .accept(MediaType.APPLICATION_JSON))
       .andExpect(status().isOk())
       .andExpect(jsonPath("$.status").value(ResponseConditionStatus.SUCCESS.getValue()))
@@ -261,6 +261,45 @@ public class UserControllerTest {
   }
 
   @Test
+  @DisplayName("getProfile - Should return a success response with OK status code and the user's info")
+  void getUserProfileSuccess() throws Exception {
+    UserResponseDTO userResponse = this.userMapper.toDTO(this.dataMock.getUsers().get(1));
+
+    when(this.userService.getProfile("02")).thenReturn(userResponse);
+
+    this.mockMvc.perform(get(this.baseUrl + "/users/02")
+      .accept(MediaType.APPLICATION_JSON))
+      .andExpect(status().isOk())
+      .andExpect(jsonPath("$.status").value(ResponseConditionStatus.SUCCESS.getValue()))
+      .andExpect(jsonPath("$.code").value(HttpStatus.OK.value()))
+      .andExpect(jsonPath("$.message").value("Usuário encontrado"))
+      .andExpect(jsonPath("$.data.id").value(userResponse.id()))
+      .andExpect(jsonPath("$.data.name").value(userResponse.name()))
+      .andExpect(jsonPath("$.data.email").value(userResponse.email()))
+      .andExpect(jsonPath("$.data.role").value(userResponse.role()))
+      .andExpect(jsonPath("$.data.createdAt").value(userResponse.createdAt().toString()))
+      .andExpect(jsonPath("$.data.updatedAt").value(userResponse.updatedAt().toString()));
+
+    verify(this.userService, times(1)).getProfile("02");
+  }
+
+  @Test
+  @DisplayName("getProfile - Should return an error response with not found status code")
+  void getUserProfileFailsByUserNotFound() throws Exception {
+    when(this.userService.getProfile("02")).thenThrow(new RecordNotFoundException("Usuário não encontrado"));
+
+    this.mockMvc.perform(get(this.baseUrl + "/users/02")
+      .accept(MediaType.APPLICATION_JSON))
+      .andExpect(status().isNotFound())
+      .andExpect(jsonPath("$.status").value(ResponseConditionStatus.ERROR.getValue()))
+      .andExpect(jsonPath("$.code").value(HttpStatus.NOT_FOUND.value()))
+      .andExpect(jsonPath("$.message").value("Usuário não encontrado"))
+      .andExpect(jsonPath("$.data").doesNotExist());
+
+    verify(this.userService, times(1)).getProfile("02");
+  }
+
+  @Test
   @DisplayName("updateAuthenticatedUser - Should return a success response with OK status code and the updated user")
   void updateAuthenticatedUserSuccess() throws Exception {
     User user = this.dataMock.getUsers().get(1);
@@ -270,7 +309,7 @@ public class UserControllerTest {
 
     when(this.userService.updateAuthenticatedUser("02", userData)).thenReturn(updatedUser);
 
-    this.mockMvc.perform(patch(this.baseUrl + "/users/02/profile")
+    this.mockMvc.perform(patch(this.baseUrl + "/users/02")
       .contentType(MediaType.APPLICATION_JSON).content(jsonBody)
       .accept(MediaType.APPLICATION_JSON))
       .andExpect(status().isOk())
@@ -295,7 +334,7 @@ public class UserControllerTest {
 
     when(this.userService.updateAuthenticatedUser("01", updateDTO)).thenThrow(new AccessDeniedException("Acesso negaod"));
 
-    this.mockMvc.perform(patch(this.baseUrl + "/users/01/profile")
+    this.mockMvc.perform(patch(this.baseUrl + "/users/01")
       .contentType(MediaType.APPLICATION_JSON).content(jsonBody)
       .accept(MediaType.APPLICATION_JSON))
       .andExpect(status().isForbidden())
@@ -315,7 +354,7 @@ public class UserControllerTest {
 
     when(this.userService.updateAuthenticatedUser("01", userData)).thenThrow(new RecordNotFoundException("Usuário não encontrado"));
 
-    this.mockMvc.perform(patch(this.baseUrl + "/users/01/profile")
+    this.mockMvc.perform(patch(this.baseUrl + "/users/01")
       .contentType(MediaType.APPLICATION_JSON).content(jsonBody)
       .accept(MediaType.APPLICATION_JSON))
       .andExpect(status().isNotFound())
