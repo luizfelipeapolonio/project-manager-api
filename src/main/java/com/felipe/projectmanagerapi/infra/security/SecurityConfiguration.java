@@ -34,12 +34,19 @@ public class SecurityConfiguration {
 
   @Bean
   public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    String authBaseUrl = "/api/auth";
+    String userBaseUrl = "/api/users";
     return http
       .csrf(AbstractHttpConfigurer::disable)
       .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
       .authorizeHttpRequests(authorizeHttpRequests -> authorizeHttpRequests
-        .requestMatchers(HttpMethod.POST, "/api/auth/register").hasRole("ADMIN")
-        .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
+        .requestMatchers(HttpMethod.POST, authBaseUrl + "/register").hasRole("ADMIN")
+        .requestMatchers(HttpMethod.POST, authBaseUrl + "/login").permitAll()
+        .requestMatchers(HttpMethod.GET, userBaseUrl).hasRole("ADMIN")
+        .requestMatchers(HttpMethod.GET, userBaseUrl + "/me").hasAnyRole("ADMIN", "WRITE_READ", "READ_ONLY")
+        .requestMatchers(HttpMethod.PATCH, userBaseUrl + "/{userId}").hasAnyRole("ADMIN", "WRITE_READ", "READ_ONLY")
+        .requestMatchers(HttpMethod.GET, userBaseUrl + "/{userId}").hasRole("ADMIN")
+        .requestMatchers(HttpMethod.PATCH, userBaseUrl + "/{userId}/role").hasRole("ADMIN")
         .requestMatchers(HttpMethod.GET, "/api/auth/test").hasAnyRole("ADMIN", "WRITE_READ")
         .anyRequest().authenticated())
       .addFilterBefore(this.securityFilter, UsernamePasswordAuthenticationFilter.class)
