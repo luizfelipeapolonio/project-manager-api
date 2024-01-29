@@ -37,6 +37,7 @@ import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.doNothing;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchException;
 
@@ -423,5 +424,43 @@ public class UserServiceTest {
 
     verify(this.userRepository, times(1)).findById("03");
     verify(this.userRepository, never()).save(any(User.class));
+  }
+
+  @Test
+  @DisplayName("delete - Should successfully delete a user")
+  void deleteUserSuccess() {
+    User user = this.dataMock.getUsers().get(1);
+    UserResponseDTO responseDTO = this.userMapper.toDTO(user);
+
+    when(this.userRepository.findById("02")).thenReturn(Optional.of(user));
+    doNothing().when(this.userRepository).deleteById("02");
+
+    Map<String, UserResponseDTO> deletedUser = this.userService.delete("02");
+
+    assertThat(deletedUser.containsKey("deletedUser")).isTrue();
+    assertThat(deletedUser.get("deletedUser").id()).isEqualTo(responseDTO.id());
+    assertThat(deletedUser.get("deletedUser").name()).isEqualTo(responseDTO.name());
+    assertThat(deletedUser.get("deletedUser").email()).isEqualTo(responseDTO.email());
+    assertThat(deletedUser.get("deletedUser").role()).isEqualTo(responseDTO.role());
+    assertThat(deletedUser.get("deletedUser").createdAt()).isEqualTo(responseDTO.createdAt());
+    assertThat(deletedUser.get("deletedUser").updatedAt()).isEqualTo(responseDTO.updatedAt());
+
+    verify(this.userRepository, times(1)).findById("02");
+    verify(this.userRepository, times(1)).deleteById("02");
+  }
+
+  @Test
+  @DisplayName("delete - Should throw a RecordNotFoundException if user is not found")
+  void deleteUserFailsByUserNotFound() {
+    when(this.userRepository.findById("02")).thenReturn(Optional.empty());
+
+    Exception thrown = catchException(() -> this.userService.delete("02"));
+
+    assertThat(thrown)
+      .isExactlyInstanceOf(RecordNotFoundException.class)
+      .hasMessage("Usuário não encontrado");
+
+    verify(this.userRepository, times(1)).findById("02");
+    verify(this.userRepository, never()).deleteById("02");
   }
 }

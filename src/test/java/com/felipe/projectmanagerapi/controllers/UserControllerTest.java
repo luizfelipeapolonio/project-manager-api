@@ -35,6 +35,7 @@ import java.util.Map;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.times;
@@ -413,5 +414,46 @@ public class UserControllerTest {
       .andExpect(jsonPath("$.data").doesNotExist());
 
     verify(this.userService, times(1)).updateRole("03", roleData);
+  }
+
+  @Test
+  @DisplayName("delete - Should return a success response with OK status code")
+  void deleteUserSuccess() throws Exception {
+    UserResponseDTO deletedUser = this.userMapper.toDTO(this.dataMock.getUsers().get(1));
+    Map<String, UserResponseDTO> response = new HashMap<>();
+    response.put("deletedUser", deletedUser);
+
+    when(this.userService.delete("02")).thenReturn(response);
+
+    this.mockMvc.perform(delete(this.baseUrl + "/users/02")
+      .accept(MediaType.APPLICATION_JSON))
+      .andExpect(status().isOk())
+      .andExpect(jsonPath("$.status").value(ResponseConditionStatus.SUCCESS.getValue()))
+      .andExpect(jsonPath("$.code").value(HttpStatus.OK.value()))
+      .andExpect(jsonPath("$.message").value("Usuário deletado com sucesso"))
+      .andExpect(jsonPath("$.data.deletedUser.id").value(deletedUser.id()))
+      .andExpect(jsonPath("$.data.deletedUser.name").value(deletedUser.name()))
+      .andExpect(jsonPath("$.data.deletedUser.email").value(deletedUser.email()))
+      .andExpect(jsonPath("$.data.deletedUser.role").value(deletedUser.role()))
+      .andExpect(jsonPath("$.data.deletedUser.createdAt").value(deletedUser.createdAt().toString()))
+      .andExpect(jsonPath("$.data.deletedUser.updatedAt").value(deletedUser.updatedAt().toString()));
+
+    verify(this.userService, times(1)).delete("02");
+  }
+
+  @Test
+  @DisplayName("delete - Should return an error response with not found status code")
+  void deleteUserFailsByUserNotFound() throws Exception {
+    when(this.userService.delete("02")).thenThrow(new RecordNotFoundException("Usuário não encontrado"));
+
+    this.mockMvc.perform(delete(this.baseUrl + "/users/02")
+      .accept(MediaType.APPLICATION_JSON))
+      .andExpect(status().isNotFound())
+      .andExpect(jsonPath("$.status").value(ResponseConditionStatus.ERROR.getValue()))
+      .andExpect(jsonPath("$.code").value(HttpStatus.NOT_FOUND.value()))
+      .andExpect(jsonPath("$.message").value("Usuário não encontrado"))
+      .andExpect(jsonPath("$.data").doesNotExist());
+
+    verify(this.userService, times(1)).delete("02");
   }
 }
