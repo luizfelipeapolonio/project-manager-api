@@ -74,7 +74,7 @@ public class UserController {
     return response;
   }
 
-  @GetMapping("/users/profile")
+  @GetMapping("/users/me")
   @ResponseStatus(HttpStatus.OK)
   public CustomResponseBody<UserResponseDTO> getAuthenticatedUserProfile() {
     UserResponseDTO user = this.userService.getAuthenticatedUserProfile();
@@ -87,7 +87,20 @@ public class UserController {
     return response;
   }
 
-  @PatchMapping("/users/{userId}/profile")
+  @GetMapping("/users/{userId}")
+  @ResponseStatus(HttpStatus.OK)
+  public CustomResponseBody<UserResponseDTO> getProfile(@PathVariable @NotBlank @NotNull String userId) {
+    UserResponseDTO user = this.userService.getProfile(userId);
+
+    CustomResponseBody<UserResponseDTO> response = new CustomResponseBody<>();
+    response.setStatus(ResponseConditionStatus.SUCCESS);
+    response.setCode(HttpStatus.OK);
+    response.setMessage("Usuário encontrado");
+    response.setData(user);
+    return response;
+  }
+
+  @PatchMapping("/users/{userId}")
   @ResponseStatus(HttpStatus.OK)
   public CustomResponseBody<UserResponseDTO> updateAuthenticatedUser(
     @PathVariable @NotNull @NotBlank String userId,
