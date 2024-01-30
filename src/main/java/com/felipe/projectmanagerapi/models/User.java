@@ -10,10 +10,15 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Convert;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.FetchType;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "users")
@@ -44,6 +49,9 @@ public class User {
   @UpdateTimestamp
   @Column(name = "updated_at", columnDefinition = "TIMESTAMP(2)", nullable = false)
   private LocalDateTime updatedAt;
+
+  @OneToMany(mappedBy = "owner", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+  private List<Workspace> workspaces = new ArrayList<>();
 
   public User() {}
 
@@ -109,5 +117,13 @@ public class User {
 
   public void setUpdatedAt(LocalDateTime updatedAt) {
     this.updatedAt = updatedAt;
+  }
+
+  public List<Workspace> getWorkspaces() {
+    return this.workspaces;
+  }
+
+  public void setWorkspaces(List<Workspace> workspaces) {
+    this.workspaces = workspaces;
   }
 }
