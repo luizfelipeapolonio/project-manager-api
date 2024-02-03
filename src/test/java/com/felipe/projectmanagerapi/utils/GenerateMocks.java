@@ -2,6 +2,7 @@ package com.felipe.projectmanagerapi.utils;
 
 import com.felipe.projectmanagerapi.enums.Role;
 import com.felipe.projectmanagerapi.models.User;
+import com.felipe.projectmanagerapi.models.Workspace;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -10,13 +11,19 @@ import java.util.List;
 public class GenerateMocks {
 
   private final List<User> users;
+  private final List<Workspace> workspaces;
 
   public GenerateMocks() {
     this.users = this.generateUsers();
+    this.workspaces = this.generateWorkspaces();
   }
 
   public List<User> getUsers() {
     return this.users;
+  }
+
+  public List<Workspace> getWorkspaces() {
+    return this.workspaces;
   }
 
   private List<User> generateUsers() {
@@ -56,5 +63,33 @@ public class GenerateMocks {
     users.add(u3);
 
     return users;
+  }
+
+  private List<Workspace> generateWorkspaces() {
+    List<Workspace> workspaces = new ArrayList<>();
+    LocalDateTime mockDateTime = LocalDateTime.parse("2024-01-01T12:00:00.123456");
+    User u1 = this.users.get(0);
+
+    Workspace w1 = new Workspace(
+      "01",
+      "Workspace 1",
+      mockDateTime,
+      mockDateTime,
+      u1,
+      this.users
+    );
+
+    Workspace w2 = new Workspace(
+      "02",
+      "Workspace 2",
+      mockDateTime,
+      mockDateTime,
+      u1,
+      this.users
+    );
+
+    workspaces.add(w1);
+    workspaces.add(w2);
+    return workspaces;
   }
 }
