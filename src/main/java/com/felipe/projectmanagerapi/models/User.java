@@ -10,6 +10,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Convert;
+import jakarta.persistence.ManyToMany;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.FetchType;
@@ -51,7 +52,10 @@ public class User {
   private LocalDateTime updatedAt;
 
   @OneToMany(mappedBy = "owner", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-  private List<Workspace> workspaces = new ArrayList<>();
+  private List<Workspace> myWorkspaces = new ArrayList<>();
+
+  @ManyToMany(mappedBy = "members", cascade = CascadeType.ALL)
+  private List<Workspace> memberOfWorkspaces = new ArrayList<>();
 
   public User() {}
 
@@ -119,11 +123,19 @@ public class User {
     this.updatedAt = updatedAt;
   }
 
-  public List<Workspace> getWorkspaces() {
-    return this.workspaces;
+  public List<Workspace> getMyWorkspaces() {
+    return this.myWorkspaces;
   }
 
-  public void setWorkspaces(List<Workspace> workspaces) {
-    this.workspaces = workspaces;
+  public void setMyWorkspaces(List<Workspace> workspaces) {
+    this.myWorkspaces = workspaces;
+  }
+
+  public List<Workspace> getMemberOfWorkspaces() {
+    return this.memberOfWorkspaces;
+  }
+
+  public void setMemberOfWorkspaces(List<Workspace> workspaces) {
+    this.memberOfWorkspaces = workspaces;
   }
 }

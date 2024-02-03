@@ -6,13 +6,17 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Column;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
+import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
-import jakarta.persistence.JoinColumn;
 import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "workspace")
@@ -37,14 +41,23 @@ public class Workspace {
   @JoinColumn(name = "owner_id", nullable = false)
   private User owner;
 
+  @ManyToMany
+  @JoinTable(
+    name = "workspace_members",
+    joinColumns = @JoinColumn(name = "workspace_id"),
+    inverseJoinColumns = @JoinColumn(name = "user_id")
+  )
+  private List<User> members = new ArrayList<>();
+
   public Workspace() {}
 
-  public Workspace(String id, String name, LocalDateTime createdAt, LocalDateTime updatedAt, User owner) {
+  public Workspace(String id, String name, LocalDateTime createdAt, LocalDateTime updatedAt, User owner, List<User> members) {
     this.id = id;
     this.name = name;
     this.createdAt = createdAt;
     this.updatedAt = updatedAt;
     this.owner = owner;
+    this.members = members;
   }
 
   public String getId() {
@@ -63,6 +76,14 @@ public class Workspace {
     this.name = name;
   }
 
+  public User getOwner() {
+    return this.owner;
+  }
+
+  public void setOwner(User owner) {
+    this.owner = owner;
+  }
+
   public LocalDateTime getCreatedAt() {
     return this.createdAt;
   }
@@ -79,11 +100,11 @@ public class Workspace {
     this.updatedAt = updatedAt;
   }
 
-  public User getOwner() {
-    return this.owner;
+  public List<User> getMembers() {
+    return this.members;
   }
 
-  public void setOwner(User owner) {
-    this.owner = owner;
+  public void setMembers(List<User> members) {
+    this.members = members;
   }
 }
