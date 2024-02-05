@@ -105,7 +105,7 @@ public class UserService {
     return this.userMapper.toDTO(authenticatedUser.getUser());
   }
 
-  public UserResponseDTO getProfile(String userId) {
+  public UserResponseDTO getProfile(@NotNull String userId) {
     return this.userRepository.findById(userId)
       .map(this.userMapper::toDTO)
       .orElseThrow(() -> new RecordNotFoundException("Usuário não encontrado"));
