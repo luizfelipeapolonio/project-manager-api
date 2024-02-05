@@ -1,10 +1,11 @@
 package com.felipe.projectmanagerapi.controllers;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.felipe.projectmanagerapi.dtos.WorkspaceCreateDTO;
+import com.felipe.projectmanagerapi.dtos.WorkspaceCreateOrUpdateDTO;
 import com.felipe.projectmanagerapi.dtos.WorkspaceResponseDTO;
 import com.felipe.projectmanagerapi.dtos.mappers.WorkspaceMapper;
 import com.felipe.projectmanagerapi.enums.ResponseConditionStatus;
+import com.felipe.projectmanagerapi.exceptions.RecordNotFoundException;
 import com.felipe.projectmanagerapi.models.Workspace;
 import com.felipe.projectmanagerapi.services.WorkspaceService;
 import com.felipe.projectmanagerapi.utils.GenerateMocks;
@@ -19,6 +20,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -26,6 +28,7 @@ import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.times;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 
@@ -67,7 +70,7 @@ public class WorkspaceControllerTest {
   void workspaceCreateSuccess() throws Exception {
     Workspace workspace = this.dataMock.getWorkspaces().get(0);
     WorkspaceResponseDTO createdWorkspace = this.workspaceMapper.toDTO(workspace);
-    WorkspaceCreateDTO workspaceDTO = new WorkspaceCreateDTO("Workspace 1");
+    WorkspaceCreateOrUpdateDTO workspaceDTO = new WorkspaceCreateOrUpdateDTO("Workspace 1");
     String jsonBody = this.objectMapper.writeValueAsString(workspaceDTO);
 
     when(this.workspaceService.create(workspaceDTO)).thenReturn(createdWorkspace);
@@ -86,5 +89,75 @@ public class WorkspaceControllerTest {
       .andExpect(jsonPath("$.data.updatedAt").value(createdWorkspace.updatedAt().toString()));
 
     verify(this.workspaceService, times(1)).create(workspaceDTO);
+  }
+
+  @Test
+  @DisplayName("update - Should return a success response with OK status code and the updated workspace")
+  void updateWorkspaceSuccess() throws Exception {
+    WorkspaceCreateOrUpdateDTO workspaceDTO = new WorkspaceCreateOrUpdateDTO("Updated Name");
+    Workspace workspace = this.dataMock.getWorkspaces().get(0);
+    workspace.setName(workspaceDTO.name());
+
+    WorkspaceResponseDTO updatedWorkspace = this.workspaceMapper.toDTO(workspace);
+    String jsonBody = this.objectMapper.writeValueAsString(workspaceDTO);
+
+    when(this.workspaceService.update("01", workspaceDTO)).thenReturn(updatedWorkspace);
+
+    this.mockMvc.perform(patch(this.baseUrl + "/01")
+      .contentType(MediaType.APPLICATION_JSON).content(jsonBody)
+      .accept(MediaType.APPLICATION_JSON))
+      .andExpect(status().isOk())
+      .andExpect(jsonPath("$.status").value(ResponseConditionStatus.SUCCESS.getValue()))
+      .andExpect(jsonPath("$.code").value(HttpStatus.OK.value()))
+      .andExpect(jsonPath("$.message").value("Workspace atualizado com sucesso"))
+      .andExpect(jsonPath("$.data.id").value(updatedWorkspace.id()))
+      .andExpect(jsonPath("$.data.name").value(updatedWorkspace.name()))
+      .andExpect(jsonPath("$.data.ownerId").value(updatedWorkspace.ownerId()))
+      .andExpect(jsonPath("$.data.createdAt").value(updatedWorkspace.createdAt().toString()))
+      .andExpect(jsonPath("$.data.updatedAt").value(updatedWorkspace.updatedAt().toString()));
+
+    verify(this.workspaceService, times(1)).update("01", workspaceDTO);
+  }
+
+  @Test
+  @DisplayName("update - Should return an error response with forbidden status code")
+  void updateWorkspaceFailsByDifferentOwnerId() throws Exception {
+    WorkspaceCreateOrUpdateDTO workspaceDTO = new WorkspaceCreateOrUpdateDTO("Updated Name");
+    String jsonBody = this.objectMapper.writeValueAsString(workspaceDTO);
+
+    when(this.workspaceService.update("01", workspaceDTO))
+      .thenThrow(new AccessDeniedException("Acesso negado: Você não tem permissão para modificar este recurso"));
+
+    this.mockMvc.perform(patch(this.baseUrl + "/01")
+      .contentType(MediaType.APPLICATION_JSON).content(jsonBody)
+      .accept(MediaType.APPLICATION_JSON))
+      .andExpect(status().isForbidden())
+      .andExpect(jsonPath("$.status").value(ResponseConditionStatus.ERROR.getValue()))
+      .andExpect(jsonPath("$.code").value(HttpStatus.FORBIDDEN.value()))
+      .andExpect(jsonPath("$.message").value("Acesso negado: Você não tem permissão para modificar este recurso"))
+      .andExpect(jsonPath("$.data").doesNotExist());
+
+    verify(this.workspaceService, times(1)).update("01", workspaceDTO);
+  }
+
+  @Test
+  @DisplayName("update - Should return an error response with not found status code")
+  void updateWorkspaceFailsByWorkspaceNotFound() throws Exception {
+    WorkspaceCreateOrUpdateDTO workspaceDTO = new WorkspaceCreateOrUpdateDTO("Updated Name");
+    String jsonBody = this.objectMapper.writeValueAsString(workspaceDTO);
+
+    when(this.workspaceService.update("01", workspaceDTO))
+      .thenThrow(new RecordNotFoundException("Workspace não encontrado"));
+
+    this.mockMvc.perform(patch(this.baseUrl + "/01")
+      .contentType(MediaType.APPLICATION_JSON).content(jsonBody)
+      .accept(MediaType.APPLICATION_JSON))
+      .andExpect(status().isNotFound())
+      .andExpect(jsonPath("$.status").value(ResponseConditionStatus.ERROR.getValue()))
+      .andExpect(jsonPath("$.code").value(HttpStatus.NOT_FOUND.value()))
+      .andExpect(jsonPath("$.message").value("Workspace não encontrado"))
+      .andExpect(jsonPath("$.data").doesNotExist());
+
+    verify(this.workspaceService, times(1)).update("01", workspaceDTO);
   }
 }
