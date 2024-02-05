@@ -57,11 +57,11 @@ public class ExceptionControllerAdvice {
 
   @ExceptionHandler(AccessDeniedException.class)
   @ResponseStatus(HttpStatus.FORBIDDEN)
-  public CustomResponseBody<Void> handleAccessDeniedException() {
+  public CustomResponseBody<Void> handleAccessDeniedException(AccessDeniedException e) {
     CustomResponseBody<Void> response = new CustomResponseBody<>();
     response.setStatus(ResponseConditionStatus.ERROR);
     response.setCode(HttpStatus.FORBIDDEN);
-    response.setMessage("Acesso negado");
+    response.setMessage(e.getMessage().equals("Access Denied") ? "Acesso negado" : e.getMessage());
     response.setData(null);
     return response;
   }
