@@ -8,6 +8,7 @@ import com.felipe.projectmanagerapi.enums.ResponseConditionStatus;
 import com.felipe.projectmanagerapi.exceptions.RecordNotFoundException;
 import com.felipe.projectmanagerapi.models.Workspace;
 import com.felipe.projectmanagerapi.services.WorkspaceService;
+import com.felipe.projectmanagerapi.utils.CustomResponseBody;
 import com.felipe.projectmanagerapi.utils.GenerateMocks;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -24,13 +25,17 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.util.List;
+
 import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.times;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 
 @SpringBootTest
 @AutoConfigureMockMvc(addFilters = false)
@@ -159,5 +164,30 @@ public class WorkspaceControllerTest {
       .andExpect(jsonPath("$.data").doesNotExist());
 
     verify(this.workspaceService, times(1)).update("01", workspaceDTO);
+  }
+
+  @Test
+  @DisplayName("getAllUserWorkspaces - Should return a success response with OK status code and a list of WorkspaceResponseDTO")
+  void getAllUserWorkspacesSuccess() throws Exception {
+    List<WorkspaceResponseDTO> workspaces = this.dataMock.getWorkspaces()
+      .stream()
+      .map(this.workspaceMapper::toDTO)
+      .toList();
+
+    CustomResponseBody<List<WorkspaceResponseDTO>> response = new CustomResponseBody<>();
+    response.setStatus(ResponseConditionStatus.SUCCESS);
+    response.setCode(HttpStatus.OK);
+    response.setMessage("Todos os seus workspaces");
+    response.setData(workspaces);
+
+    String jsonResponseBody = this.objectMapper.writeValueAsString(response);
+
+    when(this.workspaceService.getAllUserWorkspaces()).thenReturn(workspaces);
+
+    this.mockMvc.perform(get(this.baseUrl).accept(MediaType.APPLICATION_JSON))
+      .andExpect(status().isOk())
+      .andExpect(content().json(jsonResponseBody));
+
+    verify(this.workspaceService, times(1)).getAllUserWorkspaces();
   }
 }

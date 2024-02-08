@@ -1,6 +1,6 @@
 package com.felipe.projectmanagerapi.services;
 
-import com.felipe.projectmanagerapi.dtos.WorkspaceCreateDTO;
+import com.felipe.projectmanagerapi.dtos.WorkspaceCreateOrUpdateDTO;
 import com.felipe.projectmanagerapi.dtos.WorkspaceResponseDTO;
 import com.felipe.projectmanagerapi.dtos.mappers.WorkspaceMapper;
 import com.felipe.projectmanagerapi.exceptions.RecordNotFoundException;
@@ -22,6 +22,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 
+import java.util.List;
 import java.util.Optional;
 
 import static org.mockito.Mockito.when;
@@ -70,7 +71,7 @@ public class WorkspaceServiceTest {
     User user = this.dataMock.getUsers().get(0);
     UserPrincipal userPrincipal = new UserPrincipal(user);
     Workspace workspace = this.dataMock.getWorkspaces().get(0);
-    WorkspaceCreateDTO workspaceDTO = new WorkspaceCreateDTO("Workspace 1");
+    WorkspaceCreateOrUpdateDTO workspaceDTO = new WorkspaceCreateOrUpdateDTO("Workspace 1");
 
     when(this.authorizationService.getAuthentication()).thenReturn(this.authentication);
     when(this.authentication.getPrincipal()).thenReturn(userPrincipal);
@@ -96,7 +97,7 @@ public class WorkspaceServiceTest {
     UserPrincipal userPrincipal = new UserPrincipal(this.dataMock.getUsers().get(0));
 
     Workspace workspace = this.dataMock.getWorkspaces().get(0);
-    WorkspaceCreateDTO workspaceDTO = new WorkspaceCreateDTO("Updated Name");
+    WorkspaceCreateOrUpdateDTO workspaceDTO = new WorkspaceCreateOrUpdateDTO("Updated Name");
     Workspace updatedWorkspaceEntity = this.dataMock.getWorkspaces().get(0);
     updatedWorkspaceEntity.setName(workspaceDTO.name());
 
@@ -123,7 +124,7 @@ public class WorkspaceServiceTest {
   @Test
   @DisplayName("update - Should throw an AccessDeniedException if the workspace owner id is different from authenticated user id")
   void updateWorkspaceFailsByDifferentOwnerId() {
-    WorkspaceCreateDTO workspaceDTO = new WorkspaceCreateDTO("Updated Name");
+    WorkspaceCreateOrUpdateDTO workspaceDTO = new WorkspaceCreateOrUpdateDTO("Updated Name");
     UserPrincipal userPrincipal = new UserPrincipal(this.dataMock.getUsers().get(1));
     Workspace workspace = this.dataMock.getWorkspaces().get(0);
 
@@ -135,7 +136,7 @@ public class WorkspaceServiceTest {
 
     assertThat(thrown)
       .isExactlyInstanceOf(AccessDeniedException.class)
-      .hasMessage("Acesso negado");
+      .hasMessage("Acesso negado: Você não tem permissão para modificar este recurso");
 
     verify(this.authorizationService, times(1)).getAuthentication();
     verify(this.authentication, times(1)).getPrincipal();
@@ -147,7 +148,7 @@ public class WorkspaceServiceTest {
   @Test
   @DisplayName("update - Should throw a RecordNotFoundException if the workspace is not found")
   void updateWorkspaceFailsByWorkspaceNotFound() {
-    WorkspaceCreateDTO workspaceDTO = new WorkspaceCreateDTO("Updated Name");
+    WorkspaceCreateOrUpdateDTO workspaceDTO = new WorkspaceCreateOrUpdateDTO("Updated Name");
     UserPrincipal userPrincipal = new UserPrincipal(this.dataMock.getUsers().get(0));
 
     when(this.authorizationService.getAuthentication()).thenReturn(this.authentication);
@@ -165,5 +166,27 @@ public class WorkspaceServiceTest {
     verify(this.workspaceRepository, times(1)).findById("01");
     verify(this.workspaceRepository, never()).save(any(Workspace.class));
     verify(this.workspaceMapper, never()).toDTO(any(Workspace.class));
+  }
+
+  @Test
+  @DisplayName("getAllUserWorkspaces - Should successfully return all user workspaces")
+  void getAllUserWorkspacesSuccess() {
+    UserPrincipal userPrincipal = new UserPrincipal(this.dataMock.getUsers().get(0));
+    List<Workspace> workspaces = this.dataMock.getWorkspaces();
+
+    when(this.authorizationService.getAuthentication()).thenReturn(this.authentication);
+    when(this.authentication.getPrincipal()).thenReturn(userPrincipal);
+    when(this.workspaceRepository.findAllByOwnerId(userPrincipal.getUser().getId())).thenReturn(workspaces);
+
+    List<WorkspaceResponseDTO> foundWorkspaces = this.workspaceService.getAllUserWorkspaces();
+
+    assertThat(foundWorkspaces)
+      .allSatisfy(workspace -> assertThat(workspace.ownerId()).isEqualTo(userPrincipal.getUser().getId()))
+      .hasSize(3);
+
+    verify(this.authorizationService, times(1)).getAuthentication();
+    verify(this.authentication, times(1)).getPrincipal();
+    verify(this.workspaceRepository, times(1)).findAllByOwnerId(userPrincipal.getUser().getId());
+    verify(this.workspaceMapper, times(3)).toDTO(any(Workspace.class));
   }
 }
