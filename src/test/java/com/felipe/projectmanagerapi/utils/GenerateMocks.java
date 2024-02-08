@@ -88,8 +88,18 @@ public class GenerateMocks {
       this.users
     );
 
+    Workspace w3 = new Workspace(
+      "03",
+      "Workspace 3",
+      mockDateTime,
+      mockDateTime,
+      u1,
+      this.users
+    );
+
     workspaces.add(w1);
     workspaces.add(w2);
+    workspaces.add(w3);
     return workspaces;
   }
 }
