@@ -1,6 +1,6 @@
 package com.felipe.projectmanagerapi.services;
 
-import com.felipe.projectmanagerapi.dtos.WorkspaceCreateDTO;
+import com.felipe.projectmanagerapi.dtos.WorkspaceCreateOrUpdateDTO;
 import com.felipe.projectmanagerapi.dtos.WorkspaceResponseDTO;
 import com.felipe.projectmanagerapi.dtos.mappers.WorkspaceMapper;
 import com.felipe.projectmanagerapi.exceptions.RecordNotFoundException;
@@ -29,33 +29,41 @@ public class WorkspaceService {
     this.workspaceMapper = workspaceMapper;
   }
 
-  public WorkspaceResponseDTO create(@Valid @NotNull WorkspaceCreateDTO workspaceDTO) {
+  public WorkspaceResponseDTO create(@Valid @NotNull WorkspaceCreateOrUpdateDTO workspaceDTO) {
     Authentication authentication = this.authorizationService.getAuthentication();
     UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
 
     Workspace workspace = new Workspace();
     workspace.setName(workspaceDTO.name());
     workspace.setOwner(userPrincipal.getUser());
-    //workspace.setMembers(List.of(userPrincipal.getUser()));
-    // TODO: O dono do workspace precisa realmente ser colocado como membro também??
 
     Workspace createdWorkspace = this.workspaceRepository.save(workspace);
     return this.workspaceMapper.toDTO(createdWorkspace);
   }
 
-  public WorkspaceResponseDTO update(String workspaceId, WorkspaceCreateDTO workspaceDTO) {
+  public WorkspaceResponseDTO update(@NotNull String workspaceId, @Valid @NotNull WorkspaceCreateOrUpdateDTO workspaceDTO) {
     Authentication authentication = this.authorizationService.getAuthentication();
     UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
 
     Workspace updatedWorkspace = this.workspaceRepository.findById(workspaceId)
       .map(workspace -> {
         if(!userPrincipal.getUser().getId().equals(workspace.getOwner().getId())) {
-          throw new AccessDeniedException("Acesso negado");
+          throw new AccessDeniedException("Acesso negado: Você não tem permissão para modificar este recurso");
         }
         workspace.setName(workspaceDTO.name());
         return this.workspaceRepository.save(workspace);
       })
       .orElseThrow(() -> new RecordNotFoundException("Workspace não encontrado"));
     return this.workspaceMapper.toDTO(updatedWorkspace);
+  }
+
+  public List<WorkspaceResponseDTO> getAllUserWorkspaces() {
+    Authentication authentication = this.authorizationService.getAuthentication();
+    UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
+
+    return this.workspaceRepository.findAllByOwnerId(userPrincipal.getUser().getId())
+      .stream()
+      .map(this.workspaceMapper::toDTO)
+      .toList();
   }
 }

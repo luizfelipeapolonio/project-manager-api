@@ -11,11 +11,14 @@ import jakarta.validation.constraints.NotNull;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.PathVariable;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/workspaces")
@@ -37,6 +40,19 @@ public class WorkspaceController {
     response.setCode(HttpStatus.CREATED);
     response.setMessage("Workspace criado com sucesso");
     response.setData(createdWorkspace);
+    return response;
+  }
+
+  @GetMapping
+  @ResponseStatus(HttpStatus.OK)
+  public CustomResponseBody<List<WorkspaceResponseDTO>> getAllUserWorkspaces() {
+    List<WorkspaceResponseDTO> workspaces = this.workspaceService.getAllUserWorkspaces();
+
+    CustomResponseBody<List<WorkspaceResponseDTO>> response = new CustomResponseBody<>();
+    response.setStatus(ResponseConditionStatus.SUCCESS);
+    response.setCode(HttpStatus.OK);
+    response.setMessage("Todos os seus workspaces");
+    response.setData(workspaces);
     return response;
   }
 
