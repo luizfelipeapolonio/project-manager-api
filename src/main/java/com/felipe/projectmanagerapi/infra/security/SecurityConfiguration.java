@@ -36,6 +36,7 @@ public class SecurityConfiguration {
   public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
     String authBaseUrl = "/api/auth";
     String userBaseUrl = "/api/users";
+    String workspaceBaseUrl = "/api/workspaces";
     return http
       .csrf(AbstractHttpConfigurer::disable)
       .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
@@ -48,6 +49,8 @@ public class SecurityConfiguration {
         .requestMatchers(HttpMethod.GET, userBaseUrl + "/{userId}").hasRole("ADMIN")
         .requestMatchers(HttpMethod.DELETE, userBaseUrl + "/{userId}").hasRole("ADMIN")
         .requestMatchers(HttpMethod.PATCH, userBaseUrl + "/{userId}/role").hasRole("ADMIN")
+        .requestMatchers(workspaceBaseUrl).hasRole("ADMIN")
+        .requestMatchers(HttpMethod.PATCH, workspaceBaseUrl + "/{workspaceId}").hasRole("ADMIN")
         .requestMatchers(HttpMethod.GET, "/api/auth/test").hasAnyRole("ADMIN", "WRITE_READ")
         .anyRequest().authenticated())
       .addFilterBefore(this.securityFilter, UsernamePasswordAuthenticationFilter.class)
