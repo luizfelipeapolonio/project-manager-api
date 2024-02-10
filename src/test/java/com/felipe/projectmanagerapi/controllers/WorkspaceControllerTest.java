@@ -19,6 +19,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.access.AccessDeniedException;
@@ -30,6 +31,8 @@ import java.util.List;
 import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.never;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -51,7 +54,7 @@ public class WorkspaceControllerTest {
   @MockBean
   WorkspaceService workspaceService;
 
-  @Autowired
+  @SpyBean
   WorkspaceMapper workspaceMapper;
 
   private AutoCloseable closeable;
@@ -74,11 +77,18 @@ public class WorkspaceControllerTest {
   @DisplayName("create - Should return a success response with created status code")
   void workspaceCreateSuccess() throws Exception {
     Workspace workspace = this.dataMock.getWorkspaces().get(0);
-    WorkspaceResponseDTO createdWorkspace = this.workspaceMapper.toDTO(workspace);
+    WorkspaceResponseDTO createdWorkspace = new WorkspaceResponseDTO(
+      workspace.getId(),
+      workspace.getName(),
+      workspace.getOwner().getId(),
+      workspace.getCreatedAt(),
+      workspace.getUpdatedAt()
+    );
     WorkspaceCreateOrUpdateDTO workspaceDTO = new WorkspaceCreateOrUpdateDTO("Workspace 1");
     String jsonBody = this.objectMapper.writeValueAsString(workspaceDTO);
 
-    when(this.workspaceService.create(workspaceDTO)).thenReturn(createdWorkspace);
+    when(this.workspaceService.create(workspaceDTO)).thenReturn(workspace);
+    when(this.workspaceMapper.toDTO(workspace)).thenReturn(createdWorkspace);
 
     this.mockMvc.perform(post(this.baseUrl)
       .contentType(MediaType.APPLICATION_JSON).content(jsonBody)
@@ -94,6 +104,7 @@ public class WorkspaceControllerTest {
       .andExpect(jsonPath("$.data.updatedAt").value(createdWorkspace.updatedAt().toString()));
 
     verify(this.workspaceService, times(1)).create(workspaceDTO);
+    verify(this.workspaceMapper, times(1)).toDTO(workspace);
   }
 
   @Test
@@ -103,10 +114,17 @@ public class WorkspaceControllerTest {
     Workspace workspace = this.dataMock.getWorkspaces().get(0);
     workspace.setName(workspaceDTO.name());
 
-    WorkspaceResponseDTO updatedWorkspace = this.workspaceMapper.toDTO(workspace);
+    WorkspaceResponseDTO updatedWorkspace = new WorkspaceResponseDTO(
+      workspace.getId(),
+      workspace.getName(),
+      workspace.getOwner().getId(),
+      workspace.getCreatedAt(),
+      workspace.getUpdatedAt()
+    );
     String jsonBody = this.objectMapper.writeValueAsString(workspaceDTO);
 
-    when(this.workspaceService.update("01", workspaceDTO)).thenReturn(updatedWorkspace);
+    when(this.workspaceService.update("01", workspaceDTO)).thenReturn(workspace);
+    when(this.workspaceMapper.toDTO(workspace)).thenReturn(updatedWorkspace);
 
     this.mockMvc.perform(patch(this.baseUrl + "/01")
       .contentType(MediaType.APPLICATION_JSON).content(jsonBody)
@@ -122,6 +140,7 @@ public class WorkspaceControllerTest {
       .andExpect(jsonPath("$.data.updatedAt").value(updatedWorkspace.updatedAt().toString()));
 
     verify(this.workspaceService, times(1)).update("01", workspaceDTO);
+    verify(this.workspaceMapper, times(1)).toDTO(workspace);
   }
 
   @Test
@@ -143,6 +162,7 @@ public class WorkspaceControllerTest {
       .andExpect(jsonPath("$.data").doesNotExist());
 
     verify(this.workspaceService, times(1)).update("01", workspaceDTO);
+    verify(this.workspaceMapper, never()).toDTO(any(Workspace.class));
   }
 
   @Test
@@ -164,21 +184,28 @@ public class WorkspaceControllerTest {
       .andExpect(jsonPath("$.data").doesNotExist());
 
     verify(this.workspaceService, times(1)).update("01", workspaceDTO);
+    verify(this.workspaceMapper, never()).toDTO(any(Workspace.class));
   }
 
   @Test
   @DisplayName("getAllUserWorkspaces - Should return a success response with OK status code and a list of WorkspaceResponseDTO")
   void getAllUserWorkspacesSuccess() throws Exception {
-    List<WorkspaceResponseDTO> workspaces = this.dataMock.getWorkspaces()
+    List<Workspace> workspaces = this.dataMock.getWorkspaces();
+    List<WorkspaceResponseDTO> workspacesDTO = workspaces
       .stream()
-      .map(this.workspaceMapper::toDTO)
+      .map(workspace -> new WorkspaceResponseDTO(
+        workspace.getId(),
+        workspace.getName(),
+        workspace.getOwner().getId(),
+        workspace.getCreatedAt(),
+        workspace.getUpdatedAt()))
       .toList();
 
     CustomResponseBody<List<WorkspaceResponseDTO>> response = new CustomResponseBody<>();
     response.setStatus(ResponseConditionStatus.SUCCESS);
     response.setCode(HttpStatus.OK);
     response.setMessage("Todos os seus workspaces");
-    response.setData(workspaces);
+    response.setData(workspacesDTO);
 
     String jsonResponseBody = this.objectMapper.writeValueAsString(response);
 
@@ -189,5 +216,6 @@ public class WorkspaceControllerTest {
       .andExpect(content().json(jsonResponseBody));
 
     verify(this.workspaceService, times(1)).getAllUserWorkspaces();
+    verify(this.workspaceMapper, times(3)).toDTO(any(Workspace.class));
   }
 }
