@@ -1,7 +1,9 @@
 package com.felipe.projectmanagerapi.controllers;
 
 import com.felipe.projectmanagerapi.dtos.*;
+import com.felipe.projectmanagerapi.dtos.mappers.UserMapper;
 import com.felipe.projectmanagerapi.enums.ResponseConditionStatus;
+import com.felipe.projectmanagerapi.models.User;
 import com.felipe.projectmanagerapi.services.UserService;
 import com.felipe.projectmanagerapi.utils.CustomResponseBody;
 import jakarta.validation.Valid;
@@ -18,6 +20,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.DeleteMapping;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -26,9 +29,11 @@ import java.util.Map;
 public class UserController {
 
   private final UserService userService;
+  private final UserMapper userMapper;
 
-  public UserController(UserService userService) {
+  public UserController(UserService userService, UserMapper userMapper) {
     this.userService = userService;
+    this.userMapper = userMapper;
   }
 
   @GetMapping("/auth/test")
@@ -39,7 +44,8 @@ public class UserController {
   @PostMapping("/auth/register")
   @ResponseStatus(HttpStatus.CREATED)
   public CustomResponseBody<UserResponseDTO> register(@RequestBody @Valid @NotNull UserRegisterDTO data) {
-    UserResponseDTO registerResponseDTO = this.userService.register(data);
+    User createdUser = this.userService.register(data);
+    UserResponseDTO registerResponseDTO = this.userMapper.toDTO(createdUser);
 
     CustomResponseBody<UserResponseDTO> response = new CustomResponseBody<>();
     response.setStatus(ResponseConditionStatus.SUCCESS);
@@ -52,7 +58,12 @@ public class UserController {
   @PostMapping("/auth/login")
   @ResponseStatus(HttpStatus.OK)
   public CustomResponseBody<Map<String, Object>> login(@RequestBody @Valid @NotNull LoginDTO login) {
-    Map<String, Object> loginResponseMap = this.userService.login(login);
+    Map<String, Object> loginMap = this.userService.login(login);
+    UserResponseDTO userResponseDTO = this.userMapper.toDTO((User) loginMap.get("user"));
+
+    Map<String, Object> loginResponseMap = new HashMap<>();
+    loginResponseMap.put("userInfo", userResponseDTO);
+    loginResponseMap.put("token", loginMap.get("token"));
 
     CustomResponseBody<Map<String, Object>> response = new CustomResponseBody<>();
     response.setStatus(ResponseConditionStatus.SUCCESS);
@@ -65,39 +76,42 @@ public class UserController {
   @GetMapping("/users")
   @ResponseStatus(HttpStatus.OK)
   public CustomResponseBody<List<UserResponseDTO>> getAllUsers() {
-    List<UserResponseDTO> users = this.userService.getAllUsers();
+    List<User> users = this.userService.getAllUsers();
+    List<UserResponseDTO> usersDTO = users.stream().map(this.userMapper::toDTO).toList();
 
     CustomResponseBody<List<UserResponseDTO>> response = new CustomResponseBody<>();
     response.setStatus(ResponseConditionStatus.SUCCESS);
     response.setCode(HttpStatus.OK);
     response.setMessage("Todos os usuários");
-    response.setData(users);
+    response.setData(usersDTO);
     return response;
   }
 
   @GetMapping("/users/me")
   @ResponseStatus(HttpStatus.OK)
   public CustomResponseBody<UserResponseDTO> getAuthenticatedUserProfile() {
-    UserResponseDTO user = this.userService.getAuthenticatedUserProfile();
+    User user = this.userService.getAuthenticatedUserProfile();
+    UserResponseDTO userResponseDTO = this.userMapper.toDTO(user);
 
     CustomResponseBody<UserResponseDTO> response = new CustomResponseBody<>();
     response.setStatus(ResponseConditionStatus.SUCCESS);
     response.setCode(HttpStatus.OK);
     response.setMessage("Usuário autenticado");
-    response.setData(user);
+    response.setData(userResponseDTO);
     return response;
   }
 
   @GetMapping("/users/{userId}")
   @ResponseStatus(HttpStatus.OK)
   public CustomResponseBody<UserResponseDTO> getProfile(@PathVariable @NotBlank @NotNull String userId) {
-    UserResponseDTO user = this.userService.getProfile(userId);
+    User user = this.userService.getProfile(userId);
+    UserResponseDTO userResponseDTO = this.userMapper.toDTO(user);
 
     CustomResponseBody<UserResponseDTO> response = new CustomResponseBody<>();
     response.setStatus(ResponseConditionStatus.SUCCESS);
     response.setCode(HttpStatus.OK);
     response.setMessage("Usuário encontrado");
-    response.setData(user);
+    response.setData(userResponseDTO);
     return response;
   }
 
@@ -107,13 +121,14 @@ public class UserController {
     @PathVariable @NotNull @NotBlank String userId,
     @RequestBody @Valid @NotNull UserUpdateDTO userData
   ) {
-    UserResponseDTO updatedUser = this.userService.updateAuthenticatedUser(userId, userData);
+    User updatedUser = this.userService.updateAuthenticatedUser(userId, userData);
+    UserResponseDTO updatedUserDTO = this.userMapper.toDTO(updatedUser);
 
     CustomResponseBody<UserResponseDTO> response = new CustomResponseBody<>();
     response.setStatus(ResponseConditionStatus.SUCCESS);
     response.setCode(HttpStatus.OK);
     response.setMessage("Usuário atualizado com sucesso");
-    response.setData(updatedUser);
+    response.setData(updatedUserDTO);
     return response;
   }
 
@@ -123,26 +138,31 @@ public class UserController {
     @PathVariable @NotNull @NotBlank String userId,
     @RequestBody @Valid @NotNull UserRoleUpdateDTO roleData
   ) {
-    UserResponseDTO updatedUser = this.userService.updateRole(userId, roleData);
+    User updatedUser = this.userService.updateRole(userId, roleData);
+    UserResponseDTO updatedUserDTO = this.userMapper.toDTO(updatedUser);
 
     CustomResponseBody<UserResponseDTO> response = new CustomResponseBody<>();
     response.setStatus(ResponseConditionStatus.SUCCESS);
     response.setCode(HttpStatus.OK);
     response.setMessage("Role atualizada com sucesso");
-    response.setData(updatedUser);
+    response.setData(updatedUserDTO);
     return response;
   }
 
   @DeleteMapping("/users/{userId}")
   @ResponseStatus(HttpStatus.OK)
   public CustomResponseBody<Map<String, UserResponseDTO>> delete(@PathVariable @NotBlank @NotNull String userId) {
-    Map<String, UserResponseDTO> deletedUser = this.userService.delete(userId);
+    Map<String, User> deletedUser = this.userService.delete(userId);
+    UserResponseDTO deletedUserDTO = this.userMapper.toDTO(deletedUser.get("deletedUser"));
+
+    Map<String, UserResponseDTO> deletedUserResponseMap = new HashMap<>();
+    deletedUserResponseMap.put("deletedUser", deletedUserDTO);
 
     CustomResponseBody<Map<String, UserResponseDTO>> response = new CustomResponseBody<>();
     response.setStatus(ResponseConditionStatus.SUCCESS);
     response.setCode(HttpStatus.OK);
     response.setMessage("Usuário deletado com sucesso");
-    response.setData(deletedUser);
+    response.setData(deletedUserResponseMap);
     return response;
   }
 }
