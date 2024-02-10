@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.felipe.projectmanagerapi.dtos.*;
 import com.felipe.projectmanagerapi.dtos.mappers.UserMapper;
 import com.felipe.projectmanagerapi.enums.ResponseConditionStatus;
-import com.felipe.projectmanagerapi.enums.Role;
 import com.felipe.projectmanagerapi.exceptions.RecordNotFoundException;
 import com.felipe.projectmanagerapi.exceptions.UserAlreadyExistsException;
 import com.felipe.projectmanagerapi.models.User;
@@ -16,6 +15,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockitoAnnotations;
+import org.mockito.Spy;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -57,7 +57,7 @@ public class UserControllerTest {
   @MockBean
   UserService userService;
 
-  @Autowired
+  @Spy
   UserMapper userMapper;
 
   private AutoCloseable closeable;
@@ -87,7 +87,16 @@ public class UserControllerTest {
       "123456",
       "WRITE_READ"
     );
-    UserResponseDTO createdUser = new UserResponseDTO(
+    User user = new User();
+    user.setId("01");
+    user.setName(data.name());
+    user.setEmail(data.email());
+    user.setPassword(data.password());
+    user.setRole(this.dataMock.getUsers().get(1).getRole());
+    user.setCreatedAt(this.mockDateTime);
+    user.setUpdatedAt(this.mockDateTime);
+
+    UserResponseDTO createdUserDTO = new UserResponseDTO(
       "01",
       data.name(),
       data.email(),
@@ -97,7 +106,7 @@ public class UserControllerTest {
     );
     String jsonBody = this.objectMapper.writeValueAsString(data);
 
-    when(this.userService.register(data)).thenReturn(createdUser);
+    when(this.userService.register(data)).thenReturn(user);
 
     this.mockMvc.perform(post(this.baseUrl + "/auth/register")
       .contentType(MediaType.APPLICATION_JSON).content(jsonBody)
@@ -106,12 +115,12 @@ public class UserControllerTest {
       .andExpect(jsonPath("$.status").value(ResponseConditionStatus.SUCCESS.getValue()))
       .andExpect(jsonPath("$.code").value(HttpStatus.CREATED.value()))
       .andExpect(jsonPath("$.message").value("Usuário criado com sucesso"))
-      .andExpect(jsonPath("$.data.id").value(createdUser.id()))
-      .andExpect(jsonPath("$.data.name").value(createdUser.name()))
-      .andExpect(jsonPath("$.data.email").value(createdUser.email()))
-      .andExpect(jsonPath("$.data.role").value(createdUser.role()))
-      .andExpect(jsonPath("$.data.createdAt").value(createdUser.createdAt().toString()))
-      .andExpect(jsonPath("$.data.updatedAt").value(createdUser.updatedAt().toString()));
+      .andExpect(jsonPath("$.data.id").value(createdUserDTO.id()))
+      .andExpect(jsonPath("$.data.name").value(createdUserDTO.name()))
+      .andExpect(jsonPath("$.data.email").value(createdUserDTO.email()))
+      .andExpect(jsonPath("$.data.role").value(createdUserDTO.role()))
+      .andExpect(jsonPath("$.data.createdAt").value(createdUserDTO.createdAt().toString()))
+      .andExpect(jsonPath("$.data.updatedAt").value(createdUserDTO.updatedAt().toString()));
 
     verify(this.userService, times(1)).register(data);
   }
@@ -139,23 +148,24 @@ public class UserControllerTest {
   @Test
   @DisplayName("login - Should return a success response with OK status code, user's info and an access token")
   void userLoginSuccess() throws Exception {
-    LoginDTO login = new LoginDTO("teste1@email.com", "123456");
+    User mockUser = this.dataMock.getUsers().get(1);
+    LoginDTO login = new LoginDTO("teste2@email.com", "123456");
     UserResponseDTO userResponseDTO = new UserResponseDTO(
-      "01",
-      "User 1",
+      mockUser.getId(),
+      mockUser.getName(),
       login.email(),
-      Role.READ_ONLY.getName(),
-      this.mockDateTime,
-      this.mockDateTime
+      mockUser.getRole().getName(),
+      mockUser.getCreatedAt(),
+      mockUser.getUpdatedAt()
     );
     String jsonBody = this.objectMapper.writeValueAsString(login);
     String token = "Access Token";
 
-    Map<String, Object> response = new HashMap<>();
-    response.put("userInfo", userResponseDTO);
-    response.put("token", token);
+    Map<String, Object> loginResponseMap = new HashMap<>();
+    loginResponseMap.put("user", mockUser);
+    loginResponseMap.put("token", token);
 
-    when(this.userService.login(login)).thenReturn(response);
+    when(this.userService.login(login)).thenReturn(loginResponseMap);
 
     this.mockMvc.perform(post(this.baseUrl + "/auth/login")
       .contentType(MediaType.APPLICATION_JSON).content(jsonBody)
@@ -219,7 +229,16 @@ public class UserControllerTest {
   @DisplayName("getAllUsers - Should return a success response with OK status code and a list of UserResponseDTO")
   void getAllUsersSuccess() throws Exception {
     List<User> users = this.dataMock.getUsers();
-    List<UserResponseDTO> usersResponse = users.stream().map(this.userMapper::toDTO).toList();
+    List<UserResponseDTO> usersResponse = users
+      .stream()
+      .map(user -> new UserResponseDTO(
+        user.getId(),
+        user.getName(),
+        user.getEmail(),
+        user.getRole().getName(),
+        user.getCreatedAt(),
+        user.getUpdatedAt()))
+      .toList();
 
     CustomResponseBody<List<UserResponseDTO>> response = new CustomResponseBody<>();
     response.setStatus(ResponseConditionStatus.SUCCESS);
@@ -229,7 +248,7 @@ public class UserControllerTest {
 
     String jsonResponseBody = this.objectMapper.writeValueAsString(response);
 
-    when(this.userService.getAllUsers()).thenReturn(usersResponse);
+    when(this.userService.getAllUsers()).thenReturn(users);
 
     this.mockMvc.perform(get(this.baseUrl + "/users").accept(MediaType.APPLICATION_JSON))
       .andExpect(status().isOk())
@@ -241,9 +260,17 @@ public class UserControllerTest {
   @Test
   @DisplayName("getAuthenticatedUserProfile - Should return a success response with OK status code and the authenticated user's info")
   void getAuthenticatedUserProfileSuccess() throws Exception {
-    UserResponseDTO userDTO = this.userMapper.toDTO(this.dataMock.getUsers().get(1));
+    User user = this.dataMock.getUsers().get(1);
+    UserResponseDTO userDTO = new UserResponseDTO(
+      user.getId(),
+      user.getName(),
+      user.getEmail(),
+      user.getRole().getName(),
+      user.getCreatedAt(),
+      user.getUpdatedAt()
+    );
 
-    when(this.userService.getAuthenticatedUserProfile()).thenReturn(userDTO);
+    when(this.userService.getAuthenticatedUserProfile()).thenReturn(user);
 
     this.mockMvc.perform(get(this.baseUrl + "/users/me")
       .accept(MediaType.APPLICATION_JSON))
@@ -264,9 +291,17 @@ public class UserControllerTest {
   @Test
   @DisplayName("getProfile - Should return a success response with OK status code and the user's info")
   void getUserProfileSuccess() throws Exception {
-    UserResponseDTO userResponse = this.userMapper.toDTO(this.dataMock.getUsers().get(1));
+    User user = this.dataMock.getUsers().get(1);
+    UserResponseDTO userResponse = new UserResponseDTO(
+      user.getId(),
+      user.getName(),
+      user.getEmail(),
+      user.getRole().getName(),
+      user.getCreatedAt(),
+      user.getUpdatedAt()
+    );
 
-    when(this.userService.getProfile("02")).thenReturn(userResponse);
+    when(this.userService.getProfile("02")).thenReturn(user);
 
     this.mockMvc.perform(get(this.baseUrl + "/users/02")
       .accept(MediaType.APPLICATION_JSON))
@@ -304,11 +339,18 @@ public class UserControllerTest {
   @DisplayName("updateAuthenticatedUser - Should return a success response with OK status code and the updated user")
   void updateAuthenticatedUserSuccess() throws Exception {
     User user = this.dataMock.getUsers().get(1);
-    UserResponseDTO updatedUser = this.userMapper.toDTO(user);
+    UserResponseDTO updatedUser = new UserResponseDTO(
+      user.getId(),
+      user.getName(),
+      user.getEmail(),
+      user.getRole().getName(),
+      user.getCreatedAt(),
+      user.getUpdatedAt()
+    );
     UserUpdateDTO userData = new UserUpdateDTO("User 2", "123456");
     String jsonBody = this.objectMapper.writeValueAsString(userData);
 
-    when(this.userService.updateAuthenticatedUser("02", userData)).thenReturn(updatedUser);
+    when(this.userService.updateAuthenticatedUser("02", userData)).thenReturn(user);
 
     this.mockMvc.perform(patch(this.baseUrl + "/users/02")
       .contentType(MediaType.APPLICATION_JSON).content(jsonBody)
@@ -333,7 +375,7 @@ public class UserControllerTest {
     UserUpdateDTO updateDTO = new UserUpdateDTO("Updated User", "123456");
     String jsonBody = this.objectMapper.writeValueAsString(updateDTO);
 
-    when(this.userService.updateAuthenticatedUser("01", updateDTO)).thenThrow(new AccessDeniedException("Acesso negaod"));
+    when(this.userService.updateAuthenticatedUser("01", updateDTO)).thenThrow(new AccessDeniedException("Acesso negado"));
 
     this.mockMvc.perform(patch(this.baseUrl + "/users/01")
       .contentType(MediaType.APPLICATION_JSON).content(jsonBody)
@@ -374,10 +416,17 @@ public class UserControllerTest {
     User user = this.dataMock.getUsers().get(2);
     user.setRole(this.userMapper.convertValueToRole(roleData.role()));
 
-    UserResponseDTO userResponse = this.userMapper.toDTO(user);
+    UserResponseDTO userResponse = new UserResponseDTO(
+      user.getId(),
+      user.getName(),
+      user.getEmail(),
+      user.getRole().getName(),
+      user.getCreatedAt(),
+      user.getUpdatedAt()
+    );
     String jsonBody = this.objectMapper.writeValueAsString(roleData);
 
-    when(this.userService.updateRole("03", roleData)).thenReturn(userResponse);
+    when(this.userService.updateRole("03", roleData)).thenReturn(user);
 
     this.mockMvc.perform(patch(this.baseUrl + "/users/03/role")
       .contentType(MediaType.APPLICATION_JSON).content(jsonBody)
@@ -419,9 +468,17 @@ public class UserControllerTest {
   @Test
   @DisplayName("delete - Should return a success response with OK status code")
   void deleteUserSuccess() throws Exception {
-    UserResponseDTO deletedUser = this.userMapper.toDTO(this.dataMock.getUsers().get(1));
-    Map<String, UserResponseDTO> response = new HashMap<>();
-    response.put("deletedUser", deletedUser);
+    User user = this.dataMock.getUsers().get(1);
+    UserResponseDTO deletedUser = new UserResponseDTO(
+      user.getId(),
+      user.getName(),
+      user.getEmail(),
+      user.getRole().getName(),
+      user.getCreatedAt(),
+      user.getUpdatedAt()
+    );
+    Map<String, User> response = new HashMap<>();
+    response.put("deletedUser", user);
 
     when(this.userService.delete("02")).thenReturn(response);
 
