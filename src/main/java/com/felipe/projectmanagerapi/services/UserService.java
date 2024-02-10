@@ -50,7 +50,7 @@ public class UserService {
     this.authorizationService = authorizationService;
   }
 
-  public UserResponseDTO register(@Valid @NotNull UserRegisterDTO data) {
+  public User register(@Valid @NotNull UserRegisterDTO data) {
     Optional<User> existingUser = this.userRepository.findByEmail(data.email());
 
     if(existingUser.isPresent()) {
@@ -65,9 +65,7 @@ public class UserService {
     user.setPassword(encodedPassword);
     user.setRole(this.userMapper.convertValueToRole(data.role()));
 
-    User createdUser = this.userRepository.save(user);
-
-    return this.userMapper.toDTO(createdUser);
+    return this.userRepository.save(user);
   }
 
   public Map<String, Object> login(@Valid @NotNull LoginDTO login) {
@@ -77,12 +75,11 @@ public class UserService {
       UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
       String token = this.tokenService.generateToken(userPrincipal);
 
-      UserResponseDTO user = this.userRepository.findByEmail(login.email())
-        .map(this.userMapper::toDTO)
+      User user = this.userRepository.findByEmail(login.email())
         .orElseThrow(() -> new RecordNotFoundException("Usuário '" + login.email() + "' não encontrado"));
 
       Map<String, Object> loginResponse = new HashMap<>();
-      loginResponse.put("userInfo", user);
+      loginResponse.put("user", user);
       loginResponse.put("token", token);
 
       return loginResponse;
@@ -92,26 +89,22 @@ public class UserService {
     }
   }
 
-  public List<UserResponseDTO> getAllUsers() {
-    return this.userRepository.findAll()
-      .stream()
-      .map(this.userMapper::toDTO)
-      .toList();
+  public List<User> getAllUsers() {
+    return this.userRepository.findAll();
   }
 
-  public UserResponseDTO getAuthenticatedUserProfile() {
+  public User getAuthenticatedUserProfile() {
     Authentication authentication = this.authorizationService.getAuthentication();
-    UserPrincipal authenticatedUser = (UserPrincipal) authentication.getPrincipal();
-    return this.userMapper.toDTO(authenticatedUser.getUser());
+    UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
+    return userPrincipal.getUser();
   }
 
-  public UserResponseDTO getProfile(@NotNull String userId) {
+  public User getProfile(@NotNull String userId) {
     return this.userRepository.findById(userId)
-      .map(this.userMapper::toDTO)
       .orElseThrow(() -> new RecordNotFoundException("Usuário não encontrado"));
   }
 
-  public UserResponseDTO updateAuthenticatedUser(@NotNull String userId, @Valid @NotNull UserUpdateDTO userData) {
+  public User updateAuthenticatedUser(@NotNull String userId, @Valid @NotNull UserUpdateDTO userData) {
     Authentication authentication = this.authorizationService.getAuthentication();
     UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
 
@@ -127,30 +120,27 @@ public class UserService {
         if(userData.password() != null) {
           user.setPassword(this.passwordEncoder.encode(userData.password()));
         }
-        User updatedUser = this.userRepository.save(user);
-        return this.userMapper.toDTO(updatedUser);
+        return this.userRepository.save(user);
       })
       .orElseThrow(() -> new RecordNotFoundException("Usuário não encontrado"));
   }
 
-  public UserResponseDTO updateRole(@NotNull String userId, @Valid @NotNull UserRoleUpdateDTO roleDTO) {
+  public User updateRole(@NotNull String userId, @Valid @NotNull UserRoleUpdateDTO roleDTO) {
     return this.userRepository.findById(userId)
       .map(user -> {
         user.setRole(this.userMapper.convertValueToRole(roleDTO.role()));
-        User updatedUser = this.userRepository.save(user);
-        return this.userMapper.toDTO(updatedUser);
+        return this.userRepository.save(user);
       })
       .orElseThrow(() -> new RecordNotFoundException("Usuário não encontrado"));
   }
 
-  public Map<String, UserResponseDTO> delete(@NotNull String userId) {
-    UserResponseDTO user = this.userRepository.findById(userId)
-      .map(this.userMapper::toDTO)
+  public Map<String, User> delete(@NotNull String userId) {
+    User user = this.userRepository.findById(userId)
       .orElseThrow(() -> new RecordNotFoundException("Usuário não encontrado"));
 
-    this.userRepository.deleteById(user.id());
+    this.userRepository.deleteById(user.getId());
 
-    Map<String, UserResponseDTO> deletedUser = new HashMap<>();
+    Map<String, User> deletedUser = new HashMap<>();
     deletedUser.put("deletedUser", user);
     return deletedUser;
   }
