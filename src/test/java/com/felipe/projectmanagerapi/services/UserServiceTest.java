@@ -97,14 +97,14 @@ public class UserServiceTest {
     when(this.userRepository.findByEmail(userData.email())).thenReturn(Optional.empty());
     when(this.userRepository.save(any(User.class))).thenReturn(user);
 
-    UserResponseDTO createdUser = this.userService.register(userData);
+    User createdUser = this.userService.register(userData);
 
-    assertThat(createdUser.id()).isEqualTo(user.getId());
-    assertThat(createdUser.name()).isEqualTo(user.getName());
-    assertThat(createdUser.email()).isEqualTo(user.getEmail());
-    assertThat(createdUser.role()).isEqualTo(user.getRole().getName());
-    assertThat(createdUser.createdAt()).isEqualTo(user.getCreatedAt());
-    assertThat(createdUser.updatedAt()).isEqualTo(user.getUpdatedAt());
+    assertThat(createdUser.getId()).isEqualTo(user.getId());
+    assertThat(createdUser.getName()).isEqualTo(user.getName());
+    assertThat(createdUser.getEmail()).isEqualTo(user.getEmail());
+    assertThat(createdUser.getRole()).isEqualTo(user.getRole());
+    assertThat(createdUser.getCreatedAt()).isEqualTo(user.getCreatedAt());
+    assertThat(createdUser.getUpdatedAt()).isEqualTo(user.getUpdatedAt());
 
     verify(this.passwordEncoder, times(1)).encode(userData.password());
     verify(this.userRepository, times(1)).findByEmail(userData.email());
@@ -142,14 +142,6 @@ public class UserServiceTest {
     Authentication auth = new UsernamePasswordAuthenticationToken(login.email(), login.password());
     User user = this.dataMock.getUsers().get(0);
     UserPrincipal userPrincipal = new UserPrincipal(user);
-    UserResponseDTO userResponseDTO = new UserResponseDTO(
-      user.getId(),
-      user.getName(),
-      user.getEmail(),
-      user.getRole().toString(),
-      user.getCreatedAt(),
-      user.getUpdatedAt()
-    );
 
     when(this.userRepository.findByEmail(login.email())).thenReturn(Optional.of(user));
     when(this.authenticationManager.authenticate(auth)).thenReturn(this.authentication);
@@ -158,17 +150,18 @@ public class UserServiceTest {
 
     Map<String, Object> loginResponse = this.userService.login(login);
 
-    assertThat(loginResponse.containsKey("userInfo")).isTrue();
+    assertThat(loginResponse.containsKey("user")).isTrue();
     assertThat(loginResponse.containsKey("token")).isTrue();
-    assertThat(loginResponse.get("userInfo"))
-      .extracting("id", "name", "email", "role", "createdAt", "updatedAt")
+    assertThat(loginResponse.get("user"))
+      .extracting("id", "name", "email", "password", "role", "createdAt", "updatedAt")
       .contains(
-        userResponseDTO.id(),
-        userResponseDTO.name(),
-        userResponseDTO.email(),
-        userResponseDTO.role(),
-        userResponseDTO.createdAt(),
-        userResponseDTO.updatedAt()
+        user.getId(),
+        user.getName(),
+        user.getEmail(),
+        user.getPassword(),
+        user.getRole(),
+        user.getCreatedAt(),
+        user.getUpdatedAt()
       );
     assertThat(loginResponse.get("token")).isEqualTo("Access Token");
 
@@ -226,21 +219,20 @@ public class UserServiceTest {
 
     when(this.userRepository.findAll()).thenReturn(users);
 
-    List<UserResponseDTO> allUsers = this.userService.getAllUsers();
+    List<User> allUsers = this.userService.getAllUsers();
 
     assertThat(allUsers).hasSize(3);
-    assertThat(allUsers.get(0).id()).isEqualTo(users.get(0).getId());
-    assertThat(allUsers.get(0).name()).isEqualTo(users.get(0).getName());
-    assertThat(allUsers.get(0).email()).isEqualTo(users.get(0).getEmail());
-    assertThat(allUsers.get(1).id()).isEqualTo(users.get(1).getId());
-    assertThat(allUsers.get(1).name()).isEqualTo(users.get(1).getName());
-    assertThat(allUsers.get(1).email()).isEqualTo(users.get(1).getEmail());
-    assertThat(allUsers.get(2).id()).isEqualTo(users.get(2).getId());
-    assertThat(allUsers.get(2).name()).isEqualTo(users.get(2).getName());
-    assertThat(allUsers.get(2).email()).isEqualTo(users.get(2).getEmail());
+    assertThat(allUsers.get(0).getId()).isEqualTo(users.get(0).getId());
+    assertThat(allUsers.get(0).getName()).isEqualTo(users.get(0).getName());
+    assertThat(allUsers.get(0).getEmail()).isEqualTo(users.get(0).getEmail());
+    assertThat(allUsers.get(1).getId()).isEqualTo(users.get(1).getId());
+    assertThat(allUsers.get(1).getName()).isEqualTo(users.get(1).getName());
+    assertThat(allUsers.get(1).getEmail()).isEqualTo(users.get(1).getEmail());
+    assertThat(allUsers.get(2).getId()).isEqualTo(users.get(2).getId());
+    assertThat(allUsers.get(2).getName()).isEqualTo(users.get(2).getName());
+    assertThat(allUsers.get(2).getEmail()).isEqualTo(users.get(2).getEmail());
 
     verify(this.userRepository, times(1)).findAll();
-    verify(this.userMapper, times(3)).toDTO(any(User.class));
   }
 
   @Test
@@ -252,35 +244,33 @@ public class UserServiceTest {
     when(this.authorizationService.getAuthentication()).thenReturn(this.authentication);
     when(this.authentication.getPrincipal()).thenReturn(userPrincipal);
 
-    UserResponseDTO authenticatedUser = this.userService.getAuthenticatedUserProfile();
+    User authenticatedUser = this.userService.getAuthenticatedUserProfile();
 
-    assertThat(authenticatedUser.id()).isEqualTo(userPrincipal.getUser().getId());
-    assertThat(authenticatedUser.name()).isEqualTo(userPrincipal.getUser().getName());
-    assertThat(authenticatedUser.email()).isEqualTo(userPrincipal.getUsername());
-    assertThat(authenticatedUser.role()).isEqualTo(userPrincipal.getUser().getRole().getName());
-    assertThat(authenticatedUser.createdAt()).isEqualTo(userPrincipal.getUser().getCreatedAt());
-    assertThat(authenticatedUser.updatedAt()).isEqualTo(userPrincipal.getUser().getUpdatedAt());
+    assertThat(authenticatedUser.getId()).isEqualTo(userPrincipal.getUser().getId());
+    assertThat(authenticatedUser.getName()).isEqualTo(userPrincipal.getUser().getName());
+    assertThat(authenticatedUser.getEmail()).isEqualTo(userPrincipal.getUsername());
+    assertThat(authenticatedUser.getRole().getName()).isEqualTo(userPrincipal.getUser().getRole().getName());
+    assertThat(authenticatedUser.getCreatedAt()).isEqualTo(userPrincipal.getUser().getCreatedAt());
+    assertThat(authenticatedUser.getUpdatedAt()).isEqualTo(userPrincipal.getUser().getUpdatedAt());
 
     verify(this.authentication, times(1)).getPrincipal();
-    verify(this.userMapper, times(1)).toDTO(userPrincipal.getUser());
   }
 
   @Test
   @DisplayName("getProfile - Should successfully return a user profile")
   void getProfileSuccess() {
     User user = this.dataMock.getUsers().get(1);
-    UserResponseDTO userResponse = this.userMapper.toDTO(user);
 
     when(this.userRepository.findById("02")).thenReturn(Optional.of(user));
 
-    UserResponseDTO userProfile = this.userService.getProfile("02");
+    User userProfile = this.userService.getProfile("02");
 
-    assertThat(userProfile.id()).isEqualTo(userResponse.id());
-    assertThat(userProfile.name()).isEqualTo(userResponse.name());
-    assertThat(userProfile.email()).isEqualTo(userResponse.email());
-    assertThat(userProfile.role()).isEqualTo(userResponse.role());
-    assertThat(userProfile.createdAt()).isEqualTo(userResponse.createdAt());
-    assertThat(userProfile.updatedAt()).isEqualTo(userResponse.updatedAt());
+    assertThat(userProfile.getId()).isEqualTo(user.getId());
+    assertThat(userProfile.getName()).isEqualTo(user.getName());
+    assertThat(userProfile.getEmail()).isEqualTo(user.getEmail());
+    assertThat(userProfile.getRole()).isEqualTo(user.getRole());
+    assertThat(userProfile.getCreatedAt()).isEqualTo(user.getCreatedAt());
+    assertThat(userProfile.getUpdatedAt()).isEqualTo(user.getUpdatedAt());
 
     verify(this.userRepository, times(1)).findById("02");
   }
@@ -297,7 +287,6 @@ public class UserServiceTest {
       .hasMessage("Usuário não encontrado");
 
     verify(this.userRepository, times(1)).findById("02");
-    verify(this.userMapper, never()).toDTO(any(User.class));
   }
 
   @Test
@@ -315,21 +304,21 @@ public class UserServiceTest {
     updatedUserEntity.setRole(user.getRole());
     updatedUserEntity.setCreatedAt(user.getCreatedAt());
     updatedUserEntity.setUpdatedAt(user.getUpdatedAt());
-    UserResponseDTO updatedUserResponse = this.userMapper.toDTO(updatedUserEntity);
 
     when(this.authorizationService.getAuthentication()).thenReturn(this.authentication);
     when(this.authentication.getPrincipal()).thenReturn(userPrincipal);
     when(this.userRepository.findByEmail(userPrincipal.getUsername())).thenReturn(Optional.of(user));
     when(this.userRepository.save(any(User.class))).thenReturn(updatedUserEntity);
 
-    UserResponseDTO updatedUser = this.userService.updateAuthenticatedUser("02", updateDTO);
+    User updatedUser = this.userService.updateAuthenticatedUser("02", updateDTO);
 
-    assertThat(updatedUser.id()).isEqualTo(user.getId());
-    assertThat(updatedUser.name()).isEqualTo(updatedUserResponse.name());
-    assertThat(updatedUser.email()).isEqualTo(updatedUserResponse.email());
-    assertThat(updatedUser.role()).isEqualTo(updatedUserResponse.role());
-    assertThat(updatedUser.createdAt()).isEqualTo(updatedUserResponse.createdAt());
-    assertThat(updatedUser.updatedAt()).isEqualTo(updatedUserResponse.updatedAt());
+    assertThat(updatedUser.getId()).isEqualTo(user.getId());
+    assertThat(updatedUser.getName()).isEqualTo(updatedUserEntity.getName());
+    assertThat(updatedUser.getEmail()).isEqualTo(updatedUserEntity.getEmail());
+    assertThat(updatedUser.getPassword()).isEqualTo(updatedUserEntity.getPassword());
+    assertThat(updatedUser.getRole()).isEqualTo(updatedUserEntity.getRole());
+    assertThat(updatedUser.getCreatedAt()).isEqualTo(updatedUserEntity.getCreatedAt());
+    assertThat(updatedUser.getUpdatedAt()).isEqualTo(updatedUserEntity.getUpdatedAt());
 
     verify(this.authorizationService, times(1)).getAuthentication();
     verify(this.authentication, times(1)).getPrincipal();
@@ -357,7 +346,6 @@ public class UserServiceTest {
     verify(this.authentication, times(1)).getPrincipal();
     verify(this.userRepository, never()).findByEmail(anyString());
     verify(this.userRepository, never()).save(any(User.class));
-    verify(this.userMapper, never()).toDTO(any(User.class));
   }
 
   @Test
@@ -381,7 +369,6 @@ public class UserServiceTest {
     verify(this.userRepository, times(1)).findByEmail(userPrincipal.getUsername());
     verify(this.userRepository, never()).save(any(User.class));
     verify(this.passwordEncoder, never()).encode(anyString());
-    verify(this.userMapper, never()).toDTO(any(User.class));
   }
 
   @Test
@@ -393,19 +380,18 @@ public class UserServiceTest {
     User updatedUser = this.dataMock.getUsers().get(2);
     updatedUser.setRole(Role.WRITE_READ);
 
-    UserResponseDTO userResponse = this.userMapper.toDTO(updatedUser);
-
     when(this.userRepository.findById("03")).thenReturn(Optional.of(user));
     when(this.userRepository.save(any(User.class))).thenReturn(updatedUser);
 
-    UserResponseDTO updatedUserResponse = this.userService.updateRole("03", updateRoleDTO);
+    User updatedUserResponse = this.userService.updateRole("03", updateRoleDTO);
 
-    assertThat(updatedUserResponse.id()).isEqualTo(userResponse.id());
-    assertThat(updatedUserResponse.name()).isEqualTo(userResponse.name());
-    assertThat(updatedUserResponse.email()).isEqualTo(userResponse.email());
-    assertThat(updatedUserResponse.role()).isEqualTo(userResponse.role());
-    assertThat(updatedUserResponse.createdAt()).isEqualTo(userResponse.createdAt());
-    assertThat(updatedUserResponse.updatedAt()).isEqualTo(userResponse.updatedAt());
+    assertThat(updatedUserResponse.getId()).isEqualTo(updatedUser.getId());
+    assertThat(updatedUserResponse.getName()).isEqualTo(updatedUser.getName());
+    assertThat(updatedUserResponse.getEmail()).isEqualTo(updatedUser.getEmail());
+    assertThat(updatedUserResponse.getPassword()).isEqualTo(updatedUser.getPassword());
+    assertThat(updatedUserResponse.getRole()).isEqualTo(updatedUser.getRole());
+    assertThat(updatedUserResponse.getCreatedAt()).isEqualTo(updatedUser.getCreatedAt());
+    assertThat(updatedUserResponse.getUpdatedAt()).isEqualTo(updatedUser.getUpdatedAt());
 
     verify(this.userRepository, times(1)).findById("03");
     verify(this.userRepository, times(1)).save(any(User.class));
@@ -430,20 +416,20 @@ public class UserServiceTest {
   @DisplayName("delete - Should successfully delete a user")
   void deleteUserSuccess() {
     User user = this.dataMock.getUsers().get(1);
-    UserResponseDTO responseDTO = this.userMapper.toDTO(user);
 
     when(this.userRepository.findById("02")).thenReturn(Optional.of(user));
     doNothing().when(this.userRepository).deleteById("02");
 
-    Map<String, UserResponseDTO> deletedUser = this.userService.delete("02");
+    Map<String, User> deletedUser = this.userService.delete("02");
 
     assertThat(deletedUser.containsKey("deletedUser")).isTrue();
-    assertThat(deletedUser.get("deletedUser").id()).isEqualTo(responseDTO.id());
-    assertThat(deletedUser.get("deletedUser").name()).isEqualTo(responseDTO.name());
-    assertThat(deletedUser.get("deletedUser").email()).isEqualTo(responseDTO.email());
-    assertThat(deletedUser.get("deletedUser").role()).isEqualTo(responseDTO.role());
-    assertThat(deletedUser.get("deletedUser").createdAt()).isEqualTo(responseDTO.createdAt());
-    assertThat(deletedUser.get("deletedUser").updatedAt()).isEqualTo(responseDTO.updatedAt());
+    assertThat(deletedUser.get("deletedUser").getId()).isEqualTo(user.getId());
+    assertThat(deletedUser.get("deletedUser").getName()).isEqualTo(user.getName());
+    assertThat(deletedUser.get("deletedUser").getEmail()).isEqualTo(user.getEmail());
+    assertThat(deletedUser.get("deletedUser").getPassword()).isEqualTo(user.getPassword());
+    assertThat(deletedUser.get("deletedUser").getRole()).isEqualTo(user.getRole());
+    assertThat(deletedUser.get("deletedUser").getCreatedAt()).isEqualTo(user.getCreatedAt());
+    assertThat(deletedUser.get("deletedUser").getUpdatedAt()).isEqualTo(user.getUpdatedAt());
 
     verify(this.userRepository, times(1)).findById("02");
     verify(this.userRepository, times(1)).deleteById("02");
