@@ -1,8 +1,7 @@
 package com.felipe.projectmanagerapi.services;
 
 import com.felipe.projectmanagerapi.dtos.WorkspaceCreateOrUpdateDTO;
-import com.felipe.projectmanagerapi.dtos.WorkspaceResponseDTO;
-import com.felipe.projectmanagerapi.dtos.mappers.WorkspaceMapper;
+import com.felipe.projectmanagerapi.dtos.WorkspaceMemberResponseDTO;
 import com.felipe.projectmanagerapi.exceptions.RecordNotFoundException;
 import com.felipe.projectmanagerapi.infra.security.AuthorizationService;
 import com.felipe.projectmanagerapi.infra.security.UserPrincipal;
@@ -21,15 +20,19 @@ public class WorkspaceService {
 
   private final WorkspaceRepository workspaceRepository;
   private final AuthorizationService authorizationService;
-  private final WorkspaceMapper workspaceMapper;
+  //private final UserService userService;
 
-  public WorkspaceService(WorkspaceRepository workspaceRepository, AuthorizationService authorizationService, WorkspaceMapper workspaceMapper) {
+  public WorkspaceService(
+    WorkspaceRepository workspaceRepository,
+    AuthorizationService authorizationService
+    //UserService userService
+  ) {
     this.workspaceRepository = workspaceRepository;
     this.authorizationService = authorizationService;
-    this.workspaceMapper = workspaceMapper;
+    //this.userService = userService;
   }
 
-  public WorkspaceResponseDTO create(@Valid @NotNull WorkspaceCreateOrUpdateDTO workspaceDTO) {
+  public Workspace create(@Valid @NotNull WorkspaceCreateOrUpdateDTO workspaceDTO) {
     Authentication authentication = this.authorizationService.getAuthentication();
     UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
 
@@ -37,15 +40,14 @@ public class WorkspaceService {
     workspace.setName(workspaceDTO.name());
     workspace.setOwner(userPrincipal.getUser());
 
-    Workspace createdWorkspace = this.workspaceRepository.save(workspace);
-    return this.workspaceMapper.toDTO(createdWorkspace);
+    return this.workspaceRepository.save(workspace);
   }
 
-  public WorkspaceResponseDTO update(@NotNull String workspaceId, @Valid @NotNull WorkspaceCreateOrUpdateDTO workspaceDTO) {
+  public Workspace update(@NotNull String workspaceId, @Valid @NotNull WorkspaceCreateOrUpdateDTO workspaceDTO) {
     Authentication authentication = this.authorizationService.getAuthentication();
     UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
 
-    Workspace updatedWorkspace = this.workspaceRepository.findById(workspaceId)
+    return this.workspaceRepository.findById(workspaceId)
       .map(workspace -> {
         if(!userPrincipal.getUser().getId().equals(workspace.getOwner().getId())) {
           throw new AccessDeniedException("Acesso negado: Você não tem permissão para modificar este recurso");
@@ -54,16 +56,18 @@ public class WorkspaceService {
         return this.workspaceRepository.save(workspace);
       })
       .orElseThrow(() -> new RecordNotFoundException("Workspace não encontrado"));
-    return this.workspaceMapper.toDTO(updatedWorkspace);
   }
 
-  public List<WorkspaceResponseDTO> getAllUserWorkspaces() {
+  public List<Workspace> getAllUserWorkspaces() {
+    Authentication authentication = this.authorizationService.getAuthentication();
+    UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
+    return this.workspaceRepository.findAllByOwnerId(userPrincipal.getUser().getId());
+  }
+
+  public WorkspaceMemberResponseDTO insertMember(String workspaceId, String userId) {
     Authentication authentication = this.authorizationService.getAuthentication();
     UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
 
-    return this.workspaceRepository.findAllByOwnerId(userPrincipal.getUser().getId())
-      .stream()
-      .map(this.workspaceMapper::toDTO)
-      .toList();
+    return null;
   }
 }
