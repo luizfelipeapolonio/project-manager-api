@@ -15,11 +15,11 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockitoAnnotations;
-import org.mockito.Spy;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.access.AccessDeniedException;
@@ -39,6 +39,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.any;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
@@ -57,7 +59,7 @@ public class UserControllerTest {
   @MockBean
   UserService userService;
 
-  @Spy
+  @SpyBean
   UserMapper userMapper;
 
   private AutoCloseable closeable;
@@ -107,6 +109,7 @@ public class UserControllerTest {
     String jsonBody = this.objectMapper.writeValueAsString(data);
 
     when(this.userService.register(data)).thenReturn(user);
+    when(this.userMapper.toDTO(user)).thenReturn(createdUserDTO);
 
     this.mockMvc.perform(post(this.baseUrl + "/auth/register")
       .contentType(MediaType.APPLICATION_JSON).content(jsonBody)
@@ -123,6 +126,7 @@ public class UserControllerTest {
       .andExpect(jsonPath("$.data.updatedAt").value(createdUserDTO.updatedAt().toString()));
 
     verify(this.userService, times(1)).register(data);
+    verify(this.userMapper, times(1)).toDTO(user);
   }
 
   @Test
@@ -143,6 +147,7 @@ public class UserControllerTest {
       .andExpect(jsonPath("$.data").doesNotExist());
 
     verify(this.userService, times(1)).register(registerDTO);
+    verify(this.userMapper, never()).toDTO(any(User.class));
   }
 
   @Test
@@ -166,6 +171,7 @@ public class UserControllerTest {
     loginResponseMap.put("token", token);
 
     when(this.userService.login(login)).thenReturn(loginResponseMap);
+    when(this.userMapper.toDTO((User) loginResponseMap.get("user"))).thenReturn(userResponseDTO);
 
     this.mockMvc.perform(post(this.baseUrl + "/auth/login")
       .contentType(MediaType.APPLICATION_JSON).content(jsonBody)
@@ -183,6 +189,7 @@ public class UserControllerTest {
       .andExpect(jsonPath("$.data.token").value(token));
 
     verify(this.userService, times(1)).login(login);
+    verify(this.userMapper, times(1)).toDTO((User) loginResponseMap.get("user"));
   }
 
   @Test
@@ -203,6 +210,7 @@ public class UserControllerTest {
       .andExpect(jsonPath("$.data").doesNotExist());
 
     verify(this.userService, times(1)).login(login);
+    verify(this.userMapper, never()).toDTO(any(User.class));
   }
 
   @Test
@@ -223,6 +231,7 @@ public class UserControllerTest {
       .andExpect(jsonPath("$.data").doesNotExist());
 
     verify(this.userService, times(1)).login(login);
+    verify(this.userMapper, never()).toDTO(any(User.class));
   }
 
   @Test
@@ -255,6 +264,7 @@ public class UserControllerTest {
       .andExpect(content().json(jsonResponseBody));
 
     verify(this.userService, times(1)).getAllUsers();
+    verify(this.userMapper, times(3)).toDTO(any(User.class));
   }
 
   @Test
@@ -271,6 +281,7 @@ public class UserControllerTest {
     );
 
     when(this.userService.getAuthenticatedUserProfile()).thenReturn(user);
+    when(this.userMapper.toDTO(user)).thenReturn(userDTO);
 
     this.mockMvc.perform(get(this.baseUrl + "/users/me")
       .accept(MediaType.APPLICATION_JSON))
@@ -286,6 +297,7 @@ public class UserControllerTest {
       .andExpect(jsonPath("$.data.updatedAt").value(userDTO.updatedAt().toString()));
 
     verify(this.userService, times(1)).getAuthenticatedUserProfile();
+    verify(this.userMapper, times(1)).toDTO(user);
   }
 
   @Test
@@ -302,6 +314,7 @@ public class UserControllerTest {
     );
 
     when(this.userService.getProfile("02")).thenReturn(user);
+    when(this.userMapper.toDTO(user)).thenReturn(userResponse);
 
     this.mockMvc.perform(get(this.baseUrl + "/users/02")
       .accept(MediaType.APPLICATION_JSON))
@@ -317,6 +330,7 @@ public class UserControllerTest {
       .andExpect(jsonPath("$.data.updatedAt").value(userResponse.updatedAt().toString()));
 
     verify(this.userService, times(1)).getProfile("02");
+    verify(this.userMapper, times(1)).toDTO(user);
   }
 
   @Test
@@ -333,6 +347,7 @@ public class UserControllerTest {
       .andExpect(jsonPath("$.data").doesNotExist());
 
     verify(this.userService, times(1)).getProfile("02");
+    verify(this.userMapper, never()).toDTO(any(User.class));
   }
 
   @Test
@@ -351,6 +366,7 @@ public class UserControllerTest {
     String jsonBody = this.objectMapper.writeValueAsString(userData);
 
     when(this.userService.updateAuthenticatedUser("02", userData)).thenReturn(user);
+    when(this.userMapper.toDTO(user)).thenReturn(updatedUser);
 
     this.mockMvc.perform(patch(this.baseUrl + "/users/02")
       .contentType(MediaType.APPLICATION_JSON).content(jsonBody)
@@ -367,6 +383,7 @@ public class UserControllerTest {
       .andExpect(jsonPath("$.data.updatedAt").value(updatedUser.updatedAt().toString()));
 
     verify(this.userService, times(1)).updateAuthenticatedUser("02", userData);
+    verify(this.userMapper, times(1)).toDTO(user);
   }
 
   @Test
@@ -387,6 +404,7 @@ public class UserControllerTest {
       .andExpect(jsonPath("$.data").doesNotExist());
 
     verify(this.userService, times(1)).updateAuthenticatedUser("01", updateDTO);
+    verify(this.userMapper, never()).toDTO(any(User.class));
   }
 
   @Test
@@ -407,6 +425,7 @@ public class UserControllerTest {
       .andExpect(jsonPath("$.data").doesNotExist());
 
     verify(this.userService, times(1)).updateAuthenticatedUser("01", userData);
+    verify(this.userMapper, never()).toDTO(any(User.class));
   }
 
   @Test
@@ -427,6 +446,7 @@ public class UserControllerTest {
     String jsonBody = this.objectMapper.writeValueAsString(roleData);
 
     when(this.userService.updateRole("03", roleData)).thenReturn(user);
+    when(this.userMapper.toDTO(user)).thenReturn(userResponse);
 
     this.mockMvc.perform(patch(this.baseUrl + "/users/03/role")
       .contentType(MediaType.APPLICATION_JSON).content(jsonBody)
@@ -443,6 +463,7 @@ public class UserControllerTest {
       .andExpect(jsonPath("$.data.updatedAt").value(userResponse.createdAt().toString()));
 
     verify(this.userService, times(1)).updateRole("03", roleData);
+    verify(this.userMapper, times(1)).toDTO(user);
   }
 
   @Test
@@ -463,6 +484,7 @@ public class UserControllerTest {
       .andExpect(jsonPath("$.data").doesNotExist());
 
     verify(this.userService, times(1)).updateRole("03", roleData);
+    verify(this.userMapper, never()).toDTO(any(User.class));
   }
 
   @Test
@@ -481,6 +503,7 @@ public class UserControllerTest {
     response.put("deletedUser", user);
 
     when(this.userService.delete("02")).thenReturn(response);
+    when(this.userMapper.toDTO(response.get("deletedUser"))).thenReturn(deletedUser);
 
     this.mockMvc.perform(delete(this.baseUrl + "/users/02")
       .accept(MediaType.APPLICATION_JSON))
@@ -496,6 +519,7 @@ public class UserControllerTest {
       .andExpect(jsonPath("$.data.deletedUser.updatedAt").value(deletedUser.updatedAt().toString()));
 
     verify(this.userService, times(1)).delete("02");
+    verify(this.userMapper, times(1)).toDTO(response.get("deletedUser"));
   }
 
   @Test
@@ -512,5 +536,6 @@ public class UserControllerTest {
       .andExpect(jsonPath("$.data").doesNotExist());
 
     verify(this.userService, times(1)).delete("02");
+    verify(this.userMapper, never()).toDTO(any(User.class));
   }
 }
