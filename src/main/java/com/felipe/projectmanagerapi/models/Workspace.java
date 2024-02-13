@@ -107,4 +107,8 @@ public class Workspace {
   public void setMembers(List<User> members) {
     this.members = members;
   }
+
+  public void addMember(User user) {
+    this.members.add(user);
+  }
 }

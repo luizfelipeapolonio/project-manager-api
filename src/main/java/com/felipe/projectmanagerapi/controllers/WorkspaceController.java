@@ -1,7 +1,10 @@
 package com.felipe.projectmanagerapi.controllers;
 
+import com.felipe.projectmanagerapi.dtos.UserResponseDTO;
 import com.felipe.projectmanagerapi.dtos.WorkspaceCreateOrUpdateDTO;
+import com.felipe.projectmanagerapi.dtos.WorkspaceMembersResponseDTO;
 import com.felipe.projectmanagerapi.dtos.WorkspaceResponseDTO;
+import com.felipe.projectmanagerapi.dtos.mappers.UserMapper;
 import com.felipe.projectmanagerapi.dtos.mappers.WorkspaceMapper;
 import com.felipe.projectmanagerapi.enums.ResponseConditionStatus;
 import com.felipe.projectmanagerapi.models.Workspace;
@@ -28,10 +31,12 @@ public class WorkspaceController {
 
   private final WorkspaceService workspaceService;
   private final WorkspaceMapper workspaceMapper;
+  private final UserMapper userMapper;
 
-  public WorkspaceController(WorkspaceService workspaceService, WorkspaceMapper workspaceMapper) {
+  public WorkspaceController(WorkspaceService workspaceService, WorkspaceMapper workspaceMapper, UserMapper userMapper) {
     this.workspaceService = workspaceService;
     this.workspaceMapper = workspaceMapper;
+    this.userMapper = userMapper;
   }
 
   @PostMapping
@@ -76,6 +81,25 @@ public class WorkspaceController {
     response.setCode(HttpStatus.OK);
     response.setMessage("Workspace atualizado com sucesso");
     response.setData(updatedWorkspaceDTO);
+    return response;
+  }
+
+  @PatchMapping("/{workspaceId}/member/{userId}")
+  @ResponseStatus(HttpStatus.OK)
+  public CustomResponseBody<WorkspaceMembersResponseDTO> insertMember(
+    @PathVariable @NotNull @NotBlank String workspaceId,
+    @PathVariable @NotNull @NotBlank String userId
+  ) {
+    Workspace workspace = this.workspaceService.insertMember(workspaceId, userId);
+    WorkspaceResponseDTO workspaceDTO = this.workspaceMapper.toDTO(workspace);
+    List<UserResponseDTO> members = workspace.getMembers().stream().map(this.userMapper::toDTO).toList();
+    WorkspaceMembersResponseDTO workspaceMemberDTO = new WorkspaceMembersResponseDTO(workspaceDTO, members);
+
+    CustomResponseBody<WorkspaceMembersResponseDTO> response = new CustomResponseBody<>();
+    response.setStatus(ResponseConditionStatus.SUCCESS);
+    response.setCode(HttpStatus.OK);
+    response.setMessage("Membro inserido no workspace com sucesso");
+    response.setData(workspaceMemberDTO);
     return response;
   }
 }
