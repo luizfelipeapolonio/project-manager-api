@@ -3,6 +3,7 @@ package com.felipe.projectmanagerapi.controllers;
 import com.auth0.jwt.exceptions.JWTCreationException;
 import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.felipe.projectmanagerapi.enums.ResponseConditionStatus;
+import com.felipe.projectmanagerapi.exceptions.MemberAlreadyExistsException;
 import com.felipe.projectmanagerapi.exceptions.RecordNotFoundException;
 import com.felipe.projectmanagerapi.exceptions.UserAlreadyExistsException;
 import com.felipe.projectmanagerapi.utils.CustomResponseBody;
@@ -88,9 +89,9 @@ public class ExceptionControllerAdvice {
     return response;
   }
 
-  @ExceptionHandler(UserAlreadyExistsException.class)
+  @ExceptionHandler({UserAlreadyExistsException.class, MemberAlreadyExistsException.class})
   @ResponseStatus(HttpStatus.CONFLICT)
-  public CustomResponseBody<Void> handleUserAlreadyExistsException(UserAlreadyExistsException e) {
+  public CustomResponseBody<Void> handleResourceAlreadyExistsException(Exception e) {
     CustomResponseBody<Void> response = new CustomResponseBody<>();
     response.setStatus(ResponseConditionStatus.ERROR);
     response.setCode(HttpStatus.CONFLICT);
