@@ -51,6 +51,7 @@ public class SecurityConfiguration {
         .requestMatchers(HttpMethod.PATCH, userBaseUrl + "/{userId}/role").hasRole("ADMIN")
         .requestMatchers(workspaceBaseUrl).hasRole("ADMIN")
         .requestMatchers(HttpMethod.PATCH, workspaceBaseUrl + "/{workspaceId}").hasRole("ADMIN")
+        .requestMatchers(workspaceBaseUrl + "/{workspaceId}/member/**").hasRole("ADMIN")
         .requestMatchers(HttpMethod.GET, "/api/auth/test").hasAnyRole("ADMIN", "WRITE_READ")
         .anyRequest().authenticated())
       .addFilterBefore(this.securityFilter, UsernamePasswordAuthenticationFilter.class)
