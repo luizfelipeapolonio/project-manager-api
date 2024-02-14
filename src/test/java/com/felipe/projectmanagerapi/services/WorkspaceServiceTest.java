@@ -293,4 +293,110 @@ public class WorkspaceServiceTest {
     verify(this.userService, times(1)).getProfile("02");
     verify(this.workspaceRepository, never()).save(workspace);
   }
+
+  @Test
+  @DisplayName("removeMember - Should successfully remove a member of the workspace")
+  void removeMemberSuccess() {
+    UserPrincipal userPrincipal = new UserPrincipal(this.dataMock.getUsers().get(0));
+    User workspaceMember = this.dataMock.getUsers().get(1);
+    Workspace workspace = this.dataMock.getWorkspaces().get(0);
+
+    when(this.authorizationService.getAuthentication()).thenReturn(this.authentication);
+    when(this.authentication.getPrincipal()).thenReturn(userPrincipal);
+    when(this.userService.getProfile("02")).thenReturn(workspaceMember);
+    when(this.workspaceRepository.findById("01")).thenReturn(Optional.of(workspace));
+    when(this.workspaceRepository.save(workspace)).thenReturn(workspace);
+
+    Workspace updatedWorkspace = this.workspaceService.removeMember("01", "02");
+
+    assertThat(updatedWorkspace.getMembers()).doesNotContain(workspaceMember).hasSize(2);
+    assertThat(updatedWorkspace.getId()).isEqualTo(workspace.getId());
+    assertThat(updatedWorkspace.getName()).isEqualTo(workspace.getName());
+    assertThat(updatedWorkspace.getOwner().getId()).isEqualTo(workspace.getOwner().getId());
+    assertThat(updatedWorkspace.getCreatedAt()).isEqualTo(workspace.getCreatedAt());
+    assertThat(updatedWorkspace.getUpdatedAt()).isEqualTo(workspace.getUpdatedAt());
+
+    verify(this.authorizationService, times(1)).getAuthentication();
+    verify(this.authentication, times(1)).getPrincipal();
+    verify(this.userService, times(1)).getProfile("02");
+    verify(this.workspaceRepository, times(1)).findById("01");
+    verify(this.workspaceRepository, times(1)).save(workspace);
+  }
+
+  @Test
+  @DisplayName("removeMember - Should throw a RecordNotFoundException if the workspace is not found")
+  void removeMemberFailsByWorkspaceNotFound() {
+    UserPrincipal userPrincipal = new UserPrincipal(this.dataMock.getUsers().get(0));
+    User workspaceMember = this.dataMock.getUsers().get(1);
+
+    when(this.authorizationService.getAuthentication()).thenReturn(this.authentication);
+    when(this.authentication.getPrincipal()).thenReturn(userPrincipal);
+    when(this.userService.getProfile("02")).thenReturn(workspaceMember);
+    when(this.workspaceRepository.findById("01")).thenReturn(Optional.empty());
+
+    Exception thrown = catchException(() -> this.workspaceService.removeMember("01", "02"));
+
+    assertThat(thrown)
+      .isExactlyInstanceOf(RecordNotFoundException.class)
+      .hasMessage("Workspace de ID: '01' não encontrado");
+
+    verify(this.authorizationService, times(1)).getAuthentication();
+    verify(this.authentication, times(1)).getPrincipal();
+    verify(this.userService, times(1)).getProfile("02");
+    verify(this.workspaceRepository, times(1)).findById("01");
+    verify(this.workspaceRepository, never()).save(any(Workspace.class));
+  }
+
+  @Test
+  @DisplayName("removeMember - Should throw an AccessDeniedException if the workspace owner id is different from authenticated user id")
+  void removeMemberFailsByDifferentWorkspaceOwnerId() {
+    UserPrincipal userPrincipal = new UserPrincipal(this.dataMock.getUsers().get(1));
+    Workspace workspace = this.dataMock.getWorkspaces().get(0);
+    User workspaceMember = this.dataMock.getUsers().get(2);
+
+    when(this.authorizationService.getAuthentication()).thenReturn(this.authentication);
+    when(this.authentication.getPrincipal()).thenReturn(userPrincipal);
+    when(this.userService.getProfile("02")).thenReturn(workspaceMember);
+    when(this.workspaceRepository.findById("01")).thenReturn(Optional.of(workspace));
+
+    Exception thrown = catchException(() -> this.workspaceService.removeMember("01", "02"));
+
+    assertThat(thrown)
+      .isExactlyInstanceOf(AccessDeniedException.class)
+      .hasMessage("Acesso negado: Você não tem permissão para alterar este recurso");
+
+    verify(this.authorizationService, times(1)).getAuthentication();
+    verify(this.authentication, times(1)).getPrincipal();
+    verify(this.userService, times(1)).getProfile("02");
+    verify(this.workspaceRepository, times(1)).findById("01");
+    verify(this.workspaceRepository, never()).save(any(Workspace.class));
+  }
+
+  @Test
+  @DisplayName("removeMember - Should throw a RecordNotFoundException if the member does not exist in the workspace")
+  void removeMemberFailsByMemberNotFound() {
+    UserPrincipal userPrincipal = new UserPrincipal(this.dataMock.getUsers().get(0));
+    User workspaceMember = this.dataMock.getUsers().get(1);
+    User randomUser = this.dataMock.getUsers().get(2);
+
+    Workspace workspace = this.dataMock.getWorkspaces().get(0);
+    workspace.setMembers(List.of(randomUser));
+
+    when(this.authorizationService.getAuthentication()).thenReturn(this.authentication);
+    when(this.authentication.getPrincipal()).thenReturn(userPrincipal);
+    when(this.userService.getProfile("02")).thenReturn(workspaceMember);
+    when(this.workspaceRepository.findById("01")).thenReturn(Optional.of(workspace));
+
+    Exception thrown = catchException(() -> this.workspaceService.removeMember("01", "02"));
+
+    assertThat(thrown)
+      .isExactlyInstanceOf(RecordNotFoundException.class)
+      .hasMessage("Membro de ID: '02' não encontrado no workspace de ID: '01'");
+
+    verify(this.authorizationService, times(1)).getAuthentication();
+    verify(this.authentication, times(1)).getPrincipal();
+    verify(this.userService, times(1)).getProfile("02");
+    verify(this.workspaceRepository, times(1)).findById("01");
+    verify(this.workspaceRepository, never()).save(any(Workspace.class));
+  }
 }
