@@ -66,7 +66,7 @@ public class WorkspaceService {
     return this.workspaceRepository.findAllByOwnerId(userPrincipal.getUser().getId());
   }
 
-  public Workspace insertMember(String workspaceId, String userId) {
+  public Workspace insertMember(@NotNull String workspaceId, @NotNull String userId) {
     Authentication authentication = this.authorizationService.getAuthentication();
     UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
     User workspaceMember = this.userService.getProfile(userId);
@@ -90,5 +90,32 @@ public class WorkspaceService {
         return this.workspaceRepository.save(workspace);
       })
       .orElseThrow(() -> new RecordNotFoundException("Workspace com ID: '" + workspaceId + "' não encontrado"));
+  }
+
+  public Workspace removeMember(@NotNull String workspaceId, @NotNull String userId) {
+    Authentication authentication = this.authorizationService.getAuthentication();
+    UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
+    User workspaceMember = this.userService.getProfile(userId);
+
+    return this.workspaceRepository.findById(workspaceId)
+      .map(workspace -> {
+        if(!workspace.getOwner().getId().equals(userPrincipal.getUser().getId())) {
+          throw new AccessDeniedException("Acesso negado: Você não tem permissão para alterar este recurso");
+        }
+
+        Optional<User> existingMember = workspace.getMembers()
+          .stream()
+          .filter(member -> member.getId().equals(userId))
+          .findFirst();
+
+        if(existingMember.isEmpty()) {
+          throw new RecordNotFoundException("Membro de ID: '" + userId + "' não encontrado" +
+            " no workspace de ID: '" + workspaceId + "'");
+        }
+
+        workspace.removeMember(workspaceMember);
+        return this.workspaceRepository.save(workspace);
+      })
+      .orElseThrow(() -> new RecordNotFoundException("Workspace de ID: '" + workspaceId + "' não encontrado"));
   }
 }
