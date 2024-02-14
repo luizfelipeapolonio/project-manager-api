@@ -17,6 +17,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -84,7 +85,7 @@ public class WorkspaceController {
     return response;
   }
 
-  @PatchMapping("/{workspaceId}/member/{userId}")
+  @PatchMapping("/{workspaceId}/members/{userId}")
   @ResponseStatus(HttpStatus.OK)
   public CustomResponseBody<WorkspaceMembersResponseDTO> insertMember(
     @PathVariable @NotNull @NotBlank String workspaceId,
@@ -93,13 +94,32 @@ public class WorkspaceController {
     Workspace workspace = this.workspaceService.insertMember(workspaceId, userId);
     WorkspaceResponseDTO workspaceDTO = this.workspaceMapper.toDTO(workspace);
     List<UserResponseDTO> members = workspace.getMembers().stream().map(this.userMapper::toDTO).toList();
-    WorkspaceMembersResponseDTO workspaceMemberDTO = new WorkspaceMembersResponseDTO(workspaceDTO, members);
+    WorkspaceMembersResponseDTO workspaceMembersDTO = new WorkspaceMembersResponseDTO(workspaceDTO, members);
 
     CustomResponseBody<WorkspaceMembersResponseDTO> response = new CustomResponseBody<>();
     response.setStatus(ResponseConditionStatus.SUCCESS);
     response.setCode(HttpStatus.OK);
     response.setMessage("Membro inserido no workspace com sucesso");
-    response.setData(workspaceMemberDTO);
+    response.setData(workspaceMembersDTO);
+    return response;
+  }
+
+  @DeleteMapping("/{workspaceId}/members/{userId}")
+  @ResponseStatus(HttpStatus.OK)
+  public CustomResponseBody<WorkspaceMembersResponseDTO> removeMember(
+    @PathVariable @NotNull @NotBlank String workspaceId,
+    @PathVariable @NotNull @NotBlank String userId
+  ) {
+    Workspace workspace = this.workspaceService.removeMember(workspaceId, userId);
+    WorkspaceResponseDTO workspaceDTO = this.workspaceMapper.toDTO(workspace);
+    List<UserResponseDTO> members = workspace.getMembers().stream().map(this.userMapper::toDTO).toList();
+    WorkspaceMembersResponseDTO workspaceMembersDTO = new WorkspaceMembersResponseDTO(workspaceDTO, members);
+
+    CustomResponseBody<WorkspaceMembersResponseDTO> response = new CustomResponseBody<>();
+    response.setStatus(ResponseConditionStatus.SUCCESS);
+    response.setCode(HttpStatus.OK);
+    response.setMessage("Membro removido do workspace com sucesso");
+    response.setData(workspaceMembersDTO);
     return response;
   }
 }
