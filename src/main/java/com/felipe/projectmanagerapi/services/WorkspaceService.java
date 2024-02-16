@@ -118,4 +118,26 @@ public class WorkspaceService {
       })
       .orElseThrow(() -> new RecordNotFoundException("Workspace de ID: '" + workspaceId + "' não encontrado"));
   }
+
+  public Workspace getById(@NotNull String workspaceId) {
+    Authentication authentication = this.authorizationService.getAuthentication();
+    UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
+
+    Workspace workspace = this.workspaceRepository.findById(workspaceId)
+      .orElseThrow(() -> new RecordNotFoundException("Workspace de ID: '" + workspaceId + "' não encontrado"));
+
+    String workspaceOwnerId = workspace.getOwner().getId();
+    String authenticatedUserId = userPrincipal.getUser().getId();
+
+    Optional<User> existingMember = workspace.getMembers()
+      .stream()
+      .filter(member -> member.getId().equals(authenticatedUserId))
+      .findFirst();
+
+    if(!workspaceOwnerId.equals(authenticatedUserId) && existingMember.isEmpty()) {
+      throw new AccessDeniedException("Acesso negado: Você não tem permissão para acessar este recurso");
+    }
+
+    return workspace;
+  }
 }
