@@ -229,6 +229,89 @@ public class WorkspaceControllerTest {
   }
 
   @Test
+  @DisplayName("getAllMembers - Should return a success response with OK status code and all members of the workspace")
+  void getAllMembersSuccess() throws Exception {
+    Workspace workspace = this.dataMock.getWorkspaces().get(0);
+    WorkspaceResponseDTO workspaceDTO = new WorkspaceResponseDTO(
+      workspace.getId(),
+      workspace.getName(),
+      workspace.getOwner().getId(),
+      workspace.getCreatedAt(),
+      workspace.getUpdatedAt()
+    );
+    List<UserResponseDTO> usersDTO = workspace.getMembers()
+      .stream()
+      .map(member -> new UserResponseDTO(
+        member.getId(),
+        member.getName(),
+        member.getEmail(),
+        member.getRole().getName(),
+        member.getCreatedAt(),
+        member.getUpdatedAt()
+      ))
+      .toList();
+    WorkspaceMembersResponseDTO workspaceMembersDTO = new WorkspaceMembersResponseDTO(workspaceDTO, usersDTO);
+
+    CustomResponseBody<WorkspaceMembersResponseDTO> response = new CustomResponseBody<>();
+    response.setStatus(ResponseConditionStatus.SUCCESS);
+    response.setCode(HttpStatus.OK);
+    response.setMessage("Todos os membros do workspace");
+    response.setData(workspaceMembersDTO);
+
+    String jsonResponseBody = this.objectMapper.writeValueAsString(response);
+
+    when(this.workspaceService.getById("01")).thenReturn(workspace);
+    when(this.workspaceMapper.toDTO(workspace)).thenReturn(workspaceDTO);
+
+    this.mockMvc.perform(get(this.baseUrl + "/01/members")
+      .accept(MediaType.APPLICATION_JSON))
+      .andExpect(status().isOk())
+      .andExpect(content().json(jsonResponseBody));
+
+    verify(this.workspaceService, times(1)).getById("01");
+    verify(this.workspaceMapper, times(1)).toDTO(workspace);
+    verify(this.userMapper, times(3)).toDTO(any(User.class));
+  }
+
+  @Test
+  @DisplayName("getAllMembers - Should return an error response with not found status code")
+  void getAllMembersFailsByWorkspaceNotFound() throws Exception {
+    when(this.workspaceService.getById("01"))
+      .thenThrow(new RecordNotFoundException("Workspace de ID: '01' não encontrado"));
+
+    this.mockMvc.perform(get(this.baseUrl + "/01/members")
+      .accept(MediaType.APPLICATION_JSON))
+      .andExpect(status().isNotFound())
+      .andExpect(jsonPath("$.status").value(ResponseConditionStatus.ERROR.getValue()))
+      .andExpect(jsonPath("$.code").value(HttpStatus.NOT_FOUND.value()))
+      .andExpect(jsonPath("$.message").value("Workspace de ID: '01' não encontrado"))
+      .andExpect(jsonPath("$.data").doesNotExist());
+
+    verify(this.workspaceService, times(1)).getById("01");
+    verify(this.workspaceMapper, never()).toDTO(any(Workspace.class));
+    verify(this.userMapper, never()).toDTO(any(User.class));
+  }
+
+  @Test
+  @DisplayName("getAllMembers - Should return an error response with forbidden status code")
+  void getAllMembersFailsByAccessDenied() throws Exception {
+    when(this.workspaceService.getById("01"))
+      .thenThrow(new AccessDeniedException("Acesso negado: Você não tem permissão para acessar este recurso"));
+
+    this.mockMvc.perform(get(this.baseUrl + "/01/members")
+      .accept(MediaType.APPLICATION_JSON))
+      .andExpect(status().isForbidden())
+      .andExpect(jsonPath("$.status").value(ResponseConditionStatus.ERROR.getValue()))
+      .andExpect(jsonPath("$.code").value(HttpStatus.FORBIDDEN.value()))
+      .andExpect(jsonPath("$.message").value("Acesso negado: Você não tem permissão para acessar este recurso"))
+      .andExpect(jsonPath("$.data").doesNotExist());
+
+    verify(this.workspaceService, times(1)).getById("01");
+    verify(this.workspaceMapper, never()).toDTO(any(Workspace.class));
+    verify(this.userMapper, never()).toDTO(any(User.class));
+  }
+
+  @Test
   @DisplayName("insertMember - Should return a success response with OK status code and the workspace with the inserted member")
   void insertMemberSuccess() throws Exception {
     Workspace workspace = this.dataMock.getWorkspaces().get(0);
