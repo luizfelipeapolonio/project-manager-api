@@ -102,6 +102,22 @@ public class WorkspaceController {
     return response;
   }
 
+  @GetMapping("/{workspaceId}/members")
+  @ResponseStatus(HttpStatus.OK)
+  public CustomResponseBody<WorkspaceMembersResponseDTO> getAllMembers(@PathVariable @NotNull @NotBlank String workspaceId) {
+    Workspace workspace = this.workspaceService.getById(workspaceId);
+    WorkspaceResponseDTO workspaceDTO = this.workspaceMapper.toDTO(workspace);
+    List<UserResponseDTO> members = workspace.getMembers().stream().map(this.userMapper::toDTO).toList();
+    WorkspaceMembersResponseDTO workspaceMembersDTO = new WorkspaceMembersResponseDTO(workspaceDTO, members);
+
+    CustomResponseBody<WorkspaceMembersResponseDTO> response = new CustomResponseBody<>();
+    response.setStatus(ResponseConditionStatus.SUCCESS);
+    response.setCode(HttpStatus.OK);
+    response.setMessage("Todos os membros do workspace");
+    response.setData(workspaceMembersDTO);
+    return response;
+  }
+
   @PatchMapping("/{workspaceId}/members/{userId}")
   @ResponseStatus(HttpStatus.OK)
   public CustomResponseBody<WorkspaceMembersResponseDTO> insertMember(
