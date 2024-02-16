@@ -432,4 +432,87 @@ public class WorkspaceControllerTest {
     verify(this.workspaceMapper, never()).toDTO(any(Workspace.class));
     verify(this.userMapper, never()).toDTO(any(User.class));
   }
+
+  @Test
+  @DisplayName("getById - Should return a success response with OK status code and the workspace with a full workspace response DTO")
+  void getByIdSuccess() throws Exception {
+    Workspace workspace = this.dataMock.getWorkspaces().get(0);
+    WorkspaceResponseDTO workspaceDTO = new WorkspaceResponseDTO(
+      workspace.getId(),
+      workspace.getName(),
+      workspace.getOwner().getId(),
+      workspace.getCreatedAt(),
+      workspace.getUpdatedAt()
+    );
+    List<UserResponseDTO> usersDTO = workspace.getMembers()
+      .stream()
+      .map(member -> new UserResponseDTO(
+        member.getId(),
+        member.getName(),
+        member.getEmail(),
+        member.getRole().getName(),
+        member.getCreatedAt(),
+        member.getUpdatedAt()
+      ))
+      .toList();
+    WorkspaceMembersResponseDTO workspaceMembersDTO = new WorkspaceMembersResponseDTO(workspaceDTO, usersDTO);
+
+    CustomResponseBody<WorkspaceMembersResponseDTO> response = new CustomResponseBody<>();
+    response.setStatus(ResponseConditionStatus.SUCCESS);
+    response.setCode(HttpStatus.OK);
+    response.setMessage("Workspace encontrado");
+    response.setData(workspaceMembersDTO);
+
+    String jsonResponseBody = this.objectMapper.writeValueAsString(response);
+
+    when(this.workspaceService.getById("01")).thenReturn(workspace);
+    when(this.workspaceMapper.toDTO(workspace)).thenReturn(workspaceDTO);
+
+    this.mockMvc.perform(get(this.baseUrl + "/01")
+      .accept(MediaType.APPLICATION_JSON))
+      .andExpect(status().isOk())
+      .andExpect(content().json(jsonResponseBody));
+
+    verify(this.workspaceService, times(1)).getById("01");
+    verify(this.workspaceMapper, times(1)).toDTO(workspace);
+    verify(this.userMapper, times(3)).toDTO(any(User.class));
+  }
+
+  @Test
+  @DisplayName("getById - Should return an error response with not found status code if the workspace is not found")
+  void getByIdFailsByWorkspaceNotFound() throws Exception {
+    when(this.workspaceService.getById("01"))
+      .thenThrow(new RecordNotFoundException("Workspace de ID: '01' não encontrado"));
+
+    this.mockMvc.perform(get(this.baseUrl + "/01")
+      .accept(MediaType.APPLICATION_JSON))
+      .andExpect(status().isNotFound())
+      .andExpect(jsonPath("$.status").value(ResponseConditionStatus.ERROR.getValue()))
+      .andExpect(jsonPath("$.code").value(HttpStatus.NOT_FOUND.value()))
+      .andExpect(jsonPath("$.message").value("Workspace de ID: '01' não encontrado"))
+      .andExpect(jsonPath("$.data").doesNotExist());
+
+    verify(this.workspaceService, times(1)).getById("01");
+    verify(this.workspaceMapper, never()).toDTO(any(Workspace.class));
+    verify(this.userMapper, never()).toDTO(any(User.class));
+  }
+
+  @Test
+  @DisplayName("getById - Should return an error response with forbidden status code")
+  void getByIdFailsByAccessDenied() throws Exception {
+    when(this.workspaceService.getById("01"))
+      .thenThrow(new AccessDeniedException("Acesso negado: Você não tem permissão para acessar este recurso"));
+
+    this.mockMvc.perform(get(this.baseUrl + "/01")
+      .accept(MediaType.APPLICATION_JSON))
+      .andExpect(status().isForbidden())
+      .andExpect(jsonPath("$.status").value(ResponseConditionStatus.ERROR.getValue()))
+      .andExpect(jsonPath("$.code").value(HttpStatus.FORBIDDEN.value()))
+      .andExpect(jsonPath("$.message").value("Acesso negado: Você não tem permissão para acessar este recurso"))
+      .andExpect(jsonPath("$.data").doesNotExist());
+
+    verify(this.workspaceService, times(1)).getById("01");
+    verify(this.workspaceMapper, never()).toDTO(any(Workspace.class));
+    verify(this.userMapper, never()).toDTO(any(User.class));
+  }
 }

@@ -399,4 +399,72 @@ public class WorkspaceServiceTest {
     verify(this.workspaceRepository, times(1)).findById("01");
     verify(this.workspaceRepository, never()).save(any(Workspace.class));
   }
+
+  @Test
+  @DisplayName("getById - Should successfully get a workspace by Id")
+  void getByIdSuccess() {
+    UserPrincipal userPrincipal = new UserPrincipal(this.dataMock.getUsers().get(0));
+    Workspace workspace = this.dataMock.getWorkspaces().get(0);
+
+    when(this.authorizationService.getAuthentication()).thenReturn(this.authentication);
+    when(this.authentication.getPrincipal()).thenReturn(userPrincipal);
+    when(this.workspaceRepository.findById("01")).thenReturn(Optional.of(workspace));
+
+    Workspace foundWorkspace = this.workspaceService.getById("01");
+
+    assertThat(foundWorkspace.getId()).isEqualTo(workspace.getId());
+    assertThat(foundWorkspace.getName()).isEqualTo(workspace.getName());
+    assertThat(foundWorkspace.getOwner().getId()).isEqualTo(workspace.getOwner().getId());
+    assertThat(foundWorkspace.getMembers().size()).isEqualTo(workspace.getMembers().size());
+    assertThat(foundWorkspace.getCreatedAt()).isEqualTo(workspace.getCreatedAt());
+    assertThat(foundWorkspace.getUpdatedAt()).isEqualTo(workspace.getUpdatedAt());
+
+    verify(this.authorizationService, times(1)).getAuthentication();
+    verify(this.authentication, times(1)).getPrincipal();
+    verify(this.workspaceRepository, times(1)).findById("01");
+  }
+
+  @Test
+  @DisplayName("getById - Should throw a RecordNotFoundException if the workspace is not found")
+  void getByIdFailsByWorkspaceNotFound() {
+    UserPrincipal userPrincipal = new UserPrincipal(this.dataMock.getUsers().get(0));
+
+    when(this.authorizationService.getAuthentication()).thenReturn(this.authentication);
+    when(this.authentication.getPrincipal()).thenReturn(userPrincipal);
+    when(this.workspaceRepository.findById("01")).thenReturn(Optional.empty());
+
+    Exception thrown = catchException(() -> this.workspaceService.getById("01"));
+
+    assertThat(thrown)
+      .isExactlyInstanceOf(RecordNotFoundException.class)
+      .hasMessage("Workspace de ID: '01' não encontrado");
+
+    verify(this.authorizationService, times(1)).getAuthentication();
+    verify(this.authentication, times(1)).getPrincipal();
+    verify(this.workspaceRepository, times(1)).findById("01");
+  }
+
+  @Test
+  @DisplayName("getById - Should throw an AccessDeniedException if the authenticated user is not the owner or member of the workspace")
+  void getByIdFailsByNotBeingOwnerOrMemberOfWorkspace() {
+    UserPrincipal userPrincipal = new UserPrincipal(this.dataMock.getUsers().get(1));
+    User randomUser = this.dataMock.getUsers().get(2);
+
+    Workspace workspace = this.dataMock.getWorkspaces().get(0);
+    workspace.setMembers(List.of(randomUser));
+
+    when(this.authorizationService.getAuthentication()).thenReturn(this.authentication);
+    when(this.authentication.getPrincipal()).thenReturn(userPrincipal);
+    when(this.workspaceRepository.findById("01")).thenReturn(Optional.of(workspace));
+
+    Exception thrown = catchException(() -> this.workspaceService.getById("01"));
+
+    assertThat(thrown)
+      .isExactlyInstanceOf(AccessDeniedException.class)
+      .hasMessage("Acesso negado: Você não tem permissão para acessar este recurso");
+
+    verify(this.authorizationService, times(1)).getAuthentication();
+    verify(this.authentication, times(1)).getPrincipal();
+    verify(this.workspaceRepository, times(1)).findById("01");
+  }
 }
