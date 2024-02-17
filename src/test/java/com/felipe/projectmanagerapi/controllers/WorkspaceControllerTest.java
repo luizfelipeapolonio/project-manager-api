@@ -31,7 +31,9 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.verify;
@@ -309,6 +311,76 @@ public class WorkspaceControllerTest {
     verify(this.workspaceService, times(1)).getById("01");
     verify(this.workspaceMapper, never()).toDTO(any(Workspace.class));
     verify(this.userMapper, never()).toDTO(any(User.class));
+  }
+
+  @Test
+  @DisplayName("delete - Should return a success response with OK status code and the deleted workspace")
+  void deleteWorkspaceSuccess() throws Exception {
+    Workspace workspace = this.dataMock.getWorkspaces().get(0);
+    WorkspaceResponseDTO deletedWorkspace = new WorkspaceResponseDTO(
+      workspace.getId(),
+      workspace.getName(),
+      workspace.getOwner().getId(),
+      workspace.getCreatedAt(),
+      workspace.getUpdatedAt()
+    );
+
+    Map<String, WorkspaceResponseDTO> response = new HashMap<>();
+    response.put("deletedWorkspace", deletedWorkspace);
+
+    when(this.workspaceService.delete("01")).thenReturn(workspace);
+    when(this.workspaceMapper.toDTO(workspace)).thenReturn(deletedWorkspace);
+
+    this.mockMvc.perform(delete(this.baseUrl + "/01")
+      .accept(MediaType.APPLICATION_JSON))
+      .andExpect(status().isOk())
+      .andExpect(jsonPath("$.status").value(ResponseConditionStatus.SUCCESS.getValue()))
+      .andExpect(jsonPath("$.code").value(HttpStatus.OK.value()))
+      .andExpect(jsonPath("$.message").value("Workspace deletado com sucesso"))
+      .andExpect(jsonPath("$.data.deletedWorkspace.id").value(response.get("deletedWorkspace").id()))
+      .andExpect(jsonPath("$.data.deletedWorkspace.name").value(response.get("deletedWorkspace").name()))
+      .andExpect(jsonPath("$.data.deletedWorkspace.ownerId").value(response.get("deletedWorkspace").ownerId()))
+      .andExpect(jsonPath("$.data.deletedWorkspace.createdAt").value(response.get("deletedWorkspace").createdAt().toString()))
+      .andExpect(jsonPath("$.data.deletedWorkspace.updatedAt").value(response.get("deletedWorkspace").updatedAt().toString()));
+
+    verify(this.workspaceService, times(1)).delete("01");
+    verify(this.workspaceMapper, times(1)).toDTO(workspace);
+  }
+
+  @Test
+  @DisplayName("delete - Should return an error response with not found status code")
+  void deleteWorkspaceFailsByWorkspaceNotFound() throws Exception {
+    when(this.workspaceService.delete("01"))
+      .thenThrow(new RecordNotFoundException("Workspace de ID: '01' não encontrado"));
+
+    this.mockMvc.perform(delete(this.baseUrl + "/01")
+      .accept(MediaType.APPLICATION_JSON))
+      .andExpect(status().isNotFound())
+      .andExpect(jsonPath("$.status").value(ResponseConditionStatus.ERROR.getValue()))
+      .andExpect(jsonPath("$.code").value(HttpStatus.NOT_FOUND.value()))
+      .andExpect(jsonPath("$.message").value("Workspace de ID: '01' não encontrado"))
+      .andExpect(jsonPath("$.data").doesNotExist());
+
+    verify(this.workspaceService, times(1)).delete("01");
+    verify(this.workspaceMapper, never()).toDTO(any(Workspace.class));
+  }
+
+  @Test
+  @DisplayName("delete - Should return an error response with forbidden status code")
+  void deleteWorkspaceFailsByDifferentWorkspaceOwnerId() throws Exception {
+    when(this.workspaceService.delete("01"))
+      .thenThrow(new AccessDeniedException("Acesso negado: Você não tem permissão para manipular este recurso"));
+
+    this.mockMvc.perform(delete(this.baseUrl + "/01")
+      .accept(MediaType.APPLICATION_JSON))
+      .andExpect(status().isForbidden())
+      .andExpect(jsonPath("$.status").value(ResponseConditionStatus.ERROR.getValue()))
+      .andExpect(jsonPath("$.code").value(HttpStatus.FORBIDDEN.value()))
+      .andExpect(jsonPath("$.message").value("Acesso negado: Você não tem permissão para manipular este recurso"))
+      .andExpect(jsonPath("$.data").doesNotExist());
+
+    verify(this.workspaceService, times(1)).delete("01");
+    verify(this.workspaceMapper, never()).toDTO(any(Workspace.class));
   }
 
   @Test

@@ -29,6 +29,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.anyString;
+import static org.mockito.Mockito.doNothing;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchException;
 
@@ -466,5 +467,74 @@ public class WorkspaceServiceTest {
     verify(this.authorizationService, times(1)).getAuthentication();
     verify(this.authentication, times(1)).getPrincipal();
     verify(this.workspaceRepository, times(1)).findById("01");
+  }
+
+  @Test
+  @DisplayName("delete - Should successfully delete a workspace and return it")
+  void deleteWorkspaceSuccess() {
+    UserPrincipal userPrincipal = new UserPrincipal(this.dataMock.getUsers().get(0));
+    Workspace workspace = this.dataMock.getWorkspaces().get(0);
+
+    when(this.authorizationService.getAuthentication()).thenReturn(this.authentication);
+    when(this.authentication.getPrincipal()).thenReturn(userPrincipal);
+    when(this.workspaceRepository.findById("01")).thenReturn(Optional.of(workspace));
+    doNothing().when(this.workspaceRepository).deleteById(workspace.getId());
+
+    Workspace deletedWorkspace = this.workspaceService.delete("01");
+
+    assertThat(deletedWorkspace.getId()).isEqualTo(workspace.getId());
+    assertThat(deletedWorkspace.getName()).isEqualTo(workspace.getName());
+    assertThat(deletedWorkspace.getOwner().getId()).isEqualTo(workspace.getOwner().getId());
+    assertThat(deletedWorkspace.getMembers().size()).isEqualTo(workspace.getMembers().size());
+    assertThat(deletedWorkspace.getCreatedAt()).isEqualTo(workspace.getCreatedAt());
+    assertThat(deletedWorkspace.getUpdatedAt()).isEqualTo(workspace.getUpdatedAt());
+
+    verify(this.authorizationService, times(1)).getAuthentication();
+    verify(this.authentication, times(1)).getPrincipal();
+    verify(this.workspaceRepository, times(1)).findById("01");
+    verify(this.workspaceRepository, times(1)).deleteById(workspace.getId());
+  }
+
+  @Test
+  @DisplayName("delete - Should throw a RecordNotFoundException if the workspace is not found")
+  void deleteWorkspaceFailsByWorkspaceNotFound() {
+    UserPrincipal userPrincipal = new UserPrincipal(this.dataMock.getUsers().get(0));
+
+    when(this.authorizationService.getAuthentication()).thenReturn(this.authentication);
+    when(this.authentication.getPrincipal()).thenReturn(userPrincipal);
+    when(this.workspaceRepository.findById("01")).thenReturn(Optional.empty());
+
+    Exception thrown = catchException(() -> this.workspaceService.delete("01"));
+
+    assertThat(thrown)
+      .isExactlyInstanceOf(RecordNotFoundException.class)
+      .hasMessage("Workspace de ID: '01' não encontrado");
+
+    verify(this.authorizationService, times(1)).getAuthentication();
+    verify(this.authentication, times(1)).getPrincipal();
+    verify(this.workspaceRepository, times(1)).findById("01");
+    verify(this.workspaceRepository, never()).deleteById(anyString());
+  }
+
+  @Test
+  @DisplayName("delete - Should throw an AccessDeniedException if the workspace owner id is different from authenticated user id")
+  void deleteWorkspaceFailsByDifferentWorkspaceOwnerId() {
+    UserPrincipal userPrincipal = new UserPrincipal(this.dataMock.getUsers().get(1));
+    Workspace workspace = this.dataMock.getWorkspaces().get(0);
+
+    when(this.authorizationService.getAuthentication()).thenReturn(this.authentication);
+    when(this.authentication.getPrincipal()).thenReturn(userPrincipal);
+    when(this.workspaceRepository.findById("01")).thenReturn(Optional.of(workspace));
+
+    Exception thrown = catchException(() -> this.workspaceService.delete("01"));
+
+    assertThat(thrown)
+      .isExactlyInstanceOf(AccessDeniedException.class)
+      .hasMessage("Acesso negado: Você não tem permissão para manipular este recurso");
+
+    verify(this.authorizationService, times(1)).getAuthentication();
+    verify(this.authentication, times(1)).getPrincipal();
+    verify(this.workspaceRepository, times(1)).findById("01");
+    verify(this.workspaceRepository, never()).deleteById(workspace.getId());
   }
 }
