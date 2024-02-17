@@ -24,7 +24,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.PathVariable;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/workspaces")
@@ -99,6 +101,23 @@ public class WorkspaceController {
     response.setCode(HttpStatus.OK);
     response.setMessage("Workspace encontrado");
     response.setData(workspaceMembersDTO);
+    return response;
+  }
+
+  @DeleteMapping("/{workspaceId}")
+  @ResponseStatus(HttpStatus.OK)
+  public CustomResponseBody<Map<String, WorkspaceResponseDTO>> delete(@PathVariable @NotNull @NotBlank String workspaceId) {
+    Workspace deletedWorkspace = this.workspaceService.delete(workspaceId);
+    WorkspaceResponseDTO deletedWorkspaceDTO = this.workspaceMapper.toDTO(deletedWorkspace);
+
+    Map<String, WorkspaceResponseDTO> deletedWorkspaceMap = new HashMap<>();
+    deletedWorkspaceMap.put("deletedWorkspace", deletedWorkspaceDTO);
+
+    CustomResponseBody<Map<String, WorkspaceResponseDTO>> response = new CustomResponseBody<>();
+    response.setStatus(ResponseConditionStatus.SUCCESS);
+    response.setCode(HttpStatus.OK);
+    response.setMessage("Workspace deletado com sucesso");
+    response.setData(deletedWorkspaceMap);
     return response;
   }
 

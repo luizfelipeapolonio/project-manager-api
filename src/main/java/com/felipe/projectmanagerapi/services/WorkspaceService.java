@@ -140,4 +140,19 @@ public class WorkspaceService {
 
     return workspace;
   }
+
+  public Workspace delete(@NotNull String workspaceId) {
+    Authentication authentication = this.authorizationService.getAuthentication();
+    UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
+
+    Workspace workspace = this.workspaceRepository.findById(workspaceId)
+      .orElseThrow(() -> new RecordNotFoundException("Workspace de ID: '" + workspaceId + "' não encontrado"));
+
+    if(!workspace.getOwner().getId().equals(userPrincipal.getUser().getId())) {
+      throw new AccessDeniedException("Acesso negado: Você não tem permissão para manipular este recurso");
+    }
+
+    this.workspaceRepository.deleteById(workspace.getId());
+    return workspace;
+  }
 }
