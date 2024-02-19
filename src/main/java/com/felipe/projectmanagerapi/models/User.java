@@ -57,6 +57,9 @@ public class User {
   @ManyToMany(mappedBy = "members", cascade = CascadeType.ALL)
   private List<Workspace> memberOfWorkspaces = new ArrayList<>();
 
+  @OneToMany(mappedBy = "owner", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+  private List<Project> myProjects = new ArrayList<>();
+
   public User() {}
 
   public User(String id, String name, String email, String password, Role role) {
@@ -137,5 +140,13 @@ public class User {
 
   public void setMemberOfWorkspaces(List<Workspace> workspaces) {
     this.memberOfWorkspaces = workspaces;
+  }
+
+  public List<Project> getMyProjects() {
+    return this.myProjects;
+  }
+
+  public void setMyProjects(List<Project> myProjects) {
+    this.myProjects = myProjects;
   }
 }

@@ -6,9 +6,11 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Column;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.FetchType;
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
 import org.hibernate.annotations.CreationTimestamp;
@@ -48,6 +50,9 @@ public class Workspace {
     inverseJoinColumns = @JoinColumn(name = "user_id")
   )
   private List<User> members = new ArrayList<>();
+
+  @OneToMany(mappedBy = "workspace", cascade = CascadeType.ALL)
+  private List<Project> projects = new ArrayList<>();
 
   public Workspace() {}
 
@@ -114,5 +119,13 @@ public class Workspace {
 
   public void removeMember(User user) {
     this.members.remove(user);
+  }
+
+  public List<Project> getProjects() {
+    return this.projects;
+  }
+
+  public void setProjects(List<Project> projects) {
+    this.projects = projects;
   }
 }
