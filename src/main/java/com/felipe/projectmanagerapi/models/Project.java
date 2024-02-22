@@ -111,11 +111,11 @@ public class Project {
     this.priority = priority;
   }
 
-  public LocalDate getDeadLine() {
+  public LocalDate getDeadline() {
     return this.deadline;
   }
 
-  public void setDeadLine(LocalDate deadline) {
+  public void setDeadline(LocalDate deadline) {
     this.deadline = deadline;
   }
 
