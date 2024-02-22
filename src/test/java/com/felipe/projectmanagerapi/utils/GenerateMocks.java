@@ -1,9 +1,13 @@
 package com.felipe.projectmanagerapi.utils;
 
+import com.felipe.projectmanagerapi.enums.PriorityLevel;
 import com.felipe.projectmanagerapi.enums.Role;
+import com.felipe.projectmanagerapi.models.Project;
 import com.felipe.projectmanagerapi.models.User;
 import com.felipe.projectmanagerapi.models.Workspace;
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -12,10 +16,12 @@ public class GenerateMocks {
 
   private final List<User> users;
   private final List<Workspace> workspaces;
+  private final List<Project> projects;
 
   public GenerateMocks() {
     this.users = this.generateUsers();
     this.workspaces = this.generateWorkspaces();
+    this.projects = this.generateProjects();
   }
 
   public List<User> getUsers() {
@@ -24,6 +30,10 @@ public class GenerateMocks {
 
   public List<Workspace> getWorkspaces() {
     return this.workspaces;
+  }
+
+  public List<Project> getProjects() {
+    return this.projects;
   }
 
   private List<User> generateUsers() {
@@ -101,5 +111,41 @@ public class GenerateMocks {
     workspaces.add(w2);
     workspaces.add(w3);
     return workspaces;
+  }
+
+  private List<Project> generateProjects() {
+    List<Project> projects = new ArrayList<>();
+    LocalDateTime mockDateTime = LocalDateTime.parse("2024-01-01T12:00:00.123456");
+
+    Project p1 = new Project();
+    p1.setId("01");
+    p1.setName("Projeto 1");
+    p1.setCategory("Desenvolvimento");
+    p1.setDescription("Projeto de desenvolvimento");
+    p1.setBudget(new BigDecimal("999.99"));
+    p1.setDeadline(LocalDate.parse("2025-01-01"));
+    p1.setPriority(PriorityLevel.LOW);
+    p1.setOwner(this.getUsers().get(0));
+    p1.setWorkspace(this.getWorkspaces().get(0));
+    p1.setCreatedAt(mockDateTime);
+    p1.setUpdatedAt(mockDateTime);
+
+    Project p2 = new Project();
+    p2.setId("02");
+    p2.setName("Projeto 2");
+    p2.setCategory("Infra");
+    p2.setDescription("Projeto de infraestrutura");
+    p2.setBudget(new BigDecimal("1000.00"));
+    p2.setDeadline(LocalDate.parse("2025-01-01"));
+    p2.setPriority(PriorityLevel.MEDIUM);
+    p2.setOwner(this.getUsers().get(1));
+    p2.setWorkspace(this.getWorkspaces().get(0));
+    p2.setCreatedAt(mockDateTime);
+    p2.setUpdatedAt(mockDateTime);
+
+    projects.add(p1);
+    projects.add(p2);
+
+    return projects;
   }
 }
