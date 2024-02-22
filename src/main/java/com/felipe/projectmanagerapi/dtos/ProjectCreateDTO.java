@@ -35,5 +35,9 @@ public record ProjectCreateDTO(
   @NotNull(message = "O prazo não deve ser nulo")
   @NotBlank(message = "O prazo não deve estar em branco")
   @ValueOfDeadline
-  String deadline
+  String deadline,
+
+  @NotNull(message = "O ID do workspace não deve ser nulo")
+  @NotBlank(message = "O ID do workspace não estar em branco")
+  String workspaceId
 ) {}
