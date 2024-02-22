@@ -24,11 +24,6 @@ public class ProjectController {
     this.projectMapper = projectMapper;
   }
 
-  @PostMapping("/test")
-  public ProjectCreateDTO test(@RequestBody @Valid ProjectCreateDTO body) {
-    return body;
-  }
-
   @PostMapping
   @ResponseStatus(HttpStatus.CREATED)
   public CustomResponseBody<ProjectResponseDTO> create(@RequestBody @NotNull @Valid ProjectCreateDTO project) {
