@@ -2,6 +2,7 @@ package com.felipe.projectmanagerapi.services;
 
 import com.felipe.projectmanagerapi.dtos.ProjectCreateDTO;
 import com.felipe.projectmanagerapi.dtos.mappers.ProjectMapper;
+import com.felipe.projectmanagerapi.exceptions.InvalidDateException;
 import com.felipe.projectmanagerapi.infra.security.AuthorizationService;
 import com.felipe.projectmanagerapi.infra.security.UserPrincipal;
 import com.felipe.projectmanagerapi.models.Project;
@@ -19,12 +20,17 @@ import org.mockito.Spy;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+
 import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyString;
+import static org.mockito.Mockito.never;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.catchException;
 
 public class ProjectServiceTest {
 
@@ -102,5 +108,43 @@ public class ProjectServiceTest {
     verify(this.workspaceService, times(1)).getById(anyString());
     verify(this.projectMapper, times(1)).convertValueToPriorityLevel(anyString());
     verify(this.projectRepository, times(1)).save(any(Project.class));
+  }
+
+  @Test
+  @DisplayName("create - Should throw an InvalidDateException if the deadline date is invalid")
+  void createProjectFailsByInvalidDeadlineDate() {
+    UserPrincipal userPrincipal = new UserPrincipal(this.dataMock.getUsers().get(1));
+    Project project = this.dataMock.getProjects().get(1);
+    Workspace workspace = this.dataMock.getWorkspaces().get(0);
+
+    ProjectCreateDTO projectDTO = new ProjectCreateDTO(
+      project.getName(),
+      project.getCategory(),
+      project.getDescription(),
+      project.getBudget(),
+      project.getPriority().getValue(),
+      "21-02-2024",
+      workspace.getId()
+    );
+    String today = LocalDate.now().format(DateTimeFormatter.ofPattern("dd-MM-yyyy"));
+
+    when(this.authorizationService.getAuthentication()).thenReturn(this.authentication);
+    when(this.authentication.getPrincipal()).thenReturn(userPrincipal);
+    when(this.workspaceService.getById(anyString())).thenReturn(workspace);
+
+    Exception thrown = catchException(() -> this.projectService.create(projectDTO));
+
+    assertThat(thrown)
+      .isExactlyInstanceOf(InvalidDateException.class)
+      .hasMessage(
+        "Data inválida. O prazo de entrega do projeto não deve ser antes da data atual" +
+        "\nData atual: " + today +
+        "\nPrazo do projeto: 21-02-2024"
+      );
+
+    verify(this.authorizationService, times(1)).getAuthentication();
+    verify(this.authentication, times(1)).getPrincipal();
+    verify(this.workspaceService, times(1)).getById(anyString());
+    verify(this.projectRepository, never()).save(any(Project.class));
   }
 }
