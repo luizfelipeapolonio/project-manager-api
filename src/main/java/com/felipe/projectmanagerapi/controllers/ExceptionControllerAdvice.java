@@ -3,6 +3,7 @@ package com.felipe.projectmanagerapi.controllers;
 import com.auth0.jwt.exceptions.JWTCreationException;
 import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.felipe.projectmanagerapi.enums.ResponseConditionStatus;
+import com.felipe.projectmanagerapi.exceptions.InvalidDateException;
 import com.felipe.projectmanagerapi.exceptions.MemberAlreadyExistsException;
 import com.felipe.projectmanagerapi.exceptions.RecordNotFoundException;
 import com.felipe.projectmanagerapi.exceptions.UserAlreadyExistsException;
@@ -117,6 +118,17 @@ public class ExceptionControllerAdvice {
     response.setCode(HttpStatus.UNPROCESSABLE_ENTITY);
     response.setMessage("Erros de validação");
     response.setData(errors);
+    return response;
+  }
+
+  @ExceptionHandler(InvalidDateException.class)
+  @ResponseStatus(HttpStatus.BAD_REQUEST)
+  public CustomResponseBody<Void> handleInvalidDateException(InvalidDateException e) {
+    CustomResponseBody<Void> response = new CustomResponseBody<>();
+    response.setStatus(ResponseConditionStatus.ERROR);
+    response.setCode(HttpStatus.BAD_REQUEST);
+    response.setMessage(e.getMessage());
+    response.setData(null);
     return response;
   }
 
