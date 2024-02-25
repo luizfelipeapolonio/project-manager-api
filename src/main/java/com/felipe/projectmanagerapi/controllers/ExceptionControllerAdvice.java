@@ -9,6 +9,7 @@ import com.felipe.projectmanagerapi.exceptions.RecordNotFoundException;
 import com.felipe.projectmanagerapi.exceptions.UserAlreadyExistsException;
 import com.felipe.projectmanagerapi.utils.CustomResponseBody;
 import com.felipe.projectmanagerapi.utils.CustomValidationErrors;
+import jakarta.validation.ConstraintViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -129,6 +130,37 @@ public class ExceptionControllerAdvice {
     response.setCode(HttpStatus.BAD_REQUEST);
     response.setMessage(e.getMessage());
     response.setData(null);
+    return response;
+  }
+
+  @ExceptionHandler(IllegalArgumentException.class)
+  @ResponseStatus(HttpStatus.BAD_REQUEST)
+  public CustomResponseBody<Void> handleIllegalArgumentException(IllegalArgumentException e) {
+    CustomResponseBody<Void> response = new CustomResponseBody<>();
+    response.setStatus(ResponseConditionStatus.ERROR);
+    response.setCode(HttpStatus.BAD_REQUEST);
+    response.setMessage(e.getMessage());
+    response.setData(null);
+    return response;
+  }
+
+  @ExceptionHandler(ConstraintViolationException.class)
+  @ResponseStatus(HttpStatus.BAD_REQUEST)
+  public CustomResponseBody<List<CustomValidationErrors>> handleConstraintViolationException(ConstraintViolationException e) {
+    List<CustomValidationErrors> errors = e.getConstraintViolations()
+      .stream()
+      .map(constraintViolation -> new CustomValidationErrors(
+        constraintViolation.getPropertyPath().toString().split("\\.")[1],
+        constraintViolation.getInvalidValue(),
+        constraintViolation.getMessage()
+      ))
+      .toList();
+
+    CustomResponseBody<List<CustomValidationErrors>> response = new CustomResponseBody<>();
+    response.setStatus(ResponseConditionStatus.ERROR);
+    response.setCode(HttpStatus.BAD_REQUEST);
+    response.setMessage("Erro ao validar parâmetros");
+    response.setData(errors);
     return response;
   }
 
