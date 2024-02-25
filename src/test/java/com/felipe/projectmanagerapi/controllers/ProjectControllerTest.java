@@ -5,6 +5,7 @@ import com.felipe.projectmanagerapi.dtos.ProjectCreateDTO;
 import com.felipe.projectmanagerapi.dtos.ProjectResponseDTO;
 import com.felipe.projectmanagerapi.dtos.mappers.ProjectMapper;
 import com.felipe.projectmanagerapi.enums.ResponseConditionStatus;
+import com.felipe.projectmanagerapi.exceptions.InvalidDateException;
 import com.felipe.projectmanagerapi.models.Project;
 import com.felipe.projectmanagerapi.services.ProjectService;
 import com.felipe.projectmanagerapi.utils.ConvertDateFormat;
@@ -30,6 +31,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.any;
 
 @SpringBootTest
 @AutoConfigureMockMvc(addFilters = false)
@@ -84,7 +87,7 @@ public class ProjectControllerTest {
       project.getCategory(),
       project.getDescription(),
       project.getBudget().toString(),
-      ConvertDateFormat.convertDateFromDatabaseToRightFormat(project.getDeadline()),
+      ConvertDateFormat.convertDateToFormattedString(project.getDeadline()),
       project.getCreatedAt(),
       project.getUpdatedAt(),
       project.getOwner().getId(),
@@ -116,5 +119,43 @@ public class ProjectControllerTest {
 
     verify(this.projectService, times(1)).create(projectCreateDTO);
     verify(this.projectMapper, times(1)).toDTO(project);
+  }
+
+  @Test
+  @DisplayName("create - Should return an error response with bad request status code")
+  void createProjectFailsByInvalidDate() throws Exception {
+    Project project = this.dataMock.getProjects().get(1);
+    ProjectCreateDTO projectDTO = new ProjectCreateDTO(
+      project.getName(),
+      project.getCategory(),
+      project.getDescription(),
+      project.getBudget(),
+      project.getPriority().getValue(),
+      "23-02-2024",
+      this.dataMock.getWorkspaces().get(0).getId()
+    );
+    String jsonBody = this.objectMapper.writeValueAsString(projectDTO);
+
+    when(this.projectService.create(projectDTO))
+      .thenThrow(new InvalidDateException(
+        "Data inválida. O prazo de entrega do projeto não deve ser antes da data atual" +
+        "\nData atual: 24-02-2024" +
+        "\nPrazo do projeto: 23-02-2024"
+      ));
+
+    this.mockMvc.perform(post(this.baseUrl)
+      .contentType(MediaType.APPLICATION_JSON).content(jsonBody)
+      .accept(MediaType.APPLICATION_JSON))
+      .andExpect(status().isBadRequest())
+      .andExpect(jsonPath("$.status").value(ResponseConditionStatus.ERROR.getValue()))
+      .andExpect(jsonPath("$.code").value(HttpStatus.BAD_REQUEST.value()))
+      .andExpect(jsonPath("$.message").value(
+        "Data inválida. O prazo de entrega do projeto não deve ser antes da data atual" +
+        "\nData atual: 24-02-2024" +
+        "\nPrazo do projeto: 23-02-2024"))
+      .andExpect(jsonPath("$.data").doesNotExist());
+
+    verify(this.projectService, times(1)).create(projectDTO);
+    verify(this.projectMapper, never()).toDTO(any(Project.class));
   }
 }
