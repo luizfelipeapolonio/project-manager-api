@@ -43,13 +43,13 @@ public class ProjectService {
     Workspace currentWorkspace = this.workspaceService.getById(project.workspaceId());
 
     LocalDate today = LocalDate.now();
-    LocalDate projectDeadline = ConvertDateFormat.convertStringToDateFormat(project.deadline());
+    LocalDate projectDeadline = ConvertDateFormat.convertFormattedStringToDate(project.deadline());
 
     if(projectDeadline.isBefore(today)) {
       throw new InvalidDateException(
         "Data inválida. O prazo de entrega do projeto não deve ser antes da data atual" +
         "\nData atual: " + today.format(DateTimeFormatter.ofPattern("dd-MM-yyyy")) +
-        "\nPrazo do projeto: " + ConvertDateFormat.convertDateFromDatabaseToRightFormat(projectDeadline)
+        "\nPrazo do projeto: " + ConvertDateFormat.convertDateToFormattedString(projectDeadline)
       );
     }
 

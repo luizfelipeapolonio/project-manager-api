@@ -7,9 +7,6 @@ import com.felipe.projectmanagerapi.utils.ConvertDateFormat;
 import jakarta.validation.constraints.NotNull;
 import org.springframework.stereotype.Component;
 
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
-
 @Component
 public class ProjectMapper {
   public ProjectResponseDTO toDTO(Project project) {
@@ -21,7 +18,7 @@ public class ProjectMapper {
       project.getCategory(),
       project.getDescription(),
       project.getBudget().toString(),
-      ConvertDateFormat.convertDateFromDatabaseToRightFormat(project.getDeadline()),
+      ConvertDateFormat.convertDateToFormattedString(project.getDeadline()),
       project.getCreatedAt(),
       project.getUpdatedAt(),
       project.getOwner().getId(),
