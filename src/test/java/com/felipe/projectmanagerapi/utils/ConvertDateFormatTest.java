@@ -15,7 +15,7 @@ public class ConvertDateFormatTest {
   void convertStringToDateFormatSuccess() {
     String stringDate = "01-01-2025";
     DateTimeFormatter outputFormat = DateTimeFormatter.ofPattern("dd-MM-yyyy");
-    LocalDate convertedDate = ConvertDateFormat.convertStringToDateFormat(stringDate);
+    LocalDate convertedDate = ConvertDateFormat.convertFormattedStringToDate(stringDate);
 
     assertThat(convertedDate).isEqualTo(LocalDate.parse("01-01-2025", outputFormat));
     assertThat(convertedDate.format(outputFormat)).isEqualTo("01-01-2025");
@@ -27,7 +27,7 @@ public class ConvertDateFormatTest {
     DateTimeFormatter inputFormat = DateTimeFormatter.ofPattern("yyyy-MM-dd");
     LocalDate inputDate = LocalDate.parse("2025-01-01", inputFormat);
 
-    String formattedDate = ConvertDateFormat.convertDateFromDatabaseToRightFormat(inputDate);
+    String formattedDate = ConvertDateFormat.convertDateToFormattedString(inputDate);
 
     assertThat(formattedDate).isEqualTo("01-01-2025");
   }

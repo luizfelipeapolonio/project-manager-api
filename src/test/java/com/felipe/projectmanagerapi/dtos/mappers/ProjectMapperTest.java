@@ -52,7 +52,7 @@ public class ProjectMapperTest {
     assertThat(convertedProjectDTO.description()).isEqualTo(project.getDescription());
     assertThat(convertedProjectDTO.budget()).isEqualTo(project.getBudget().toString());
     assertThat(convertedProjectDTO.deadline())
-      .isEqualTo(ConvertDateFormat.convertDateFromDatabaseToRightFormat(project.getDeadline()));
+      .isEqualTo(ConvertDateFormat.convertDateToFormattedString(project.getDeadline()));
     assertThat(convertedProjectDTO.createdAt()).isEqualTo(project.getCreatedAt());
     assertThat(convertedProjectDTO.updatedAt()).isEqualTo(project.getUpdatedAt());
     assertThat(convertedProjectDTO.ownerId()).isEqualTo(projectOwner.getId());
