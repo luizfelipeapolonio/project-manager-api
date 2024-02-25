@@ -10,6 +10,7 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import org.springframework.http.HttpStatus;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -24,6 +25,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+@Validated
 @RestController
 @RequestMapping("/api")
 public class UserController {
@@ -34,11 +36,6 @@ public class UserController {
   public UserController(UserService userService, UserMapper userMapper) {
     this.userService = userService;
     this.userMapper = userMapper;
-  }
-
-  @GetMapping("/auth/test")
-  public String test() {
-    return "Caiu aqui, CORNO";
   }
 
   @PostMapping("/auth/register")
