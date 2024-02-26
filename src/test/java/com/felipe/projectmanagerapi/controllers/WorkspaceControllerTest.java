@@ -1,10 +1,7 @@
 package com.felipe.projectmanagerapi.controllers;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.felipe.projectmanagerapi.dtos.UserResponseDTO;
-import com.felipe.projectmanagerapi.dtos.WorkspaceCreateOrUpdateDTO;
-import com.felipe.projectmanagerapi.dtos.WorkspaceMembersResponseDTO;
-import com.felipe.projectmanagerapi.dtos.WorkspaceResponseDTO;
+import com.felipe.projectmanagerapi.dtos.*;
 import com.felipe.projectmanagerapi.dtos.mappers.UserMapper;
 import com.felipe.projectmanagerapi.dtos.mappers.WorkspaceMapper;
 import com.felipe.projectmanagerapi.enums.ResponseConditionStatus;
@@ -13,6 +10,7 @@ import com.felipe.projectmanagerapi.exceptions.RecordNotFoundException;
 import com.felipe.projectmanagerapi.models.User;
 import com.felipe.projectmanagerapi.models.Workspace;
 import com.felipe.projectmanagerapi.services.WorkspaceService;
+import com.felipe.projectmanagerapi.utils.ConvertDateFormat;
 import com.felipe.projectmanagerapi.utils.CustomResponseBody;
 import com.felipe.projectmanagerapi.utils.GenerateMocks;
 import org.junit.jupiter.api.AfterEach;
@@ -592,6 +590,8 @@ public class WorkspaceControllerTest {
   @DisplayName("getById - Should return a success response with OK status code and the workspace with a full workspace response DTO")
   void getByIdSuccess() throws Exception {
     Workspace workspace = this.dataMock.getWorkspaces().get(0);
+    workspace.setProjects(List.of(this.dataMock.getProjects().get(1)));
+
     WorkspaceResponseDTO workspaceDTO = new WorkspaceResponseDTO(
       workspace.getId(),
       workspace.getName(),
@@ -599,7 +599,7 @@ public class WorkspaceControllerTest {
       workspace.getCreatedAt(),
       workspace.getUpdatedAt()
     );
-    List<UserResponseDTO> usersDTO = workspace.getMembers()
+    List<UserResponseDTO> members = workspace.getMembers()
       .stream()
       .map(member -> new UserResponseDTO(
         member.getId(),
@@ -610,18 +610,33 @@ public class WorkspaceControllerTest {
         member.getUpdatedAt()
       ))
       .toList();
-    WorkspaceMembersResponseDTO workspaceMembersDTO = new WorkspaceMembersResponseDTO(workspaceDTO, usersDTO);
+    List<ProjectResponseDTO> projects = workspace.getProjects()
+      .stream()
+      .map(project -> new ProjectResponseDTO(
+        project.getId(),
+        project.getName(),
+        project.getPriority().getValue(),
+        project.getCategory(),
+        project.getDescription(),
+        project.getBudget().toString(),
+        ConvertDateFormat.convertDateToFormattedString(project.getDeadline()),
+        project.getCreatedAt(),
+        project.getUpdatedAt(),
+        project.getOwner().getId(),
+        project.getWorkspace().getId()
+      ))
+      .toList();
+    WorkspaceFullResponseDTO workspaceFullDTO = new WorkspaceFullResponseDTO(workspaceDTO, projects, members);
 
-    CustomResponseBody<WorkspaceMembersResponseDTO> response = new CustomResponseBody<>();
+    CustomResponseBody<WorkspaceFullResponseDTO> response = new CustomResponseBody<>();
     response.setStatus(ResponseConditionStatus.SUCCESS);
     response.setCode(HttpStatus.OK);
     response.setMessage("Workspace encontrado");
-    response.setData(workspaceMembersDTO);
+    response.setData(workspaceFullDTO);
 
     String jsonResponseBody = this.objectMapper.writeValueAsString(response);
 
     when(this.workspaceService.getById("01")).thenReturn(workspace);
-    when(this.workspaceMapper.toDTO(workspace)).thenReturn(workspaceDTO);
 
     this.mockMvc.perform(get(this.baseUrl + "/01")
       .accept(MediaType.APPLICATION_JSON))
@@ -629,8 +644,6 @@ public class WorkspaceControllerTest {
       .andExpect(content().json(jsonResponseBody));
 
     verify(this.workspaceService, times(1)).getById("01");
-    verify(this.workspaceMapper, times(1)).toDTO(workspace);
-    verify(this.userMapper, times(3)).toDTO(any(User.class));
   }
 
   @Test
