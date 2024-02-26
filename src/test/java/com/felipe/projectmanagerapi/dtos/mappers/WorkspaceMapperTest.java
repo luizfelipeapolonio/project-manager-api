@@ -51,7 +51,7 @@ public class WorkspaceMapperTest {
       mockDateTime
     );
 
-    WorkspaceResponseDTO convertedWorkspaceDTO = this.workspaceMapper.toDTO(workspace);
+    WorkspaceResponseDTO convertedWorkspaceDTO = this.workspaceMapper.toWorkspaceResponseDTO(workspace);
 
     assertThat(convertedWorkspaceDTO.id()).isEqualTo(workspaceResponseDTO.id());
     assertThat(convertedWorkspaceDTO.name()).isEqualTo(workspaceResponseDTO.name());

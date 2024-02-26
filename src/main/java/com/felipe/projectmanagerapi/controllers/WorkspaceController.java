@@ -45,7 +45,7 @@ public class WorkspaceController {
   @ResponseStatus(HttpStatus.CREATED)
   public CustomResponseBody<WorkspaceResponseDTO> create(@RequestBody @Valid @NotNull WorkspaceCreateOrUpdateDTO body) {
     Workspace createdWorkspace = this.workspaceService.create(body);
-    WorkspaceResponseDTO createdWorkspaceDTO = this.workspaceMapper.toDTO(createdWorkspace);
+    WorkspaceResponseDTO createdWorkspaceDTO = this.workspaceMapper.toWorkspaceResponseDTO(createdWorkspace);
 
     CustomResponseBody<WorkspaceResponseDTO> response = new CustomResponseBody<>();
     response.setStatus(ResponseConditionStatus.SUCCESS);
@@ -59,7 +59,9 @@ public class WorkspaceController {
   @ResponseStatus(HttpStatus.OK)
   public CustomResponseBody<List<WorkspaceResponseDTO>> getAllUserWorkspaces() {
     List<Workspace> workspaces = this.workspaceService.getAllUserWorkspaces();
-    List<WorkspaceResponseDTO> workspacesDTO = workspaces.stream().map(this.workspaceMapper::toDTO).toList();
+    List<WorkspaceResponseDTO> workspacesDTO = workspaces.stream()
+      .map(this.workspaceMapper::toWorkspaceResponseDTO)
+      .toList();
 
     CustomResponseBody<List<WorkspaceResponseDTO>> response = new CustomResponseBody<>();
     response.setStatus(ResponseConditionStatus.SUCCESS);
@@ -76,7 +78,7 @@ public class WorkspaceController {
     @RequestBody @Valid @NotNull WorkspaceCreateOrUpdateDTO body
   ) {
     Workspace updatedWorkspace = this.workspaceService.update(workspaceId, body);
-    WorkspaceResponseDTO updatedWorkspaceDTO = this.workspaceMapper.toDTO(updatedWorkspace);
+    WorkspaceResponseDTO updatedWorkspaceDTO = this.workspaceMapper.toWorkspaceResponseDTO(updatedWorkspace);
 
     CustomResponseBody<WorkspaceResponseDTO> response = new CustomResponseBody<>();
     response.setStatus(ResponseConditionStatus.SUCCESS);
@@ -104,7 +106,7 @@ public class WorkspaceController {
   @ResponseStatus(HttpStatus.OK)
   public CustomResponseBody<Map<String, WorkspaceResponseDTO>> delete(@PathVariable @NotNull @NotBlank String workspaceId) {
     Workspace deletedWorkspace = this.workspaceService.delete(workspaceId);
-    WorkspaceResponseDTO deletedWorkspaceDTO = this.workspaceMapper.toDTO(deletedWorkspace);
+    WorkspaceResponseDTO deletedWorkspaceDTO = this.workspaceMapper.toWorkspaceResponseDTO(deletedWorkspace);
 
     Map<String, WorkspaceResponseDTO> deletedWorkspaceMap = new HashMap<>();
     deletedWorkspaceMap.put("deletedWorkspace", deletedWorkspaceDTO);
@@ -121,7 +123,7 @@ public class WorkspaceController {
   @ResponseStatus(HttpStatus.OK)
   public CustomResponseBody<WorkspaceMembersResponseDTO> getAllMembers(@PathVariable @NotNull @NotBlank String workspaceId) {
     Workspace workspace = this.workspaceService.getById(workspaceId);
-    WorkspaceResponseDTO workspaceDTO = this.workspaceMapper.toDTO(workspace);
+    WorkspaceResponseDTO workspaceDTO = this.workspaceMapper.toWorkspaceResponseDTO(workspace);
     List<UserResponseDTO> members = workspace.getMembers().stream().map(this.userMapper::toDTO).toList();
     WorkspaceMembersResponseDTO workspaceMembersDTO = new WorkspaceMembersResponseDTO(workspaceDTO, members);
 
@@ -140,7 +142,7 @@ public class WorkspaceController {
     @PathVariable @NotNull @NotBlank String userId
   ) {
     Workspace workspace = this.workspaceService.insertMember(workspaceId, userId);
-    WorkspaceResponseDTO workspaceDTO = this.workspaceMapper.toDTO(workspace);
+    WorkspaceResponseDTO workspaceDTO = this.workspaceMapper.toWorkspaceResponseDTO(workspace);
     List<UserResponseDTO> members = workspace.getMembers().stream().map(this.userMapper::toDTO).toList();
     WorkspaceMembersResponseDTO workspaceMembersDTO = new WorkspaceMembersResponseDTO(workspaceDTO, members);
 
@@ -159,7 +161,7 @@ public class WorkspaceController {
     @PathVariable @NotNull @NotBlank String userId
   ) {
     Workspace workspace = this.workspaceService.removeMember(workspaceId, userId);
-    WorkspaceResponseDTO workspaceDTO = this.workspaceMapper.toDTO(workspace);
+    WorkspaceResponseDTO workspaceDTO = this.workspaceMapper.toWorkspaceResponseDTO(workspace);
     List<UserResponseDTO> members = workspace.getMembers().stream().map(this.userMapper::toDTO).toList();
     WorkspaceMembersResponseDTO workspaceMembersDTO = new WorkspaceMembersResponseDTO(workspaceDTO, members);
 

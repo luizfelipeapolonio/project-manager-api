@@ -12,7 +12,7 @@ import java.util.List;
 
 @Component
 public class WorkspaceMapper {
-  public WorkspaceResponseDTO toDTO(Workspace workspace) {
+  public WorkspaceResponseDTO toWorkspaceResponseDTO(Workspace workspace) {
     if(workspace == null) return null;
     return new WorkspaceResponseDTO(
       workspace.getId(),
@@ -25,7 +25,7 @@ public class WorkspaceMapper {
 
   public WorkspaceFullResponseDTO toWorkspaceFullResponseDTO(Workspace workspace) {
     if(workspace == null) return null;
-    WorkspaceResponseDTO workspaceDTO = this.toDTO(workspace);
+    WorkspaceResponseDTO workspaceDTO = this.toWorkspaceResponseDTO(workspace);
     List<ProjectResponseDTO> projects = workspace.getProjects()
       .stream()
       .map(project -> new ProjectResponseDTO(

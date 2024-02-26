@@ -97,7 +97,7 @@ public class WorkspaceControllerTest {
     String jsonBody = this.objectMapper.writeValueAsString(workspaceDTO);
 
     when(this.workspaceService.create(workspaceDTO)).thenReturn(workspace);
-    when(this.workspaceMapper.toDTO(workspace)).thenReturn(createdWorkspace);
+    when(this.workspaceMapper.toWorkspaceResponseDTO(workspace)).thenReturn(createdWorkspace);
 
     this.mockMvc.perform(post(this.baseUrl)
       .contentType(MediaType.APPLICATION_JSON).content(jsonBody)
@@ -113,7 +113,7 @@ public class WorkspaceControllerTest {
       .andExpect(jsonPath("$.data.updatedAt").value(createdWorkspace.updatedAt().toString()));
 
     verify(this.workspaceService, times(1)).create(workspaceDTO);
-    verify(this.workspaceMapper, times(1)).toDTO(workspace);
+    verify(this.workspaceMapper, times(1)).toWorkspaceResponseDTO(workspace);
   }
 
   @Test
@@ -133,7 +133,7 @@ public class WorkspaceControllerTest {
     String jsonBody = this.objectMapper.writeValueAsString(workspaceDTO);
 
     when(this.workspaceService.update("01", workspaceDTO)).thenReturn(workspace);
-    when(this.workspaceMapper.toDTO(workspace)).thenReturn(updatedWorkspace);
+    when(this.workspaceMapper.toWorkspaceResponseDTO(workspace)).thenReturn(updatedWorkspace);
 
     this.mockMvc.perform(patch(this.baseUrl + "/01")
       .contentType(MediaType.APPLICATION_JSON).content(jsonBody)
@@ -149,7 +149,7 @@ public class WorkspaceControllerTest {
       .andExpect(jsonPath("$.data.updatedAt").value(updatedWorkspace.updatedAt().toString()));
 
     verify(this.workspaceService, times(1)).update("01", workspaceDTO);
-    verify(this.workspaceMapper, times(1)).toDTO(workspace);
+    verify(this.workspaceMapper, times(1)).toWorkspaceResponseDTO(workspace);
   }
 
   @Test
@@ -171,7 +171,7 @@ public class WorkspaceControllerTest {
       .andExpect(jsonPath("$.data").doesNotExist());
 
     verify(this.workspaceService, times(1)).update("01", workspaceDTO);
-    verify(this.workspaceMapper, never()).toDTO(any(Workspace.class));
+    verify(this.workspaceMapper, never()).toWorkspaceResponseDTO(any(Workspace.class));
   }
 
   @Test
@@ -193,7 +193,7 @@ public class WorkspaceControllerTest {
       .andExpect(jsonPath("$.data").doesNotExist());
 
     verify(this.workspaceService, times(1)).update("01", workspaceDTO);
-    verify(this.workspaceMapper, never()).toDTO(any(Workspace.class));
+    verify(this.workspaceMapper, never()).toWorkspaceResponseDTO(any(Workspace.class));
   }
 
   @Test
@@ -225,7 +225,7 @@ public class WorkspaceControllerTest {
       .andExpect(content().json(jsonResponseBody));
 
     verify(this.workspaceService, times(1)).getAllUserWorkspaces();
-    verify(this.workspaceMapper, times(3)).toDTO(any(Workspace.class));
+    verify(this.workspaceMapper, times(3)).toWorkspaceResponseDTO(any(Workspace.class));
   }
 
   @Test
@@ -261,7 +261,7 @@ public class WorkspaceControllerTest {
     String jsonResponseBody = this.objectMapper.writeValueAsString(response);
 
     when(this.workspaceService.getById("01")).thenReturn(workspace);
-    when(this.workspaceMapper.toDTO(workspace)).thenReturn(workspaceDTO);
+    when(this.workspaceMapper.toWorkspaceResponseDTO(workspace)).thenReturn(workspaceDTO);
 
     this.mockMvc.perform(get(this.baseUrl + "/01/members")
       .accept(MediaType.APPLICATION_JSON))
@@ -269,7 +269,7 @@ public class WorkspaceControllerTest {
       .andExpect(content().json(jsonResponseBody));
 
     verify(this.workspaceService, times(1)).getById("01");
-    verify(this.workspaceMapper, times(1)).toDTO(workspace);
+    verify(this.workspaceMapper, times(1)).toWorkspaceResponseDTO(workspace);
     verify(this.userMapper, times(3)).toDTO(any(User.class));
   }
 
@@ -288,7 +288,7 @@ public class WorkspaceControllerTest {
       .andExpect(jsonPath("$.data").doesNotExist());
 
     verify(this.workspaceService, times(1)).getById("01");
-    verify(this.workspaceMapper, never()).toDTO(any(Workspace.class));
+    verify(this.workspaceMapper, never()).toWorkspaceResponseDTO(any(Workspace.class));
     verify(this.userMapper, never()).toDTO(any(User.class));
   }
 
@@ -307,7 +307,7 @@ public class WorkspaceControllerTest {
       .andExpect(jsonPath("$.data").doesNotExist());
 
     verify(this.workspaceService, times(1)).getById("01");
-    verify(this.workspaceMapper, never()).toDTO(any(Workspace.class));
+    verify(this.workspaceMapper, never()).toWorkspaceResponseDTO(any(Workspace.class));
     verify(this.userMapper, never()).toDTO(any(User.class));
   }
 
@@ -327,7 +327,7 @@ public class WorkspaceControllerTest {
     response.put("deletedWorkspace", deletedWorkspace);
 
     when(this.workspaceService.delete("01")).thenReturn(workspace);
-    when(this.workspaceMapper.toDTO(workspace)).thenReturn(deletedWorkspace);
+    when(this.workspaceMapper.toWorkspaceResponseDTO(workspace)).thenReturn(deletedWorkspace);
 
     this.mockMvc.perform(delete(this.baseUrl + "/01")
       .accept(MediaType.APPLICATION_JSON))
@@ -342,7 +342,7 @@ public class WorkspaceControllerTest {
       .andExpect(jsonPath("$.data.deletedWorkspace.updatedAt").value(response.get("deletedWorkspace").updatedAt().toString()));
 
     verify(this.workspaceService, times(1)).delete("01");
-    verify(this.workspaceMapper, times(1)).toDTO(workspace);
+    verify(this.workspaceMapper, times(1)).toWorkspaceResponseDTO(workspace);
   }
 
   @Test
@@ -360,7 +360,7 @@ public class WorkspaceControllerTest {
       .andExpect(jsonPath("$.data").doesNotExist());
 
     verify(this.workspaceService, times(1)).delete("01");
-    verify(this.workspaceMapper, never()).toDTO(any(Workspace.class));
+    verify(this.workspaceMapper, never()).toWorkspaceResponseDTO(any(Workspace.class));
   }
 
   @Test
@@ -378,7 +378,7 @@ public class WorkspaceControllerTest {
       .andExpect(jsonPath("$.data").doesNotExist());
 
     verify(this.workspaceService, times(1)).delete("01");
-    verify(this.workspaceMapper, never()).toDTO(any(Workspace.class));
+    verify(this.workspaceMapper, never()).toWorkspaceResponseDTO(any(Workspace.class));
   }
 
   @Test
@@ -414,7 +414,7 @@ public class WorkspaceControllerTest {
     String jsonResponseBody = this.objectMapper.writeValueAsString(response);
 
     when(this.workspaceService.insertMember("01", "02")).thenReturn(workspace);
-    when(this.workspaceMapper.toDTO(workspace)).thenReturn(workspaceDTO);
+    when(this.workspaceMapper.toWorkspaceResponseDTO(workspace)).thenReturn(workspaceDTO);
 
     this.mockMvc.perform(patch(this.baseUrl + "/01/members/02")
       .accept(MediaType.APPLICATION_JSON))
@@ -422,7 +422,7 @@ public class WorkspaceControllerTest {
       .andExpect(content().json(jsonResponseBody));
 
     verify(this.workspaceService, times(1)).insertMember("01", "02");
-    verify(this.workspaceMapper, times(1)).toDTO(workspace);
+    verify(this.workspaceMapper, times(1)).toWorkspaceResponseDTO(workspace);
     verify(this.userMapper, times(3)).toDTO(any(User.class));
   }
 
@@ -441,7 +441,7 @@ public class WorkspaceControllerTest {
       .andExpect(jsonPath("$.data").doesNotExist());
 
     verify(this.workspaceService, times(1)).insertMember("01", "02");
-    verify(this.workspaceMapper, never()).toDTO(any(Workspace.class));
+    verify(this.workspaceMapper, never()).toWorkspaceResponseDTO(any(Workspace.class));
     verify(this.userMapper, never()).toDTO(any(User.class));
   }
 
@@ -460,7 +460,7 @@ public class WorkspaceControllerTest {
       .andExpect(jsonPath("$.data").doesNotExist());
 
     verify(this.workspaceService, times(1)).insertMember("01", "02");
-    verify(this.workspaceMapper, never()).toDTO(any(Workspace.class));
+    verify(this.workspaceMapper, never()).toWorkspaceResponseDTO(any(Workspace.class));
     verify(this.userMapper, never()).toDTO(any(User.class));
   }
 
@@ -479,7 +479,7 @@ public class WorkspaceControllerTest {
       .andExpect(jsonPath("$.data").doesNotExist());
 
     verify(this.workspaceService, times(1)).insertMember("01", "02");
-    verify(this.workspaceMapper, never()).toDTO(any(Workspace.class));
+    verify(this.workspaceMapper, never()).toWorkspaceResponseDTO(any(Workspace.class));
     verify(this.userMapper, never()).toDTO(any(User.class));
   }
 
@@ -517,7 +517,7 @@ public class WorkspaceControllerTest {
     String jsonResponseBody = this.objectMapper.writeValueAsString(response);
 
     when(this.workspaceService.removeMember("01", "02")).thenReturn(workspace);
-    when(this.workspaceMapper.toDTO(workspace)).thenReturn(workspaceDTO);
+    when(this.workspaceMapper.toWorkspaceResponseDTO(workspace)).thenReturn(workspaceDTO);
 
     this.mockMvc.perform(delete(this.baseUrl + "/01/members/02")
       .accept(MediaType.APPLICATION_JSON))
@@ -525,7 +525,7 @@ public class WorkspaceControllerTest {
       .andExpect(content().json(jsonResponseBody));
 
     verify(this.workspaceService, times(1)).removeMember("01", "02");
-    verify(this.workspaceMapper, times(1)).toDTO(workspace);
+    verify(this.workspaceMapper, times(1)).toWorkspaceResponseDTO(workspace);
     verify(this.userMapper, times(2)).toDTO(any(User.class));
   }
 
@@ -544,7 +544,7 @@ public class WorkspaceControllerTest {
       .andExpect(jsonPath("$.data").doesNotExist());
 
     verify(this.workspaceService, times(1)).removeMember("01", "02");
-    verify(this.workspaceMapper, never()).toDTO(any(Workspace.class));
+    verify(this.workspaceMapper, never()).toWorkspaceResponseDTO(any(Workspace.class));
     verify(this.userMapper, never()).toDTO(any(User.class));
   }
 
@@ -563,7 +563,7 @@ public class WorkspaceControllerTest {
       .andExpect(jsonPath("$.data").doesNotExist());
 
     verify(this.workspaceService, times(1)).removeMember("01", "02");
-    verify(this.workspaceMapper, never()).toDTO(any(Workspace.class));
+    verify(this.workspaceMapper, never()).toWorkspaceResponseDTO(any(Workspace.class));
     verify(this.userMapper, never()).toDTO(any(User.class));
   }
 
@@ -582,7 +582,7 @@ public class WorkspaceControllerTest {
       .andExpect(jsonPath("$.data").doesNotExist());
 
     verify(this.workspaceService, times(1)).removeMember("01", "02");
-    verify(this.workspaceMapper, never()).toDTO(any(Workspace.class));
+    verify(this.workspaceMapper, never()).toWorkspaceResponseDTO(any(Workspace.class));
     verify(this.userMapper, never()).toDTO(any(User.class));
   }
 
@@ -661,7 +661,7 @@ public class WorkspaceControllerTest {
       .andExpect(jsonPath("$.data").doesNotExist());
 
     verify(this.workspaceService, times(1)).getById("01");
-    verify(this.workspaceMapper, never()).toDTO(any(Workspace.class));
+    verify(this.workspaceMapper, never()).toWorkspaceResponseDTO(any(Workspace.class));
     verify(this.userMapper, never()).toDTO(any(User.class));
   }
 
@@ -680,7 +680,7 @@ public class WorkspaceControllerTest {
       .andExpect(jsonPath("$.data").doesNotExist());
 
     verify(this.workspaceService, times(1)).getById("01");
-    verify(this.workspaceMapper, never()).toDTO(any(Workspace.class));
+    verify(this.workspaceMapper, never()).toWorkspaceResponseDTO(any(Workspace.class));
     verify(this.userMapper, never()).toDTO(any(User.class));
   }
 }
