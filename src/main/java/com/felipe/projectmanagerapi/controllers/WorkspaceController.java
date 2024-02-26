@@ -1,9 +1,6 @@
 package com.felipe.projectmanagerapi.controllers;
 
-import com.felipe.projectmanagerapi.dtos.UserResponseDTO;
-import com.felipe.projectmanagerapi.dtos.WorkspaceCreateOrUpdateDTO;
-import com.felipe.projectmanagerapi.dtos.WorkspaceMembersResponseDTO;
-import com.felipe.projectmanagerapi.dtos.WorkspaceResponseDTO;
+import com.felipe.projectmanagerapi.dtos.*;
 import com.felipe.projectmanagerapi.dtos.mappers.UserMapper;
 import com.felipe.projectmanagerapi.dtos.mappers.WorkspaceMapper;
 import com.felipe.projectmanagerapi.enums.ResponseConditionStatus;
@@ -92,17 +89,18 @@ public class WorkspaceController {
   @GetMapping("/{workspaceId}")
   @ResponseStatus(HttpStatus.OK)
   // TODO: Trocar resposta para um WorkspaceFullResponseDTO com membros e projetos incluso
-  public CustomResponseBody<WorkspaceMembersResponseDTO> getById(@PathVariable @NotNull @NotBlank String workspaceId) {
+  public CustomResponseBody<WorkspaceFullResponseDTO> getById(@PathVariable @NotNull @NotBlank String workspaceId) {
     Workspace workspace = this.workspaceService.getById(workspaceId);
-    WorkspaceResponseDTO workspaceDTO = this.workspaceMapper.toDTO(workspace);
-    List<UserResponseDTO> members = workspace.getMembers().stream().map(this.userMapper::toDTO).toList();
-    WorkspaceMembersResponseDTO  workspaceMembersDTO = new WorkspaceMembersResponseDTO(workspaceDTO, members);
+    WorkspaceFullResponseDTO workspaceFullResponseDTO = this.workspaceMapper.toWorkspaceFullResponseDTO(workspace);
+//    WorkspaceResponseDTO workspaceDTO = this.workspaceMapper.toDTO(workspace);
+//    List<UserResponseDTO> members = workspace.getMembers().stream().map(this.userMapper::toDTO).toList();
+//    WorkspaceMembersResponseDTO  workspaceMembersDTO = new WorkspaceMembersResponseDTO(workspaceDTO, members);
 
-    CustomResponseBody<WorkspaceMembersResponseDTO> response = new CustomResponseBody<>();
+    CustomResponseBody<WorkspaceFullResponseDTO> response = new CustomResponseBody<>();
     response.setStatus(ResponseConditionStatus.SUCCESS);
     response.setCode(HttpStatus.OK);
     response.setMessage("Workspace encontrado");
-    response.setData(workspaceMembersDTO);
+    response.setData(workspaceFullResponseDTO);
     return response;
   }
 
