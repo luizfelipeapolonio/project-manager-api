@@ -88,13 +88,9 @@ public class WorkspaceController {
 
   @GetMapping("/{workspaceId}")
   @ResponseStatus(HttpStatus.OK)
-  // TODO: Trocar resposta para um WorkspaceFullResponseDTO com membros e projetos incluso
   public CustomResponseBody<WorkspaceFullResponseDTO> getById(@PathVariable @NotNull @NotBlank String workspaceId) {
     Workspace workspace = this.workspaceService.getById(workspaceId);
     WorkspaceFullResponseDTO workspaceFullResponseDTO = this.workspaceMapper.toWorkspaceFullResponseDTO(workspace);
-//    WorkspaceResponseDTO workspaceDTO = this.workspaceMapper.toDTO(workspace);
-//    List<UserResponseDTO> members = workspace.getMembers().stream().map(this.userMapper::toDTO).toList();
-//    WorkspaceMembersResponseDTO  workspaceMembersDTO = new WorkspaceMembersResponseDTO(workspaceDTO, members);
 
     CustomResponseBody<WorkspaceFullResponseDTO> response = new CustomResponseBody<>();
     response.setStatus(ResponseConditionStatus.SUCCESS);
