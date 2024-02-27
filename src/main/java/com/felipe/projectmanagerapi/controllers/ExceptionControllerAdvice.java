@@ -3,10 +3,7 @@ package com.felipe.projectmanagerapi.controllers;
 import com.auth0.jwt.exceptions.JWTCreationException;
 import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.felipe.projectmanagerapi.enums.ResponseConditionStatus;
-import com.felipe.projectmanagerapi.exceptions.InvalidDateException;
-import com.felipe.projectmanagerapi.exceptions.MemberAlreadyExistsException;
-import com.felipe.projectmanagerapi.exceptions.RecordNotFoundException;
-import com.felipe.projectmanagerapi.exceptions.UserAlreadyExistsException;
+import com.felipe.projectmanagerapi.exceptions.*;
 import com.felipe.projectmanagerapi.utils.CustomResponseBody;
 import com.felipe.projectmanagerapi.utils.CustomValidationErrors;
 import jakarta.validation.ConstraintViolationException;
@@ -136,6 +133,17 @@ public class ExceptionControllerAdvice {
   @ExceptionHandler(IllegalArgumentException.class)
   @ResponseStatus(HttpStatus.BAD_REQUEST)
   public CustomResponseBody<Void> handleIllegalArgumentException(IllegalArgumentException e) {
+    CustomResponseBody<Void> response = new CustomResponseBody<>();
+    response.setStatus(ResponseConditionStatus.ERROR);
+    response.setCode(HttpStatus.BAD_REQUEST);
+    response.setMessage(e.getMessage());
+    response.setData(null);
+    return response;
+  }
+
+  @ExceptionHandler(WorkspaceIsNotEmptyException.class)
+  @ResponseStatus(HttpStatus.BAD_REQUEST)
+  public CustomResponseBody<Void> handlerWorkspaceIsNotEmptyException(WorkspaceIsNotEmptyException e) {
     CustomResponseBody<Void> response = new CustomResponseBody<>();
     response.setStatus(ResponseConditionStatus.ERROR);
     response.setCode(HttpStatus.BAD_REQUEST);
