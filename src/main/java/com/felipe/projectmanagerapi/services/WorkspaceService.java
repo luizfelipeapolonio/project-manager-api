@@ -3,6 +3,7 @@ package com.felipe.projectmanagerapi.services;
 import com.felipe.projectmanagerapi.dtos.WorkspaceCreateOrUpdateDTO;
 import com.felipe.projectmanagerapi.exceptions.MemberAlreadyExistsException;
 import com.felipe.projectmanagerapi.exceptions.RecordNotFoundException;
+import com.felipe.projectmanagerapi.exceptions.WorkspaceIsNotEmptyException;
 import com.felipe.projectmanagerapi.infra.security.AuthorizationService;
 import com.felipe.projectmanagerapi.infra.security.UserPrincipal;
 import com.felipe.projectmanagerapi.models.User;
@@ -150,6 +151,9 @@ public class WorkspaceService {
 
     if(!workspace.getOwner().getId().equals(userPrincipal.getUser().getId())) {
       throw new AccessDeniedException("Acesso negado: Você não tem permissão para manipular este recurso");
+    }
+    if(!workspace.getProjects().isEmpty()) {
+      throw new WorkspaceIsNotEmptyException(workspace);
     }
 
     this.workspaceRepository.deleteById(workspace.getId());
