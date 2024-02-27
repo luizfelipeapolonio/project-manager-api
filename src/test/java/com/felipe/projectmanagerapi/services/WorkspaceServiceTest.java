@@ -3,6 +3,7 @@ package com.felipe.projectmanagerapi.services;
 import com.felipe.projectmanagerapi.dtos.WorkspaceCreateOrUpdateDTO;
 import com.felipe.projectmanagerapi.exceptions.MemberAlreadyExistsException;
 import com.felipe.projectmanagerapi.exceptions.RecordNotFoundException;
+import com.felipe.projectmanagerapi.exceptions.WorkspaceIsNotEmptyException;
 import com.felipe.projectmanagerapi.infra.security.AuthorizationService;
 import com.felipe.projectmanagerapi.infra.security.UserPrincipal;
 import com.felipe.projectmanagerapi.models.User;
@@ -536,5 +537,31 @@ public class WorkspaceServiceTest {
     verify(this.authentication, times(1)).getPrincipal();
     verify(this.workspaceRepository, times(1)).findById("01");
     verify(this.workspaceRepository, never()).deleteById(workspace.getId());
+  }
+
+  @Test
+  @DisplayName("delete - Should throw a WorkspaceIsNotEmptyException if there are projects in the workspace")
+  void deleteWorkspaceFailsByWorkspaceIsNotEmpty() {
+    UserPrincipal userPrincipal = new UserPrincipal(this.dataMock.getUsers().get(0));
+    Workspace workspace = this.dataMock.getWorkspaces().get(0);
+    workspace.setProjects(List.of(this.dataMock.getProjects().get(1)));
+
+    when(this.authorizationService.getAuthentication()).thenReturn(this.authentication);
+    when(this.authentication.getPrincipal()).thenReturn(userPrincipal);
+    when(this.workspaceRepository.findById("01")).thenReturn(Optional.of(workspace));
+
+    Exception thrown = catchException(() -> this.workspaceService.delete("01"));
+
+    assertThat(thrown)
+      .isExactlyInstanceOf(WorkspaceIsNotEmptyException.class)
+      .hasMessage(
+        "Não foi possível excluir o workspace. O workspace de ID: '01' não está vazio. " +
+        "Quantidade de projetos: 1. Exclua todos os projetos antes de excluir o workspace"
+      );
+
+    verify(this.authorizationService, times(1)).getAuthentication();
+    verify(this.authentication, times(1)).getPrincipal();
+    verify(this.workspaceRepository, times(1)).findById("01");
+    verify(this.workspaceRepository, never()).deleteById("01");
   }
 }

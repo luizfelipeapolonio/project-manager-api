@@ -7,6 +7,7 @@ import com.felipe.projectmanagerapi.dtos.mappers.WorkspaceMapper;
 import com.felipe.projectmanagerapi.enums.ResponseConditionStatus;
 import com.felipe.projectmanagerapi.exceptions.MemberAlreadyExistsException;
 import com.felipe.projectmanagerapi.exceptions.RecordNotFoundException;
+import com.felipe.projectmanagerapi.exceptions.WorkspaceIsNotEmptyException;
 import com.felipe.projectmanagerapi.models.User;
 import com.felipe.projectmanagerapi.models.Workspace;
 import com.felipe.projectmanagerapi.services.WorkspaceService;
@@ -376,6 +377,30 @@ public class WorkspaceControllerTest {
       .andExpect(jsonPath("$.code").value(HttpStatus.FORBIDDEN.value()))
       .andExpect(jsonPath("$.message").value("Acesso negado: Você não tem permissão para manipular este recurso"))
       .andExpect(jsonPath("$.data").doesNotExist());
+
+    verify(this.workspaceService, times(1)).delete("01");
+    verify(this.workspaceMapper, never()).toWorkspaceResponseDTO(any(Workspace.class));
+  }
+
+  @Test
+  @DisplayName("delete - Should return an error response with bad request status code")
+  void deleteWorkspaceFailsByWorkspaceIsNotEmpty() throws Exception {
+    Workspace workspace = this.dataMock.getWorkspaces().get(0);
+    workspace.setProjects(List.of(this.dataMock.getProjects().get(1)));
+
+    when(this.workspaceService.delete("01"))
+      .thenThrow(new WorkspaceIsNotEmptyException(workspace));
+
+    this.mockMvc.perform(delete(this.baseUrl + "/01")
+      .accept(MediaType.APPLICATION_JSON))
+      .andExpect(status().isBadRequest())
+      .andExpect(jsonPath("$.status").value(ResponseConditionStatus.ERROR.getValue()))
+      .andExpect(jsonPath("$.code").value(HttpStatus.BAD_REQUEST.value()))
+      .andExpect(jsonPath("$.message").value(
+        "Não foi possível excluir o workspace. O workspace de ID: '01' não está vazio. " +
+          "Quantidade de projetos: 1. Exclua todos os projetos antes de excluir o workspace"
+      ))
+      .andExpect(jsonPath(".data").doesNotExist());
 
     verify(this.workspaceService, times(1)).delete("01");
     verify(this.workspaceMapper, never()).toWorkspaceResponseDTO(any(Workspace.class));
