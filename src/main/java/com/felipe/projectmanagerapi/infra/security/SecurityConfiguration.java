@@ -57,6 +57,7 @@ public class SecurityConfiguration {
         .requestMatchers(HttpMethod.GET, workspaceBaseUrl + "/{workspaceId}/members").hasAnyRole("ADMIN", "WRITE_READ", "READ_ONLY")
         .requestMatchers(workspaceBaseUrl + "/{workspaceId}/members/**").hasRole("ADMIN")
         .requestMatchers(HttpMethod.POST, projectBaseUrl).hasAnyRole("ADMIN", "WRITE_READ")
+        .requestMatchers(HttpMethod.PATCH, projectBaseUrl + "/{projectId}").hasAnyRole("ADMIN", "WRITE_READ")
         .requestMatchers(HttpMethod.POST, "/api/projects/test").permitAll()
         .anyRequest().authenticated())
       .addFilterBefore(this.securityFilter, UsernamePasswordAuthenticationFilter.class)
