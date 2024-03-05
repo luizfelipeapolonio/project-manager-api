@@ -10,6 +10,7 @@ import com.felipe.projectmanagerapi.exceptions.RecordNotFoundException;
 import com.felipe.projectmanagerapi.exceptions.WorkspaceIsNotEmptyException;
 import com.felipe.projectmanagerapi.models.User;
 import com.felipe.projectmanagerapi.models.Workspace;
+import com.felipe.projectmanagerapi.services.MemberService;
 import com.felipe.projectmanagerapi.services.WorkspaceService;
 import com.felipe.projectmanagerapi.utils.ConvertDateFormat;
 import com.felipe.projectmanagerapi.utils.CustomResponseBody;
@@ -60,6 +61,9 @@ public class WorkspaceControllerTest {
 
   @MockBean
   WorkspaceService workspaceService;
+
+  @MockBean
+  MemberService memberService;
 
   @SpyBean
   WorkspaceMapper workspaceMapper;
@@ -438,7 +442,7 @@ public class WorkspaceControllerTest {
 
     String jsonResponseBody = this.objectMapper.writeValueAsString(response);
 
-    when(this.workspaceService.insertMember("01", "02")).thenReturn(workspace);
+    when(this.memberService.insertMember("01", "02")).thenReturn(workspace);
     when(this.workspaceMapper.toWorkspaceResponseDTO(workspace)).thenReturn(workspaceDTO);
 
     this.mockMvc.perform(patch(this.baseUrl + "/01/members/02")
@@ -446,7 +450,7 @@ public class WorkspaceControllerTest {
       .andExpect(status().isOk())
       .andExpect(content().json(jsonResponseBody));
 
-    verify(this.workspaceService, times(1)).insertMember("01", "02");
+    verify(this.memberService, times(1)).insertMember("01", "02");
     verify(this.workspaceMapper, times(1)).toWorkspaceResponseDTO(workspace);
     verify(this.userMapper, times(3)).toDTO(any(User.class));
   }
@@ -454,7 +458,7 @@ public class WorkspaceControllerTest {
   @Test
   @DisplayName("insertMember - Should return an error response with forbidden status code")
   void insertMemberFailsByDifferentWorkspaceOwnerId() throws Exception{
-    when(this.workspaceService.insertMember("01", "02"))
+    when(this.memberService.insertMember("01", "02"))
       .thenThrow(new AccessDeniedException("Acesso negado: Você não tem permissão para alterar este recurso"));
 
     this.mockMvc.perform(patch(this.baseUrl + "/01/members/02")
@@ -465,7 +469,7 @@ public class WorkspaceControllerTest {
       .andExpect(jsonPath("$.message").value("Acesso negado: Você não tem permissão para alterar este recurso"))
       .andExpect(jsonPath("$.data").doesNotExist());
 
-    verify(this.workspaceService, times(1)).insertMember("01", "02");
+    verify(this.memberService, times(1)).insertMember("01", "02");
     verify(this.workspaceMapper, never()).toWorkspaceResponseDTO(any(Workspace.class));
     verify(this.userMapper, never()).toDTO(any(User.class));
   }
@@ -473,7 +477,7 @@ public class WorkspaceControllerTest {
   @Test
   @DisplayName("insertMember - Should return an error response with not found status code")
   void insertMemberFailsByWorkspaceNotFound() throws Exception {
-    when(this.workspaceService.insertMember("01", "02"))
+    when(this.memberService.insertMember("01", "02"))
       .thenThrow(new RecordNotFoundException("Workspace com ID: '01' não encontrado"));
 
     this.mockMvc.perform(patch(this.baseUrl + "/01/members/02")
@@ -484,7 +488,7 @@ public class WorkspaceControllerTest {
       .andExpect(jsonPath("$.message").value("Workspace com ID: '01' não encontrado"))
       .andExpect(jsonPath("$.data").doesNotExist());
 
-    verify(this.workspaceService, times(1)).insertMember("01", "02");
+    verify(this.memberService, times(1)).insertMember("01", "02");
     verify(this.workspaceMapper, never()).toWorkspaceResponseDTO(any(Workspace.class));
     verify(this.userMapper, never()).toDTO(any(User.class));
   }
@@ -492,7 +496,7 @@ public class WorkspaceControllerTest {
   @Test
   @DisplayName("insertMember - Should return an error response with conflict status code")
   void insertMemberFailsByMemberAlreadyExists() throws Exception {
-    when(this.workspaceService.insertMember("01", "02"))
+    when(this.memberService.insertMember("01", "02"))
       .thenThrow(new MemberAlreadyExistsException("02", "01"));
 
     this.mockMvc.perform(patch(this.baseUrl + "/01/members/02")
@@ -503,7 +507,7 @@ public class WorkspaceControllerTest {
       .andExpect(jsonPath("$.message").value("O usuário de ID: '02' já é membro do workspace de ID: '01'."))
       .andExpect(jsonPath("$.data").doesNotExist());
 
-    verify(this.workspaceService, times(1)).insertMember("01", "02");
+    verify(this.memberService, times(1)).insertMember("01", "02");
     verify(this.workspaceMapper, never()).toWorkspaceResponseDTO(any(Workspace.class));
     verify(this.userMapper, never()).toDTO(any(User.class));
   }
@@ -541,7 +545,7 @@ public class WorkspaceControllerTest {
 
     String jsonResponseBody = this.objectMapper.writeValueAsString(response);
 
-    when(this.workspaceService.removeMember("01", "02")).thenReturn(workspace);
+    when(this.memberService.removeMember("01", "02")).thenReturn(workspace);
     when(this.workspaceMapper.toWorkspaceResponseDTO(workspace)).thenReturn(workspaceDTO);
 
     this.mockMvc.perform(delete(this.baseUrl + "/01/members/02")
@@ -549,7 +553,7 @@ public class WorkspaceControllerTest {
       .andExpect(status().isOk())
       .andExpect(content().json(jsonResponseBody));
 
-    verify(this.workspaceService, times(1)).removeMember("01", "02");
+    verify(this.memberService, times(1)).removeMember("01", "02");
     verify(this.workspaceMapper, times(1)).toWorkspaceResponseDTO(workspace);
     verify(this.userMapper, times(2)).toDTO(any(User.class));
   }
@@ -557,7 +561,7 @@ public class WorkspaceControllerTest {
   @Test
   @DisplayName("removeMember - Should return an error response with a not found status code")
   void removeMemberFailsByWorkspaceNotFound() throws Exception {
-    when(this.workspaceService.removeMember("01", "02"))
+    when(this.memberService.removeMember("01", "02"))
       .thenThrow(new RecordNotFoundException("Workspace de ID: '01' não encontrado"));
 
     this.mockMvc.perform(delete(this.baseUrl + "/01/members/02")
@@ -568,7 +572,7 @@ public class WorkspaceControllerTest {
       .andExpect(jsonPath("$.message").value("Workspace de ID: '01' não encontrado"))
       .andExpect(jsonPath("$.data").doesNotExist());
 
-    verify(this.workspaceService, times(1)).removeMember("01", "02");
+    verify(this.memberService, times(1)).removeMember("01", "02");
     verify(this.workspaceMapper, never()).toWorkspaceResponseDTO(any(Workspace.class));
     verify(this.userMapper, never()).toDTO(any(User.class));
   }
@@ -576,7 +580,7 @@ public class WorkspaceControllerTest {
   @Test
   @DisplayName("removeMember - Should return an error response with forbidden status code")
   void removeMemberFailsByDifferentWorkspaceOwnerId() throws Exception {
-    when(this.workspaceService.removeMember("01", "02"))
+    when(this.memberService.removeMember("01", "02"))
       .thenThrow(new AccessDeniedException("Acesso negado: Você não tem permissão para alterar este recurso"));
 
     this.mockMvc.perform(delete(this.baseUrl + "/01/members/02")
@@ -587,7 +591,7 @@ public class WorkspaceControllerTest {
       .andExpect(jsonPath("$.message").value("Acesso negado: Você não tem permissão para alterar este recurso"))
       .andExpect(jsonPath("$.data").doesNotExist());
 
-    verify(this.workspaceService, times(1)).removeMember("01", "02");
+    verify(this.memberService, times(1)).removeMember("01", "02");
     verify(this.workspaceMapper, never()).toWorkspaceResponseDTO(any(Workspace.class));
     verify(this.userMapper, never()).toDTO(any(User.class));
   }
@@ -595,7 +599,7 @@ public class WorkspaceControllerTest {
   @Test
   @DisplayName("removeMember - Should return an error response with a not found status code")
   void removeMemberFailsByMemberNotFound() throws Exception {
-    when(this.workspaceService.removeMember("01", "02"))
+    when(this.memberService.removeMember("01", "02"))
       .thenThrow(new RecordNotFoundException("Membro de ID: '02' não encontrado no workspace de ID: '01'"));
 
     this.mockMvc.perform(delete(this.baseUrl + "/01/members/02")
@@ -606,7 +610,7 @@ public class WorkspaceControllerTest {
       .andExpect(jsonPath("$.message").value("Membro de ID: '02' não encontrado no workspace de ID: '01'"))
       .andExpect(jsonPath("$.data").doesNotExist());
 
-    verify(this.workspaceService, times(1)).removeMember("01", "02");
+    verify(this.memberService, times(1)).removeMember("01", "02");
     verify(this.workspaceMapper, never()).toWorkspaceResponseDTO(any(Workspace.class));
     verify(this.userMapper, never()).toDTO(any(User.class));
   }
