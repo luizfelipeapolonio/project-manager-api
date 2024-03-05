@@ -9,6 +9,7 @@ import com.felipe.projectmanagerapi.exceptions.RecordNotFoundException;
 import com.felipe.projectmanagerapi.infra.security.AuthorizationService;
 import com.felipe.projectmanagerapi.infra.security.UserPrincipal;
 import com.felipe.projectmanagerapi.models.Project;
+import com.felipe.projectmanagerapi.models.User;
 import com.felipe.projectmanagerapi.models.Workspace;
 import com.felipe.projectmanagerapi.repositories.ProjectRepository;
 import com.felipe.projectmanagerapi.utils.ConvertDateFormat;
@@ -28,6 +29,7 @@ import org.springframework.security.core.Authentication;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 import java.util.Optional;
 
 import static org.mockito.Mockito.when;
@@ -36,6 +38,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.eq;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchException;
 
@@ -56,6 +60,9 @@ public class ProjectServiceTest {
 
   @Mock
   WorkspaceService workspaceService;
+
+  @Mock
+  UserService userService;
 
   @Mock
   Authentication authentication;
@@ -300,5 +307,80 @@ public class ProjectServiceTest {
     verify(this.authentication, times(1)).getPrincipal();
     verify(this.projectRepository, times(1)).findById("02");
     verify(this.projectRepository, never()).save(any(Project.class));
+  }
+
+  @Test
+  @DisplayName("getAllByWorkspaceAndOwner - Should successfully return all the projects for a specific user in a specific workspace")
+  void getAllByWorkspaceAndOwnerSuccess() {
+    UserPrincipal userPrincipal = new UserPrincipal(this.dataMock.getUsers().get(0));
+    Workspace workspace = this.dataMock.getWorkspaces().get(0);
+    User projectsOwner = this.dataMock.getUsers().get(1);
+    List<Project> projects = List.of(this.dataMock.getProjects().get(1), this.dataMock.getProjects().get(2));
+
+    when(this.authorizationService.getAuthentication()).thenReturn(this.authentication);
+    when(this.authentication.getPrincipal()).thenReturn(userPrincipal);
+    when(this.workspaceService.getById("01")).thenReturn(workspace);
+    when(this.userService.getProfile("02")).thenReturn(projectsOwner);
+    when(this.projectRepository.findAllByWorkspaceIdAndOwnerId("01", "02")).thenReturn(projects);
+
+    List<Project> foundProjects = this.projectService.getAllByWorkspaceAndOwner("01", "02");
+
+    assertThat(foundProjects).allSatisfy(project -> {
+      assertThat(project.getOwner().getId()).isEqualTo(projectsOwner.getId());
+      assertThat(project.getWorkspace().getId()).isEqualTo(workspace.getId());
+    }).hasSize(2);
+
+    verify(this.authorizationService, times(1)).getAuthentication();
+    verify(this.authentication, times(1)).getPrincipal();
+    verify(this.workspaceService, times(1)).getById("01");
+    verify(this.userService, times(1)).getProfile("02");
+    verify(this.projectRepository, times(1)).findAllByWorkspaceIdAndOwnerId("01", "02");
+  }
+
+  @Test
+  @DisplayName("getAllByWorkspaceAndOwner - Should throw an AccessDeniedException if the workspace owner id is different from authenticated user id")
+  void getAllByWorkspaceAndOwnerFailsByDifferentWorkspaceOwnerId() {
+    UserPrincipal userPrincipal = new UserPrincipal(this.dataMock.getUsers().get(1));
+    Workspace workspace = this.dataMock.getWorkspaces().get(0);
+
+    when(this.authorizationService.getAuthentication()).thenReturn(this.authentication);
+    when(this.authentication.getPrincipal()).thenReturn(userPrincipal);
+    when(this.workspaceService.getById("01")).thenReturn(workspace);
+
+    Exception thrown = catchException(() -> this.projectService.getAllByWorkspaceAndOwner("01", "02"));
+
+    assertThat(thrown)
+      .isExactlyInstanceOf(AccessDeniedException.class)
+      .hasMessage("Acesso negado: Você não tem permissão para acessar este recurso");
+
+    verify(this.authorizationService, times(1)).getAuthentication();
+    verify(this.authentication, times(1)).getPrincipal();
+    verify(this.workspaceService, times(1)).getById("01");
+    verify(this.projectRepository, never()).findAllByWorkspaceIdAndOwnerId(eq("01"), anyString());
+  }
+
+  @Test
+  @DisplayName("deleteAllFromOwnerAndWorkspace - Should successfully delete all projects of the specific workspace and owner")
+  void deleteAllFromOwnerAndWorkspaceSuccess() {
+    UserPrincipal userPrincipal = new UserPrincipal(this.dataMock.getUsers().get(0));
+    User projectsOwner = this.dataMock.getUsers().get(1);
+    Workspace workspace = this.dataMock.getWorkspaces().get(0);
+    List<Project> projects = List.of(this.dataMock.getProjects().get(1), this.dataMock.getProjects().get(2));
+
+    when(this.authorizationService.getAuthentication()).thenReturn(this.authentication);
+    when(this.authentication.getPrincipal()).thenReturn(userPrincipal);
+    when(this.workspaceService.getById("01")).thenReturn(workspace);
+    when(this.userService.getProfile("02")).thenReturn(projectsOwner);
+    when(this.projectRepository.findAllByWorkspaceIdAndOwnerId("01", "02")).thenReturn(projects);
+    doNothing().when(this.projectRepository).deleteAll(projects);
+
+    this.projectService.deleteAllFromOwnerAndWorkspace("01", "02");
+
+    verify(this.authorizationService, times(1)).getAuthentication();
+    verify(this.authentication, times(1)).getPrincipal();
+    verify(this.workspaceService, times(1)).getById("01");
+    verify(this.userService, times(1)).getProfile("02");
+    verify(this.projectRepository, times(1)).findAllByWorkspaceIdAndOwnerId("01", "02");
+    verify(this.projectRepository, times(1)).deleteAll(any());
   }
 }
