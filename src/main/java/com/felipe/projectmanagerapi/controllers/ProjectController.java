@@ -21,6 +21,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 
+import java.util.List;
+
 @Validated
 @RestController
 @RequestMapping("/api/projects")
@@ -62,6 +64,23 @@ public class ProjectController {
     response.setCode(HttpStatus.OK);
     response.setMessage("Projeto atualizado com sucesso");
     response.setData(projectResponseDTO);
+    return response;
+  }
+
+  @RequestMapping("/workspace/{workspaceId}/owner/{ownerId}")
+  @ResponseStatus(HttpStatus.OK)
+  public CustomResponseBody<List<ProjectResponseDTO>> getAllByWorkspaceAndOwner(
+    @PathVariable @NotNull @NotBlank String workspaceId,
+    @PathVariable @NotNull @NotBlank String ownerId
+  ) {
+    List<Project> projects = this.projectService.getAllByWorkspaceAndOwner(workspaceId, ownerId);
+    List<ProjectResponseDTO> projectDTOs = projects.stream().map(this.projectMapper::toDTO).toList();
+
+    CustomResponseBody<List<ProjectResponseDTO>> response = new CustomResponseBody<>();
+    response.setStatus(ResponseConditionStatus.SUCCESS);
+    response.setCode(HttpStatus.OK);
+    response.setMessage("Todos os projetos do usuário de id '" + ownerId + "' no workspace de id '" + workspaceId + "'");
+    response.setData(projectDTOs);
     return response;
   }
 }
