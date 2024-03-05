@@ -8,6 +8,7 @@ import com.felipe.projectmanagerapi.exceptions.RecordNotFoundException;
 import com.felipe.projectmanagerapi.infra.security.AuthorizationService;
 import com.felipe.projectmanagerapi.infra.security.UserPrincipal;
 import com.felipe.projectmanagerapi.models.Project;
+import com.felipe.projectmanagerapi.models.User;
 import com.felipe.projectmanagerapi.models.Workspace;
 import com.felipe.projectmanagerapi.repositories.ProjectRepository;
 import com.felipe.projectmanagerapi.utils.ConvertDateFormat;
@@ -19,6 +20,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 
 @Service
 public class ProjectService {
@@ -26,17 +28,20 @@ public class ProjectService {
   private final ProjectRepository projectRepository;
   private final AuthorizationService authorizationService;
   private final WorkspaceService workspaceService;
+  private final UserService userService;
   private final ProjectMapper projectMapper;
 
   public ProjectService(
     ProjectRepository projectRepository,
     AuthorizationService authorizationService,
     WorkspaceService workspaceService,
+    UserService userService,
     ProjectMapper projectMapper
   ) {
     this.projectRepository = projectRepository;
     this.authorizationService = authorizationService;
     this.workspaceService = workspaceService;
+    this.userService = userService;
     this.projectMapper = projectMapper;
   }
 
@@ -109,5 +114,23 @@ public class ProjectService {
         return this.projectRepository.save(project);
       })
       .orElseThrow(() -> new RecordNotFoundException("Projeto de ID: '" + projectId + "' não encontrado"));
+  }
+
+  public List<Project> getAllByWorkspaceAndOwner(@NotNull String workspaceId, @NotNull String ownerId) {
+    Authentication authentication = this.authorizationService.getAuthentication();
+    UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
+    Workspace workspace = this.workspaceService.getById(workspaceId);
+    User projectsOwner = this.userService.getProfile(ownerId);
+
+    if(!workspace.getOwner().getId().equals(userPrincipal.getUser().getId())) {
+      throw new AccessDeniedException("Acesso negado: Você não tem permissão para acessar este recurso");
+    }
+
+    return this.projectRepository.findAllByWorkspaceIdAndOwnerId(workspace.getId(), projectsOwner.getId());
+  }
+
+  public void deleteAllFromOwnerAndWorkspace(@NotNull String workspaceId, @NotNull String ownerId) {
+    List<Project> projects = this.getAllByWorkspaceAndOwner(workspaceId, ownerId);
+    this.projectRepository.deleteAll(projects);
   }
 }
