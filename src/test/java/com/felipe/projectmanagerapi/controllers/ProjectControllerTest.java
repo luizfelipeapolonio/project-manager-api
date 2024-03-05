@@ -11,6 +11,7 @@ import com.felipe.projectmanagerapi.exceptions.RecordNotFoundException;
 import com.felipe.projectmanagerapi.models.Project;
 import com.felipe.projectmanagerapi.services.ProjectService;
 import com.felipe.projectmanagerapi.utils.ConvertDateFormat;
+import com.felipe.projectmanagerapi.utils.CustomResponseBody;
 import com.felipe.projectmanagerapi.utils.GenerateMocks;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -28,12 +29,14 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
-import java.time.format.DateTimeFormatter;
+import java.util.List;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.times;
@@ -313,6 +316,64 @@ public class ProjectControllerTest {
       .andExpect(jsonPath("$.data").doesNotExist());
 
     verify(this.projectService, times(1)).update("02", projectDTO);
+    verify(this.projectMapper, never()).toDTO(any(Project.class));
+  }
+
+  @Test
+  @DisplayName("getAllByWorkspaceAndOwner - Should return a success response with OK status code and a list of project DTOs")
+  void getAllByWorkspaceAndOwnerSuccess() throws Exception {
+    List<Project> projects = List.of(this.dataMock.getProjects().get(1), this.dataMock.getProjects().get(2));
+
+    List<ProjectResponseDTO> projectDTOs = projects.stream()
+      .map(project -> new ProjectResponseDTO(
+        project.getId(),
+        project.getName(),
+        project.getPriority().getValue(),
+        project.getCategory(),
+        project.getDescription(),
+        project.getBudget().toString(),
+        ConvertDateFormat.convertDateToFormattedString(project.getDeadline()),
+        project.getCreatedAt(),
+        project.getUpdatedAt(),
+        project.getOwner().getId(),
+        project.getWorkspace().getId()
+      ))
+      .toList();
+
+    CustomResponseBody<List<ProjectResponseDTO>> response = new CustomResponseBody<>();
+    response.setStatus(ResponseConditionStatus.SUCCESS);
+    response.setCode(HttpStatus.OK);
+    response.setMessage("Todos os projetos do usuário de id '02' no workspace de id '01'");
+    response.setData(projectDTOs);
+
+    String jsonResponseBody = this.objectMapper.writeValueAsString(response);
+
+    when(this.projectService.getAllByWorkspaceAndOwner("01", "02")).thenReturn(projects);
+
+    this.mockMvc.perform(get(this.baseUrl + "/workspace/01/owner/02")
+      .accept(MediaType.APPLICATION_JSON))
+      .andExpect(status().isOk())
+      .andExpect(content().json(jsonResponseBody));
+
+    verify(this.projectService, times(1)).getAllByWorkspaceAndOwner("01", "02");
+    verify(this.projectMapper, times(2)).toDTO(any(Project.class));
+  }
+
+  @Test
+  @DisplayName("getAllByWorkspaceAndOwner - Should return an error response with forbidden status code")
+  void getAllByWorkspaceAndOwnerFailsByDifferentWorkspaceOwner() throws Exception {
+    when(this.projectService.getAllByWorkspaceAndOwner("01", "02"))
+      .thenThrow(new AccessDeniedException("Acesso negado: Você não tem permissão para acessar este recurso"));
+
+    this.mockMvc.perform(get(this.baseUrl + "/workspace/01/owner/02")
+      .accept(MediaType.APPLICATION_JSON))
+      .andExpect(status().isForbidden())
+      .andExpect(jsonPath("$.status").value(ResponseConditionStatus.ERROR.getValue()))
+      .andExpect(jsonPath("$.code").value(HttpStatus.FORBIDDEN.value()))
+      .andExpect(jsonPath("$.message").value("Acesso negado: Você não tem permissão para acessar este recurso"))
+      .andExpect(jsonPath("$.data").doesNotExist());
+
+    verify(this.projectService, times(1)).getAllByWorkspaceAndOwner("01", "02");
     verify(this.projectMapper, never()).toDTO(any(Project.class));
   }
 }
