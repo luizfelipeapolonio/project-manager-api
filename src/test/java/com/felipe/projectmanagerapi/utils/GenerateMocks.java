@@ -143,9 +143,22 @@ public class GenerateMocks {
     p2.setCreatedAt(mockDateTime);
     p2.setUpdatedAt(mockDateTime);
 
+    Project p3 = new Project();
+    p3.setId("03");
+    p3.setName("Projeto 3");
+    p3.setCategory("Marketing");
+    p3.setDescription("Projeto de Marketing");
+    p3.setBudget(new BigDecimal("1500.00"));
+    p3.setDeadline(LocalDate.parse("2025-01-01"));
+    p3.setPriority(PriorityLevel.HIGH);
+    p3.setOwner(this.getUsers().get(1));
+    p3.setWorkspace(this.getWorkspaces().get(0));
+    p3.setCreatedAt(mockDateTime);
+    p3.setUpdatedAt(mockDateTime);
+
     projects.add(p1);
     projects.add(p2);
-
+    projects.add(p3);
     return projects;
   }
 }
