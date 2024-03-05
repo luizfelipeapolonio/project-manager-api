@@ -5,6 +5,7 @@ import com.felipe.projectmanagerapi.dtos.mappers.UserMapper;
 import com.felipe.projectmanagerapi.dtos.mappers.WorkspaceMapper;
 import com.felipe.projectmanagerapi.enums.ResponseConditionStatus;
 import com.felipe.projectmanagerapi.models.Workspace;
+import com.felipe.projectmanagerapi.services.MemberService;
 import com.felipe.projectmanagerapi.services.WorkspaceService;
 import com.felipe.projectmanagerapi.utils.CustomResponseBody;
 import jakarta.validation.Valid;
@@ -32,11 +33,18 @@ import java.util.Map;
 public class WorkspaceController {
 
   private final WorkspaceService workspaceService;
+  private final MemberService memberService;
   private final WorkspaceMapper workspaceMapper;
   private final UserMapper userMapper;
 
-  public WorkspaceController(WorkspaceService workspaceService, WorkspaceMapper workspaceMapper, UserMapper userMapper) {
+  public WorkspaceController(
+    WorkspaceService workspaceService,
+    MemberService memberService,
+    WorkspaceMapper workspaceMapper,
+    UserMapper userMapper
+  ) {
     this.workspaceService = workspaceService;
+    this.memberService = memberService;
     this.workspaceMapper = workspaceMapper;
     this.userMapper = userMapper;
   }
@@ -141,7 +149,7 @@ public class WorkspaceController {
     @PathVariable @NotNull @NotBlank String workspaceId,
     @PathVariable @NotNull @NotBlank String userId
   ) {
-    Workspace workspace = this.workspaceService.insertMember(workspaceId, userId);
+    Workspace workspace = this.memberService.insertMember(workspaceId, userId);
     WorkspaceResponseDTO workspaceDTO = this.workspaceMapper.toWorkspaceResponseDTO(workspace);
     List<UserResponseDTO> members = workspace.getMembers().stream().map(this.userMapper::toDTO).toList();
     WorkspaceMembersResponseDTO workspaceMembersDTO = new WorkspaceMembersResponseDTO(workspaceDTO, members);
@@ -160,7 +168,7 @@ public class WorkspaceController {
     @PathVariable @NotNull @NotBlank String workspaceId,
     @PathVariable @NotNull @NotBlank String userId
   ) {
-    Workspace workspace = this.workspaceService.removeMember(workspaceId, userId);
+    Workspace workspace = this.memberService.removeMember(workspaceId, userId);
     WorkspaceResponseDTO workspaceDTO = this.workspaceMapper.toWorkspaceResponseDTO(workspace);
     List<UserResponseDTO> members = workspace.getMembers().stream().map(this.userMapper::toDTO).toList();
     WorkspaceMembersResponseDTO workspaceMembersDTO = new WorkspaceMembersResponseDTO(workspaceDTO, members);
