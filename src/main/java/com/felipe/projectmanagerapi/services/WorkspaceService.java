@@ -1,7 +1,6 @@
 package com.felipe.projectmanagerapi.services;
 
 import com.felipe.projectmanagerapi.dtos.WorkspaceCreateOrUpdateDTO;
-import com.felipe.projectmanagerapi.exceptions.MemberAlreadyExistsException;
 import com.felipe.projectmanagerapi.exceptions.RecordNotFoundException;
 import com.felipe.projectmanagerapi.exceptions.WorkspaceIsNotEmptyException;
 import com.felipe.projectmanagerapi.infra.security.AuthorizationService;
@@ -23,16 +22,10 @@ public class WorkspaceService {
 
   private final WorkspaceRepository workspaceRepository;
   private final AuthorizationService authorizationService;
-  private final UserService userService;
 
-  public WorkspaceService(
-    WorkspaceRepository workspaceRepository,
-    AuthorizationService authorizationService,
-    UserService userService
-  ) {
+  public WorkspaceService(WorkspaceRepository workspaceRepository, AuthorizationService authorizationService) {
     this.workspaceRepository = workspaceRepository;
     this.authorizationService = authorizationService;
-    this.userService = userService;
   }
 
   public Workspace create(@Valid @NotNull WorkspaceCreateOrUpdateDTO workspaceDTO) {
@@ -65,59 +58,6 @@ public class WorkspaceService {
     Authentication authentication = this.authorizationService.getAuthentication();
     UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
     return this.workspaceRepository.findAllByOwnerId(userPrincipal.getUser().getId());
-  }
-
-  public Workspace insertMember(@NotNull String workspaceId, @NotNull String userId) {
-    Authentication authentication = this.authorizationService.getAuthentication();
-    UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
-    User workspaceMember = this.userService.getProfile(userId);
-
-    return this.workspaceRepository.findById(workspaceId)
-      .map(workspace -> {
-        if(!workspace.getOwner().getId().equals(userPrincipal.getUser().getId())) {
-          throw new AccessDeniedException("Acesso negado: Você não tem permissão para alterar este recurso");
-        }
-
-        Optional<User> existingMember = workspace.getMembers()
-          .stream()
-          .filter(member -> member.getId().equals(userId))
-          .findFirst();
-
-        if(existingMember.isPresent()) {
-          throw new MemberAlreadyExistsException(existingMember.get().getId(), workspaceId);
-        }
-
-        workspace.addMember(workspaceMember);
-        return this.workspaceRepository.save(workspace);
-      })
-      .orElseThrow(() -> new RecordNotFoundException("Workspace com ID: '" + workspaceId + "' não encontrado"));
-  }
-
-  public Workspace removeMember(@NotNull String workspaceId, @NotNull String userId) {
-    Authentication authentication = this.authorizationService.getAuthentication();
-    UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
-    User workspaceMember = this.userService.getProfile(userId);
-
-    return this.workspaceRepository.findById(workspaceId)
-      .map(workspace -> {
-        if(!workspace.getOwner().getId().equals(userPrincipal.getUser().getId())) {
-          throw new AccessDeniedException("Acesso negado: Você não tem permissão para alterar este recurso");
-        }
-
-        Optional<User> existingMember = workspace.getMembers()
-          .stream()
-          .filter(member -> member.getId().equals(userId))
-          .findFirst();
-
-        if(existingMember.isEmpty()) {
-          throw new RecordNotFoundException("Membro de ID: '" + userId + "' não encontrado" +
-            " no workspace de ID: '" + workspaceId + "'");
-        }
-
-        workspace.removeMember(workspaceMember);
-        return this.workspaceRepository.save(workspace);
-      })
-      .orElseThrow(() -> new RecordNotFoundException("Workspace de ID: '" + workspaceId + "' não encontrado"));
   }
 
   public Workspace getById(@NotNull String workspaceId) {
