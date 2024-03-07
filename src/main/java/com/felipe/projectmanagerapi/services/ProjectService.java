@@ -129,6 +129,12 @@ public class ProjectService {
     return this.projectRepository.findAllByWorkspaceIdAndOwnerId(workspace.getId(), projectsOwner.getId());
   }
 
+  public Project getById(@NotNull String projectId, @NotNull String workspaceId) {
+    Workspace workspace = this.workspaceService.getById(workspaceId);
+    return this.projectRepository.findByProjectIdAndWorkspaceId(projectId, workspace.getId())
+      .orElseThrow(() -> new RecordNotFoundException("Projeto de ID: '" + projectId + "' não encontrado"));
+  }
+
   public void deleteAllFromOwnerAndWorkspace(@NotNull String workspaceId, @NotNull String ownerId) {
     List<Project> projects = this.getAllByWorkspaceAndOwner(workspaceId, ownerId);
     this.projectRepository.deleteAll(projects);

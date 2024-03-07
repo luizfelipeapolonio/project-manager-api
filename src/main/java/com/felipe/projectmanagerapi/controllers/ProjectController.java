@@ -67,7 +67,24 @@ public class ProjectController {
     return response;
   }
 
-  @RequestMapping("/workspace/{workspaceId}/owner/{ownerId}")
+  @RequestMapping("/{projectId}/workspaces/{workspaceId}")
+  @ResponseStatus(HttpStatus.OK)
+  public CustomResponseBody<ProjectResponseDTO> getById(
+    @PathVariable @NotNull @NotBlank String projectId,
+    @PathVariable @NotNull @NotBlank String workspaceId
+  ) {
+    Project project = this.projectService.getById(projectId, workspaceId);
+    ProjectResponseDTO projectResponseDTO = this.projectMapper.toDTO(project);
+
+    CustomResponseBody<ProjectResponseDTO> response = new CustomResponseBody<>();
+    response.setStatus(ResponseConditionStatus.SUCCESS);
+    response.setCode(HttpStatus.OK);
+    response.setMessage("Projeto encontrado");
+    response.setData(projectResponseDTO);
+    return response;
+  }
+
+  @RequestMapping("/workspaces/{workspaceId}/owner/{ownerId}")
   @ResponseStatus(HttpStatus.OK)
   public CustomResponseBody<List<ProjectResponseDTO>> getAllByWorkspaceAndOwner(
     @PathVariable @NotNull @NotBlank String workspaceId,
