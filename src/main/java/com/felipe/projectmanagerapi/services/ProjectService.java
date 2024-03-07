@@ -21,6 +21,7 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class ProjectService {
@@ -129,10 +130,26 @@ public class ProjectService {
     return this.projectRepository.findAllByWorkspaceIdAndOwnerId(workspace.getId(), projectsOwner.getId());
   }
 
-  public Project getById(@NotNull String projectId, @NotNull String workspaceId) {
-    Workspace workspace = this.workspaceService.getById(workspaceId);
-    return this.projectRepository.findByProjectIdAndWorkspaceId(projectId, workspace.getId())
+  public Project getById(@NotNull String projectId) {
+    Authentication authentication = this.authorizationService.getAuthentication();
+    UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
+
+    Project project = this.projectRepository.findById(projectId)
       .orElseThrow(() -> new RecordNotFoundException("Projeto de ID: '" + projectId + "' não encontrado"));
+
+    String authenticatedUserId = userPrincipal.getUser().getId();
+    String workspaceOwnerId = project.getWorkspace().getOwner().getId();
+
+    Optional<User> existingMember = project.getWorkspace().getMembers()
+      .stream()
+      .filter(member -> member.getId().equals(authenticatedUserId))
+      .findFirst();
+
+    if(!workspaceOwnerId.equals(authenticatedUserId) && existingMember.isEmpty()) {
+      throw new AccessDeniedException("Acesso negado: Você não tem permissão para acessar este recurso");
+    }
+
+    return project;
   }
 
   public void deleteAllFromOwnerAndWorkspace(@NotNull String workspaceId, @NotNull String ownerId) {

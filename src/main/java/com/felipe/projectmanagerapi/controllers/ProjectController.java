@@ -67,13 +67,10 @@ public class ProjectController {
     return response;
   }
 
-  @RequestMapping("/{projectId}/workspaces/{workspaceId}")
+  @RequestMapping("/{projectId}")
   @ResponseStatus(HttpStatus.OK)
-  public CustomResponseBody<ProjectResponseDTO> getById(
-    @PathVariable @NotNull @NotBlank String projectId,
-    @PathVariable @NotNull @NotBlank String workspaceId
-  ) {
-    Project project = this.projectService.getById(projectId, workspaceId);
+  public CustomResponseBody<ProjectResponseDTO> getById(@PathVariable @NotNull @NotBlank String projectId) {
+    Project project = this.projectService.getById(projectId);
     ProjectResponseDTO projectResponseDTO = this.projectMapper.toDTO(project);
 
     CustomResponseBody<ProjectResponseDTO> response = new CustomResponseBody<>();
