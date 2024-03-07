@@ -395,10 +395,10 @@ public class ProjectControllerTest {
       project.getWorkspace().getId()
     );
 
-    when(this.projectService.getById("01", "01")).thenReturn(project);
+    when(this.projectService.getById("01")).thenReturn(project);
     when(this.projectMapper.toDTO(project)).thenReturn(projectResponseDTO);
 
-    this.mockMvc.perform(get(this.baseUrl + "/01/workspaces/01")
+    this.mockMvc.perform(get(this.baseUrl + "/01")
       .accept(MediaType.APPLICATION_JSON))
       .andExpect(status().isOk())
       .andExpect(jsonPath("$.status").value(ResponseConditionStatus.SUCCESS.getValue()))
@@ -416,17 +416,17 @@ public class ProjectControllerTest {
       .andExpect(jsonPath("$.data.ownerId").value(projectResponseDTO.ownerId()))
       .andExpect(jsonPath("$.data.workspaceId").value(projectResponseDTO.workspaceId()));
 
-    verify(this.projectService, times(1)).getById("01", "01");
+    verify(this.projectService, times(1)).getById("01");
     verify(this.projectMapper, times(1)).toDTO(project);
   }
 
   @Test
   @DisplayName("getById - Should return an error response with not found status code")
   void getByIdFailsByProjectNotFound() throws Exception {
-    when(this.projectService.getById("01", "01"))
+    when(this.projectService.getById("01"))
       .thenThrow(new RecordNotFoundException("Projeto de ID: '01' não encontrado"));
 
-    this.mockMvc.perform(get(this.baseUrl + "/01/workspaces/01")
+    this.mockMvc.perform(get(this.baseUrl + "/01")
       .accept(MediaType.APPLICATION_JSON))
       .andExpect(status().isNotFound())
       .andExpect(jsonPath("$.status").value(ResponseConditionStatus.ERROR.getValue()))
@@ -434,7 +434,7 @@ public class ProjectControllerTest {
       .andExpect(jsonPath("$.message").value("Projeto de ID: '01' não encontrado"))
       .andExpect(jsonPath("$.data").doesNotExist());
 
-    verify(this.projectService, times(1)).getById("01", "01");
+    verify(this.projectService, times(1)).getById("01");
     verify(this.projectMapper, never()).toDTO(any(Project.class));
   }
 }

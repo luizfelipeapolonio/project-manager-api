@@ -387,13 +387,14 @@ public class ProjectServiceTest {
   @Test
   @DisplayName("getById - Should successfully get a project in a workspace")
   void getByIdSuccess() {
+    UserPrincipal userPrincipal = new UserPrincipal(this.dataMock.getUsers().get(2));
     Project project = this.dataMock.getProjects().get(0);
-    Workspace workspace = this.dataMock.getWorkspaces().get(0);
 
-    when(this.workspaceService.getById("01")).thenReturn(workspace);
-    when(this.projectRepository.findByProjectIdAndWorkspaceId("01", "01")).thenReturn(Optional.of(project));
+    when(this.authorizationService.getAuthentication()).thenReturn(this.authentication);
+    when(this.authentication.getPrincipal()).thenReturn(userPrincipal);
+    when(this.projectRepository.findById("01")).thenReturn(Optional.of(project));
 
-    Project foundProject = this.projectService.getById("01", "01");
+    Project foundProject = this.projectService.getById("01");
 
     assertThat(foundProject.getId()).isEqualTo(project.getId());
     assertThat(foundProject.getName()).isEqualTo(project.getName());
@@ -407,25 +408,53 @@ public class ProjectServiceTest {
     assertThat(foundProject.getOwner().getId()).isEqualTo(project.getOwner().getId());
     assertThat(foundProject.getWorkspace().getId()).isEqualTo(project.getWorkspace().getId());
 
-    verify(this.workspaceService, times(1)).getById("01");
-    verify(this.projectRepository, times(1)).findByProjectIdAndWorkspaceId("01", "01");
+    verify(this.authorizationService, times(1)).getAuthentication();
+    verify(this.authentication, times(1)).getPrincipal();
+    verify(this.projectRepository, times(1)).findById("01");
   }
 
   @Test
   @DisplayName("getById - Should throw a RecordNotFoundException if the project is not found")
   void getByIdFailsByProjectNotFound() {
-    Workspace workspace = this.dataMock.getWorkspaces().get(0);
+    UserPrincipal userPrincipal = new UserPrincipal(this.dataMock.getUsers().get(2));
 
-    when(this.workspaceService.getById("01")).thenReturn(workspace);
-    when(this.projectRepository.findByProjectIdAndWorkspaceId("01", "01")).thenReturn(Optional.empty());
+    when(this.authorizationService.getAuthentication()).thenReturn(this.authentication);
+    when(this.authentication.getPrincipal()).thenReturn(userPrincipal);
+    when(this.projectRepository.findById("01")).thenReturn(Optional.empty());
 
-    Exception thrown = catchException(() -> this.projectService.getById("01", "01"));
+    Exception thrown = catchException(() -> this.projectService.getById("01"));
 
     assertThat(thrown)
       .isExactlyInstanceOf(RecordNotFoundException.class)
       .hasMessage("Projeto de ID: '01' não encontrado");
 
-    verify(this.workspaceService, times(1)).getById("01");
-    verify(this.projectRepository, times(1)).findByProjectIdAndWorkspaceId("01", "01");
+    verify(this.authorizationService, times(1)).getAuthentication();
+    verify(this.authentication, times(1)).getPrincipal();
+    verify(this.projectRepository, times(1)).findById("01");
+  }
+
+  @Test
+  @DisplayName("getById - Should throw an AccessDeniedException if the authenticated user is not the owner or member of the workspace")
+  void getByIdFailsByNotBeingOwnerOrMemberOfWorkspace() {
+    UserPrincipal userPrincipal = new UserPrincipal(this.dataMock.getUsers().get(2));
+    Workspace workspace = this.dataMock.getWorkspaces().get(0);
+    workspace.setMembers(List.of(this.dataMock.getUsers().get(1)));
+
+    Project project = this.dataMock.getProjects().get(0);
+    project.setWorkspace(workspace);
+
+    when(this.authorizationService.getAuthentication()).thenReturn(this.authentication);
+    when(this.authentication.getPrincipal()).thenReturn(userPrincipal);
+    when(this.projectRepository.findById("01")).thenReturn(Optional.of(project));
+
+    Exception thrown = catchException(() -> this.projectService.getById("01"));
+
+    assertThat(thrown)
+      .isExactlyInstanceOf(AccessDeniedException.class)
+      .hasMessage("Acesso negado: Você não tem permissão para acessar este recurso");
+
+    verify(this.authorizationService, times(1)).getAuthentication();
+    verify(this.authentication, times(1)).getPrincipal();
+    verify(this.projectRepository, times(1)).findById("01");
   }
 }
