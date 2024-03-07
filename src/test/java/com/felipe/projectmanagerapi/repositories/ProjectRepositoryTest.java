@@ -12,6 +12,7 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.test.context.ActiveProfiles;
 
 import java.util.List;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -59,6 +60,40 @@ public class ProjectRepositoryTest {
       assertThat(project.getWorkspace().getId()).isEqualTo(workspace.getId());
       assertThat(project.getOwner().getId()).isEqualTo(projectOwner.getId());
     }).hasSize(2);
+  }
+
+  @Test
+  @DisplayName("findById - Should successfully find a project by id in a workspace")
+  void findByIdSuccess() {
+    User workspaceOwnerMock = this.dataMock.getUsers().get(0);
+    User projectOwnerMock = this.dataMock.getUsers().get(1);
+    Workspace workspaceMock = this.dataMock.getWorkspaces().get(0);
+    Project projectMock = this.dataMock.getProjects().get(1);
+
+    User workspaceOwner = this.generateUserByMock(workspaceOwnerMock);
+    User projectOwner = this.generateUserByMock(projectOwnerMock);
+    Workspace workspace = this.generateWorkspaceByMock(workspaceMock, workspaceOwner);
+    Project project = this.generateProjectByMock(projectMock, workspace, projectOwner);
+
+    this.entityManager.persist(workspaceOwner);
+    this.entityManager.persist(projectOwner);
+    this.entityManager.persist(workspace);
+    this.entityManager.persist(project);
+
+    Optional<Project> foundProject = this.projectRepository.findByProjectIdAndWorkspaceId(project.getId(), workspace.getId());
+
+    assertThat(foundProject.isPresent()).isTrue();
+    assertThat(foundProject.get().getId()).isEqualTo(project.getId());
+    assertThat(foundProject.get().getName()).isEqualTo(project.getName());
+    assertThat(foundProject.get().getCategory()).isEqualTo(project.getCategory());
+    assertThat(foundProject.get().getDescription()).isEqualTo(project.getDescription());
+    assertThat(foundProject.get().getPriority()).isEqualTo(project.getPriority());
+    assertThat(foundProject.get().getDeadline()).isEqualTo(project.getDeadline());
+    assertThat(foundProject.get().getBudget()).isEqualTo(project.getBudget());
+    assertThat(foundProject.get().getCreatedAt()).isEqualTo(project.getCreatedAt());
+    assertThat(foundProject.get().getUpdatedAt()).isEqualTo(project.getUpdatedAt());
+    assertThat(foundProject.get().getOwner().getId()).isEqualTo(project.getOwner().getId());
+    assertThat(foundProject.get().getWorkspace().getId()).isEqualTo(project.getWorkspace().getId());
   }
 
   private Project generateProjectByMock(Project project, Workspace workspace, User owner) {
