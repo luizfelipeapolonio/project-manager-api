@@ -350,7 +350,7 @@ public class ProjectControllerTest {
 
     when(this.projectService.getAllByWorkspaceAndOwner("01", "02")).thenReturn(projects);
 
-    this.mockMvc.perform(get(this.baseUrl + "/workspace/01/owner/02")
+    this.mockMvc.perform(get(this.baseUrl + "/workspaces/01/owner/02")
       .accept(MediaType.APPLICATION_JSON))
       .andExpect(status().isOk())
       .andExpect(content().json(jsonResponseBody));
@@ -365,7 +365,7 @@ public class ProjectControllerTest {
     when(this.projectService.getAllByWorkspaceAndOwner("01", "02"))
       .thenThrow(new AccessDeniedException("Acesso negado: Você não tem permissão para acessar este recurso"));
 
-    this.mockMvc.perform(get(this.baseUrl + "/workspace/01/owner/02")
+    this.mockMvc.perform(get(this.baseUrl + "/workspaces/01/owner/02")
       .accept(MediaType.APPLICATION_JSON))
       .andExpect(status().isForbidden())
       .andExpect(jsonPath("$.status").value(ResponseConditionStatus.ERROR.getValue()))
@@ -374,6 +374,67 @@ public class ProjectControllerTest {
       .andExpect(jsonPath("$.data").doesNotExist());
 
     verify(this.projectService, times(1)).getAllByWorkspaceAndOwner("01", "02");
+    verify(this.projectMapper, never()).toDTO(any(Project.class));
+  }
+
+  @Test
+  @DisplayName("getById - Should return a success response with OK status code and the found project")
+  void getByIdSuccess() throws Exception {
+    Project project = this.dataMock.getProjects().get(0);
+    ProjectResponseDTO projectResponseDTO = new ProjectResponseDTO(
+      project.getId(),
+      project.getName(),
+      project.getPriority().getValue(),
+      project.getCategory(),
+      project.getDescription(),
+      project.getBudget().toString(),
+      ConvertDateFormat.convertDateToFormattedString(project.getDeadline()),
+      project.getCreatedAt(),
+      project.getUpdatedAt(),
+      project.getOwner().getId(),
+      project.getWorkspace().getId()
+    );
+
+    when(this.projectService.getById("01", "01")).thenReturn(project);
+    when(this.projectMapper.toDTO(project)).thenReturn(projectResponseDTO);
+
+    this.mockMvc.perform(get(this.baseUrl + "/01/workspaces/01")
+      .accept(MediaType.APPLICATION_JSON))
+      .andExpect(status().isOk())
+      .andExpect(jsonPath("$.status").value(ResponseConditionStatus.SUCCESS.getValue()))
+      .andExpect(jsonPath("$.code").value(HttpStatus.OK.value()))
+      .andExpect(jsonPath("$.message").value("Projeto encontrado"))
+      .andExpect(jsonPath("$.data.id").value(projectResponseDTO.id()))
+      .andExpect(jsonPath("$.data.name").value(projectResponseDTO.name()))
+      .andExpect(jsonPath("$.data.priority").value(projectResponseDTO.priority()))
+      .andExpect(jsonPath("$.data.category").value(projectResponseDTO.category()))
+      .andExpect(jsonPath("$.data.description").value(projectResponseDTO.description()))
+      .andExpect(jsonPath("$.data.budget").value(projectResponseDTO.budget()))
+      .andExpect(jsonPath("$.data.deadline").value(projectResponseDTO.deadline()))
+      .andExpect(jsonPath("$.data.createdAt").value(projectResponseDTO.createdAt().toString()))
+      .andExpect(jsonPath("$.data.updatedAt").value(projectResponseDTO.updatedAt().toString()))
+      .andExpect(jsonPath("$.data.ownerId").value(projectResponseDTO.ownerId()))
+      .andExpect(jsonPath("$.data.workspaceId").value(projectResponseDTO.workspaceId()));
+
+    verify(this.projectService, times(1)).getById("01", "01");
+    verify(this.projectMapper, times(1)).toDTO(project);
+  }
+
+  @Test
+  @DisplayName("getById - Should return an error response with not found status code")
+  void getByIdFailsByProjectNotFound() throws Exception {
+    when(this.projectService.getById("01", "01"))
+      .thenThrow(new RecordNotFoundException("Projeto de ID: '01' não encontrado"));
+
+    this.mockMvc.perform(get(this.baseUrl + "/01/workspaces/01")
+      .accept(MediaType.APPLICATION_JSON))
+      .andExpect(status().isNotFound())
+      .andExpect(jsonPath("$.status").value(ResponseConditionStatus.ERROR.getValue()))
+      .andExpect(jsonPath("$.code").value(HttpStatus.NOT_FOUND.value()))
+      .andExpect(jsonPath("$.message").value("Projeto de ID: '01' não encontrado"))
+      .andExpect(jsonPath("$.data").doesNotExist());
+
+    verify(this.projectService, times(1)).getById("01", "01");
     verify(this.projectMapper, never()).toDTO(any(Project.class));
   }
 }

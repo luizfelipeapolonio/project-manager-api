@@ -383,4 +383,49 @@ public class ProjectServiceTest {
     verify(this.projectRepository, times(1)).findAllByWorkspaceIdAndOwnerId("01", "02");
     verify(this.projectRepository, times(1)).deleteAll(any());
   }
+
+  @Test
+  @DisplayName("getById - Should successfully get a project in a workspace")
+  void getByIdSuccess() {
+    Project project = this.dataMock.getProjects().get(0);
+    Workspace workspace = this.dataMock.getWorkspaces().get(0);
+
+    when(this.workspaceService.getById("01")).thenReturn(workspace);
+    when(this.projectRepository.findByProjectIdAndWorkspaceId("01", "01")).thenReturn(Optional.of(project));
+
+    Project foundProject = this.projectService.getById("01", "01");
+
+    assertThat(foundProject.getId()).isEqualTo(project.getId());
+    assertThat(foundProject.getName()).isEqualTo(project.getName());
+    assertThat(foundProject.getCategory()).isEqualTo(project.getCategory());
+    assertThat(foundProject.getPriority()).isEqualTo(project.getPriority());
+    assertThat(foundProject.getDescription()).isEqualTo(project.getDescription());
+    assertThat(foundProject.getBudget()).isEqualTo(project.getBudget());
+    assertThat(foundProject.getDeadline()).isEqualTo(project.getDeadline());
+    assertThat(foundProject.getCreatedAt()).isEqualTo(project.getCreatedAt());
+    assertThat(foundProject.getUpdatedAt()).isEqualTo(project.getUpdatedAt());
+    assertThat(foundProject.getOwner().getId()).isEqualTo(project.getOwner().getId());
+    assertThat(foundProject.getWorkspace().getId()).isEqualTo(project.getWorkspace().getId());
+
+    verify(this.workspaceService, times(1)).getById("01");
+    verify(this.projectRepository, times(1)).findByProjectIdAndWorkspaceId("01", "01");
+  }
+
+  @Test
+  @DisplayName("getById - Should throw a RecordNotFoundException if the project is not found")
+  void getByIdFailsByProjectNotFound() {
+    Workspace workspace = this.dataMock.getWorkspaces().get(0);
+
+    when(this.workspaceService.getById("01")).thenReturn(workspace);
+    when(this.projectRepository.findByProjectIdAndWorkspaceId("01", "01")).thenReturn(Optional.empty());
+
+    Exception thrown = catchException(() -> this.projectService.getById("01", "01"));
+
+    assertThat(thrown)
+      .isExactlyInstanceOf(RecordNotFoundException.class)
+      .hasMessage("Projeto de ID: '01' não encontrado");
+
+    verify(this.workspaceService, times(1)).getById("01");
+    verify(this.projectRepository, times(1)).findByProjectIdAndWorkspaceId("01", "01");
+  }
 }
