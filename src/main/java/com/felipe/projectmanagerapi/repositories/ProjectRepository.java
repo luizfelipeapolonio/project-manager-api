@@ -15,4 +15,7 @@ public interface ProjectRepository extends JpaRepository<Project, String> {
 
   @Query("SELECT p FROM Project p WHERE p.workspace.id=:workspaceId")
   List<Project> findAllByWorkspaceId(@Param("workspaceId") String workspaceId);
+
+  @Query("SELECT p FROM Project p WHERE p.owner.id=:userId")
+  List<Project> findAllByUserId(@Param("userId") String userId);
 }
