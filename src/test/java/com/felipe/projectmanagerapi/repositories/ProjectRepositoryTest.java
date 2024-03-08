@@ -62,6 +62,37 @@ public class ProjectRepositoryTest {
     }).hasSize(2);
   }
 
+  @Test
+  @DisplayName("findAllByWorkspaceId - Should successfully return all projects from workspace")
+  void findAllByWorkspaceIdSuccess() {
+    User workspaceOwnerMock = this.dataMock.getUsers().get(0);
+    User projectsOwnerMock = this.dataMock.getUsers().get(1);
+    Workspace workspaceMock = this.dataMock.getWorkspaces().get(0);
+    Project projectMock1 = this.dataMock.getProjects().get(0);
+    Project projectMock2 = this.dataMock.getProjects().get(1);
+    Project projectMock3 = this.dataMock.getProjects().get(2);
+
+    User workspaceOwner = this.generateUserByMock(workspaceOwnerMock);
+    User projectsOwner = this.generateUserByMock(projectsOwnerMock);
+    Workspace workspace = this.generateWorkspaceByMock(workspaceMock, workspaceOwner);
+    Project project1 = this.generateProjectByMock(projectMock1, workspace, workspaceOwner);
+    Project project2 = this.generateProjectByMock(projectMock2, workspace, projectsOwner);
+    Project project3 = this.generateProjectByMock(projectMock3, workspace, projectsOwner);
+
+    this.entityManager.persist(workspaceOwner);
+    this.entityManager.persist(projectsOwner);
+    this.entityManager.persist(workspace);
+    this.entityManager.persist(project1);
+    this.entityManager.persist(project2);
+    this.entityManager.persist(project3);
+
+    List<Project> workspaceProjects = this.projectRepository.findAllByWorkspaceId(workspace.getId());
+
+    assertThat(workspaceProjects)
+      .allSatisfy(project -> assertThat(project.getWorkspace().getId()).isEqualTo(workspace.getId()))
+      .hasSize(3);
+  }
+
   private Project generateProjectByMock(Project project, Workspace workspace, User owner) {
     Project newProject = new Project();
     newProject.setName(project.getName());
