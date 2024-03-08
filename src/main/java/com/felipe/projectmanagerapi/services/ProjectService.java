@@ -152,6 +152,11 @@ public class ProjectService {
     return project;
   }
 
+  public List<Project> getAllFromWorkspace(@NotNull String workspaceId) {
+    Workspace workspace = this.workspaceService.getById(workspaceId);
+    return this.projectRepository.findAllByWorkspaceId(workspace.getId());
+  }
+
   public void deleteAllFromOwnerAndWorkspace(@NotNull String workspaceId, @NotNull String ownerId) {
     List<Project> projects = this.getAllByWorkspaceAndOwner(workspaceId, ownerId);
     this.projectRepository.deleteAll(projects);

@@ -81,6 +81,20 @@ public class ProjectController {
     return response;
   }
 
+  @RequestMapping("/workspaces/{workspaceId}")
+  @ResponseStatus(HttpStatus.OK)
+  public CustomResponseBody<List<ProjectResponseDTO>> getAllFromWorkspace(@PathVariable @NotNull @NotBlank String workspaceId) {
+    List<Project> projects = this.projectService.getAllFromWorkspace(workspaceId);
+    List<ProjectResponseDTO> projectsDTO = projects.stream().map(this.projectMapper::toDTO).toList();
+
+    CustomResponseBody<List<ProjectResponseDTO>> response = new CustomResponseBody<>();
+    response.setStatus(ResponseConditionStatus.SUCCESS);
+    response.setCode(HttpStatus.OK);
+    response.setMessage("Todos os projetos do workspace de ID: '" + workspaceId + "'");
+    response.setData(projectsDTO);
+    return response;
+  }
+
   @RequestMapping("/workspaces/{workspaceId}/owner/{ownerId}")
   @ResponseStatus(HttpStatus.OK)
   public CustomResponseBody<List<ProjectResponseDTO>> getAllByWorkspaceAndOwner(
