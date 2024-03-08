@@ -476,4 +476,25 @@ public class ProjectServiceTest {
     verify(this.workspaceService, times(1)).getById("01");
     verify(this.projectRepository, times(1)).findAllByWorkspaceId("01");
   }
+
+  @Test
+  @DisplayName("getAllFromAuthenticatedUser - Should successfully get all user projects")
+  void getAllFromAuthenticatedUserSuccess() {
+    UserPrincipal userPrincipal = new UserPrincipal(this.dataMock.getUsers().get(1));
+    List<Project> projects = List.of(this.dataMock.getProjects().get(1), this.dataMock.getProjects().get(2));
+
+    when(this.authorizationService.getAuthentication()).thenReturn(this.authentication);
+    when(this.authentication.getPrincipal()).thenReturn(userPrincipal);
+    when(this.projectRepository.findAllByUserId(userPrincipal.getUser().getId())).thenReturn(projects);
+
+    List<Project> foundProjects = this.projectService.getAllFromAuthenticatedUser();
+
+    assertThat(foundProjects)
+      .allSatisfy(project -> assertThat(project.getOwner().getId()).isEqualTo(userPrincipal.getUser().getId()))
+      .hasSize(2);
+
+    verify(this.authorizationService, times(1)).getAuthentication();
+    verify(this.authentication, times(1)).getPrincipal();
+    verify(this.projectRepository, times(1)).findAllByUserId(userPrincipal.getUser().getId());
+  }
 }

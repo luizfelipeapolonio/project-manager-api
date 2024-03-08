@@ -476,4 +476,42 @@ public class ProjectControllerTest {
     verify(this.projectService, times(1)).getAllFromWorkspace("01");
     verify(this.projectMapper, times(3)).toDTO(any(Project.class));
   }
+
+  @Test
+  @DisplayName("getAllFromAuthenticatedUser - Should return a success response with OK status code and all user projects")
+  void getAllFromAuthenticatedUserSuccess() throws Exception {
+    List<Project> projects = List.of(this.dataMock.getProjects().get(1), this.dataMock.getProjects().get(2));
+    List<ProjectResponseDTO> projectsDTO = projects.stream()
+      .map(project -> new ProjectResponseDTO(
+        project.getId(),
+        project.getName(),
+        project.getPriority().getValue(),
+        project.getCategory(),
+        project.getDescription(),
+        project.getBudget().toString(),
+        ConvertDateFormat.convertDateToFormattedString(project.getDeadline()),
+        project.getCreatedAt(),
+        project.getUpdatedAt(),
+        project.getOwner().getId(),
+        project.getWorkspace().getId()
+      ))
+      .toList();
+
+    CustomResponseBody<List<ProjectResponseDTO>> response = new CustomResponseBody<>();
+    response.setStatus(ResponseConditionStatus.SUCCESS);
+    response.setCode(HttpStatus.OK);
+    response.setMessage("Todos os seus projetos");
+    response.setData(projectsDTO);
+
+    String jsonResponseBody = this.objectMapper.writeValueAsString(response);
+
+    when(this.projectService.getAllFromAuthenticatedUser()).thenReturn(projects);
+
+    this.mockMvc.perform(get(this.baseUrl).accept(MediaType.APPLICATION_JSON))
+      .andExpect(status().isOk())
+      .andExpect(content().json(jsonResponseBody));
+
+    verify(this.projectService, times(1)).getAllFromAuthenticatedUser();
+    verify(this.projectMapper, times(2)).toDTO(any(Project.class));
+  }
 }
