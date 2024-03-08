@@ -157,6 +157,12 @@ public class ProjectService {
     return this.projectRepository.findAllByWorkspaceId(workspace.getId());
   }
 
+  public List<Project> getAllFromAuthenticatedUser() {
+    Authentication authentication = this.authorizationService.getAuthentication();
+    UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
+    return this.projectRepository.findAllByUserId(userPrincipal.getUser().getId());
+  }
+
   public void deleteAllFromOwnerAndWorkspace(@NotNull String workspaceId, @NotNull String ownerId) {
     List<Project> projects = this.getAllByWorkspaceAndOwner(workspaceId, ownerId);
     this.projectRepository.deleteAll(projects);

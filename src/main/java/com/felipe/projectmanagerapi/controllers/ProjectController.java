@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 
@@ -50,6 +51,20 @@ public class ProjectController {
     return response;
   }
 
+  @GetMapping
+  @ResponseStatus(HttpStatus.OK)
+  public CustomResponseBody<List<ProjectResponseDTO>> getAllFromAuthenticatedUser() {
+    List<Project> projects = this.projectService.getAllFromAuthenticatedUser();
+    List<ProjectResponseDTO> projectsDTO = projects.stream().map(this.projectMapper::toDTO).toList();
+
+    CustomResponseBody<List<ProjectResponseDTO>> response = new CustomResponseBody<>();
+    response.setStatus(ResponseConditionStatus.SUCCESS);
+    response.setCode(HttpStatus.OK);
+    response.setMessage("Todos os seus projetos");
+    response.setData(projectsDTO);
+    return response;
+  }
+
   @PatchMapping("/{projectId}")
   @ResponseStatus(HttpStatus.OK)
   public CustomResponseBody<ProjectResponseDTO> update(
@@ -67,7 +82,7 @@ public class ProjectController {
     return response;
   }
 
-  @RequestMapping("/{projectId}")
+  @GetMapping("/{projectId}")
   @ResponseStatus(HttpStatus.OK)
   public CustomResponseBody<ProjectResponseDTO> getById(@PathVariable @NotNull @NotBlank String projectId) {
     Project project = this.projectService.getById(projectId);
@@ -81,7 +96,7 @@ public class ProjectController {
     return response;
   }
 
-  @RequestMapping("/workspaces/{workspaceId}")
+  @GetMapping("/workspaces/{workspaceId}")
   @ResponseStatus(HttpStatus.OK)
   public CustomResponseBody<List<ProjectResponseDTO>> getAllFromWorkspace(@PathVariable @NotNull @NotBlank String workspaceId) {
     List<Project> projects = this.projectService.getAllFromWorkspace(workspaceId);
@@ -95,7 +110,7 @@ public class ProjectController {
     return response;
   }
 
-  @RequestMapping("/workspaces/{workspaceId}/owner/{ownerId}")
+  @GetMapping("/workspaces/{workspaceId}/owner/{ownerId}")
   @ResponseStatus(HttpStatus.OK)
   public CustomResponseBody<List<ProjectResponseDTO>> getAllByWorkspaceAndOwner(
     @PathVariable @NotNull @NotBlank String workspaceId,
