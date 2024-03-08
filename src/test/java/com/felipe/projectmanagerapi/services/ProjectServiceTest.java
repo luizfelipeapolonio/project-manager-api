@@ -457,4 +457,23 @@ public class ProjectServiceTest {
     verify(this.authentication, times(1)).getPrincipal();
     verify(this.projectRepository, times(1)).findById("01");
   }
+
+  @Test
+  @DisplayName("getAllFromWorkspace - Should successfully get all projects from a workspace")
+  void getAllFromWorkspaceSuccess() {
+    Workspace workspace = this.dataMock.getWorkspaces().get(0);
+    workspace.setProjects(this.dataMock.getProjects());
+
+    when(this.workspaceService.getById("01")).thenReturn(workspace);
+    when(this.projectRepository.findAllByWorkspaceId("01")).thenReturn(workspace.getProjects());
+
+    List<Project> foundProjects = this.projectService.getAllFromWorkspace("01");
+
+    assertThat(foundProjects)
+      .allSatisfy(project -> assertThat(project.getWorkspace().getId()).isEqualTo(workspace.getId()))
+      .hasSize(3);
+
+    verify(this.workspaceService, times(1)).getById("01");
+    verify(this.projectRepository, times(1)).findAllByWorkspaceId("01");
+  }
 }

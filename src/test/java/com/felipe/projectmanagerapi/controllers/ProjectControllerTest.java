@@ -437,4 +437,43 @@ public class ProjectControllerTest {
     verify(this.projectService, times(1)).getById("01");
     verify(this.projectMapper, never()).toDTO(any(Project.class));
   }
+
+  @Test
+  @DisplayName("getAllFromWorkspace - Should return a success response with OK status code and a list of projects")
+  void getAllFromWorkspaceSuccess() throws Exception {
+    List<Project> projects = this.dataMock.getProjects();
+    List<ProjectResponseDTO> projectsDTO = projects.stream()
+      .map(project -> new ProjectResponseDTO(
+        project.getId(),
+        project.getName(),
+        project.getPriority().getValue(),
+        project.getCategory(),
+        project.getDescription(),
+        project.getBudget().toString(),
+        ConvertDateFormat.convertDateToFormattedString(project.getDeadline()),
+        project.getCreatedAt(),
+        project.getUpdatedAt(),
+        project.getOwner().getId(),
+        project.getWorkspace().getId()
+      ))
+      .toList();
+
+    CustomResponseBody<List<ProjectResponseDTO>> response = new CustomResponseBody<>();
+    response.setStatus(ResponseConditionStatus.SUCCESS);
+    response.setCode(HttpStatus.OK);
+    response.setMessage("Todos os projetos do workspace de ID: '01'");
+    response.setData(projectsDTO);
+
+    String jsonResponseBody = this.objectMapper.writeValueAsString(response);
+
+    when(this.projectService.getAllFromWorkspace("01")).thenReturn(projects);
+
+    this.mockMvc.perform(get(this.baseUrl + "/workspaces/01")
+      .accept(MediaType.APPLICATION_JSON))
+      .andExpect(status().isOk())
+      .andExpect(content().json(jsonResponseBody));
+
+    verify(this.projectService, times(1)).getAllFromWorkspace("01");
+    verify(this.projectMapper, times(3)).toDTO(any(Project.class));
+  }
 }
