@@ -184,6 +184,20 @@ public class ProjectService {
     return project;
   }
 
+  public List<Project> deleteAllFromWorkspace(@NotNull String workspaceId) {
+    Authentication authentication = this.authorizationService.getAuthentication();
+    UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
+    Workspace workspace = this.workspaceService.getById(workspaceId);
+
+    if(!userPrincipal.getUser().getId().equals(workspace.getOwner().getId())) {
+      throw new AccessDeniedException("Acesso negado: Você não tem permissão para remover este recurso");
+    }
+
+    List<Project> projects = this.projectRepository.findAllByWorkspaceId(workspace.getId());
+    this.projectRepository.deleteAll(projects);
+    return projects;
+  }
+
   public void deleteAllFromOwnerAndWorkspace(@NotNull String workspaceId, @NotNull String ownerId) {
     List<Project> projects = this.getAllByWorkspaceAndOwner(workspaceId, ownerId);
     this.projectRepository.deleteAll(projects);
