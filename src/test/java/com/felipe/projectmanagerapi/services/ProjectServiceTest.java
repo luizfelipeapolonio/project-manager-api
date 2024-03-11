@@ -497,4 +497,85 @@ public class ProjectServiceTest {
     verify(this.authentication, times(1)).getPrincipal();
     verify(this.projectRepository, times(1)).findAllByUserId(userPrincipal.getUser().getId());
   }
+
+  @Test
+  @DisplayName("delete - Should successfully delete a project")
+  void deleteSuccess() {
+    UserPrincipal userPrincipal = new UserPrincipal(this.dataMock.getUsers().get(0));
+    Workspace workspace = this.dataMock.getWorkspaces().get(0);
+    Project project = this.dataMock.getProjects().get(1);
+
+    when(this.authorizationService.getAuthentication()).thenReturn(this.authentication);
+    when(this.authentication.getPrincipal()).thenReturn(userPrincipal);
+    when(this.workspaceService.getById("01")).thenReturn(workspace);
+    when(this.projectRepository.findById("02")).thenReturn(Optional.of(project));
+    doNothing().when(this.projectRepository).deleteById("02");
+
+    Project deletedProject = this.projectService.delete("02");
+
+    assertThat(deletedProject.getId()).isEqualTo(project.getId());
+    assertThat(deletedProject.getName()).isEqualTo(project.getName());
+    assertThat(deletedProject.getCategory()).isEqualTo(project.getCategory());
+    assertThat(deletedProject.getPriority()).isEqualTo(project.getPriority());
+    assertThat(deletedProject.getDescription()).isEqualTo(project.getDescription());
+    assertThat(deletedProject.getBudget()).isEqualTo(project.getBudget());
+    assertThat(deletedProject.getDeadline()).isEqualTo(project.getDeadline());
+    assertThat(deletedProject.getCreatedAt()).isEqualTo(project.getCreatedAt());
+    assertThat(deletedProject.getUpdatedAt()).isEqualTo(project.getUpdatedAt());
+    assertThat(deletedProject.getOwner().getId()).isEqualTo(project.getOwner().getId());
+    assertThat(deletedProject.getWorkspace().getId()).isEqualTo(project.getWorkspace().getId());
+
+    verify(this.authorizationService, times(1)).getAuthentication();
+    verify(this.authentication, times(1)).getPrincipal();
+    verify(this.workspaceService, times(1)).getById("01");
+    verify(this.projectRepository, times(1)).findById("02");
+    verify(this.projectRepository, times(1)).deleteById("02");
+  }
+
+  @Test
+  @DisplayName("delete - Should throw a RecordNotFoundException if the project is not found")
+  void deleteFailsByProjectNotFound() {
+    UserPrincipal userPrincipal = new UserPrincipal(this.dataMock.getUsers().get(0));
+
+    when(this.authorizationService.getAuthentication()).thenReturn(this.authentication);
+    when(this.authentication.getPrincipal()).thenReturn(userPrincipal);
+    when(this.projectRepository.findById("01")).thenReturn(Optional.empty());
+
+    Exception thrown = catchException(() -> this.projectService.delete("01"));
+
+    assertThat(thrown)
+      .isExactlyInstanceOf(RecordNotFoundException.class)
+      .hasMessage("Projeto de ID: '01' não encontrado");
+
+    verify(this.authorizationService, times(1)).getAuthentication();
+    verify(this.authentication, times(1)).getPrincipal();
+    verify(this.projectRepository, times(1)).findById("01");
+    verify(this.workspaceService, never()).getById(anyString());
+    verify(this.projectRepository, never()).deleteById(anyString());
+  }
+
+  @Test
+  @DisplayName("Should throw an AccessDeniedException if the workspace and project owner is not the authenticated user")
+  void deleteFailsByNotBeingOwnerOfWorkspaceOrProject() {
+    UserPrincipal userPrincipal = new UserPrincipal(this.dataMock.getUsers().get(2));
+    Project project = this.dataMock.getProjects().get(1);
+    Workspace workspace = this.dataMock.getWorkspaces().get(0);
+
+    when(this.authorizationService.getAuthentication()).thenReturn(this.authentication);
+    when(this.authentication.getPrincipal()).thenReturn(userPrincipal);
+    when(this.projectRepository.findById("02")).thenReturn(Optional.of(project));
+    when(this.workspaceService.getById("01")).thenReturn(workspace);
+
+    Exception thrown = catchException(() -> this.projectService.delete("02"));
+
+    assertThat(thrown)
+      .isExactlyInstanceOf(AccessDeniedException.class)
+      .hasMessage("Acesso negado: Você não tem permissão para remover este recurso");
+
+    verify(this.authorizationService, times(1)).getAuthentication();
+    verify(this.authentication, times(1)).getPrincipal();
+    verify(this.projectRepository, times(1)).findById("02");
+    verify(this.workspaceService, times(1)).getById("01");
+    verify(this.projectRepository, never()).deleteById(anyString());
+  }
 }

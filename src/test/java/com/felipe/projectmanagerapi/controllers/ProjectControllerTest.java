@@ -29,11 +29,14 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
@@ -513,5 +516,87 @@ public class ProjectControllerTest {
 
     verify(this.projectService, times(1)).getAllFromAuthenticatedUser();
     verify(this.projectMapper, times(2)).toDTO(any(Project.class));
+  }
+
+  @Test
+  @DisplayName("delete - Should return a success response with OK status and the deleted project")
+  void deleteSuccess() throws Exception {
+    Project project = this.dataMock.getProjects().get(0);
+    ProjectResponseDTO projectResponseDTO = new ProjectResponseDTO(
+      project.getId(),
+      project.getName(),
+      project.getPriority().getValue(),
+      project.getCategory(),
+      project.getDescription(),
+      project.getBudget().toString(),
+      ConvertDateFormat.convertDateToFormattedString(project.getDeadline()),
+      project.getCreatedAt(),
+      project.getUpdatedAt(),
+      project.getOwner().getId(),
+      project.getWorkspace().getId()
+    );
+
+    Map<String, ProjectResponseDTO> responseMap = new HashMap<>(1);
+    responseMap.put("deletedProject", projectResponseDTO);
+
+    when(this.projectService.delete("01")).thenReturn(project);
+    when(this.projectMapper.toDTO(project)).thenReturn(projectResponseDTO);
+
+    this.mockMvc.perform(delete(this.baseUrl + "/01")
+      .accept(MediaType.APPLICATION_JSON))
+      .andExpect(status().isOk())
+      .andExpect(jsonPath("$.status").value(ResponseConditionStatus.SUCCESS.getValue()))
+      .andExpect(jsonPath("$.code").value(HttpStatus.OK.value()))
+      .andExpect(jsonPath("$.message").value("Projeto excluído com sucesso"))
+      .andExpect(jsonPath("$.data.deletedProject.id").value(responseMap.get("deletedProject").id()))
+      .andExpect(jsonPath("$.data.deletedProject.name").value(responseMap.get("deletedProject").name()))
+      .andExpect(jsonPath("$.data.deletedProject.priority").value(responseMap.get("deletedProject").priority()))
+      .andExpect(jsonPath("$.data.deletedProject.category").value(responseMap.get("deletedProject").category()))
+      .andExpect(jsonPath("$.data.deletedProject.description").value(responseMap.get("deletedProject").description()))
+      .andExpect(jsonPath("$.data.deletedProject.budget").value(responseMap.get("deletedProject").budget()))
+      .andExpect(jsonPath("$.data.deletedProject.deadline").value(responseMap.get("deletedProject").deadline()))
+      .andExpect(jsonPath("$.data.deletedProject.createdAt").value(responseMap.get("deletedProject").createdAt().toString()))
+      .andExpect(jsonPath("$.data.deletedProject.updatedAt").value(responseMap.get("deletedProject").updatedAt().toString()))
+      .andExpect(jsonPath("$.data.deletedProject.ownerId").value(responseMap.get("deletedProject").ownerId()))
+      .andExpect(jsonPath("$.data.deletedProject.workspaceId").value(responseMap.get("deletedProject").workspaceId()));
+
+    verify(this.projectService, times(1)).delete("01");
+    verify(this.projectMapper, times(1)).toDTO(project);
+  }
+
+  @Test
+  @DisplayName("delete - Should return an error response with not found status code")
+  void deleteFailsByProjectNotFound() throws Exception {
+    when(this.projectService.delete("01"))
+      .thenThrow(new RecordNotFoundException("Projeto de ID: '01' não encontrado"));
+
+    this.mockMvc.perform(delete(this.baseUrl + "/01")
+      .accept(MediaType.APPLICATION_JSON))
+      .andExpect(status().isNotFound())
+      .andExpect(jsonPath("$.status").value(ResponseConditionStatus.ERROR.getValue()))
+      .andExpect(jsonPath("$.code").value(HttpStatus.NOT_FOUND.value()))
+      .andExpect(jsonPath("$.message").value("Projeto de ID: '01' não encontrado"))
+      .andExpect(jsonPath("$.data").doesNotExist());
+
+    verify(this.projectService, times(1)).delete("01");
+    verify(this.projectMapper, never()).toDTO(any(Project.class));
+  }
+
+  @Test
+  @DisplayName("delete - Should return an error response with forbidden status code")
+  void deleteFailsByNotBeingOwnerOfWorkspaceOrProject() throws Exception {
+    when(this.projectService.delete("01"))
+      .thenThrow(new AccessDeniedException("Acesso negado: Você não tem permissão para remover este recurso"));
+
+    this.mockMvc.perform(delete(this.baseUrl + "/01")
+      .accept(MediaType.APPLICATION_JSON))
+      .andExpect(status().isForbidden())
+      .andExpect(jsonPath("$.status").value(ResponseConditionStatus.ERROR.getValue()))
+      .andExpect(jsonPath("$.code").value(HttpStatus.FORBIDDEN.value()))
+      .andExpect(jsonPath("$.message").value("Acesso negado: Você não tem permissão para remover este recurso"))
+      .andExpect(jsonPath("$.data").doesNotExist());
+
+    verify(this.projectService, times(1)).delete("01");
+    verify(this.projectMapper, never()).toDTO(any(Project.class));
   }
 }
