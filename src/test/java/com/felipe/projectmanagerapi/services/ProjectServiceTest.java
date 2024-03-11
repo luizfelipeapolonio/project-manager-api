@@ -578,4 +578,53 @@ public class ProjectServiceTest {
     verify(this.workspaceService, times(1)).getById("01");
     verify(this.projectRepository, never()).deleteById(anyString());
   }
+
+  @Test
+  @DisplayName("deleteAllFromWorkspace - Should successfully delete all projects from a workspace")
+  void deleteAllFromWorkspaceSuccess() {
+    UserPrincipal userPrincipal = new UserPrincipal(this.dataMock.getUsers().get(0));
+    Workspace workspace = this.dataMock.getWorkspaces().get(0);
+    List<Project> projects = this.dataMock.getProjects();
+
+    when(this.authorizationService.getAuthentication()).thenReturn(this.authentication);
+    when(this.authentication.getPrincipal()).thenReturn(userPrincipal);
+    when(this.workspaceService.getById("01")).thenReturn(workspace);
+    when(this.projectRepository.findAllByWorkspaceId("01")).thenReturn(projects);
+    doNothing().when(this.projectRepository).deleteAll(projects);
+
+    List<Project> deletedProjects = this.projectService.deleteAllFromWorkspace("01");
+
+    assertThat(deletedProjects)
+      .allSatisfy(project -> assertThat(project.getWorkspace().getId()).isEqualTo(workspace.getId()))
+      .hasSize(3);
+
+    verify(this.authorizationService, times(1)).getAuthentication();
+    verify(this.authentication, times(1)).getPrincipal();
+    verify(this.workspaceService, times(1)).getById("01");
+    verify(this.projectRepository, times(1)).findAllByWorkspaceId("01");
+    verify(this.projectRepository, times(1)).deleteAll(projects);
+  }
+
+  @Test
+  @DisplayName("deleteAllFromWorkspace - Should throw an AccessDeniedException if the authenticated user is not the workspace owner")
+  void deleteAllFromWorkspaceFailsByNotBeingWorkspaceOwner() {
+    UserPrincipal userPrincipal = new UserPrincipal(this.dataMock.getUsers().get(1));
+    Workspace workspace = this.dataMock.getWorkspaces().get(0);
+
+    when(this.authorizationService.getAuthentication()).thenReturn(this.authentication);
+    when(this.authentication.getPrincipal()).thenReturn(userPrincipal);
+    when(this.workspaceService.getById("01")).thenReturn(workspace);
+
+    Exception thrown = catchException(() -> this.projectService.deleteAllFromWorkspace("01"));
+
+    assertThat(thrown)
+      .isExactlyInstanceOf(AccessDeniedException.class)
+      .hasMessage("Acesso negado: Você não tem permissão para remover este recurso");
+
+    verify(this.authorizationService, times(1)).getAuthentication();
+    verify(this.authentication, times(1)).getPrincipal();
+    verify(this.workspaceService, times(1)).getById("01");
+    verify(this.projectRepository, never()).findAllByWorkspaceId(anyString());
+    verify(this.projectRepository, never()).deleteAll(any());
+  }
 }

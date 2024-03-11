@@ -599,4 +599,64 @@ public class ProjectControllerTest {
     verify(this.projectService, times(1)).delete("01");
     verify(this.projectMapper, never()).toDTO(any(Project.class));
   }
+
+  @Test
+  @DisplayName("deleteAllFromWorkspace - Should return a success response with OK status code and the deleted projects")
+  void deleteAllFromWorkspaceSuccess() throws Exception {
+    List<Project> projects = this.dataMock.getProjects();
+    List<ProjectResponseDTO> projectsDTO = projects.stream()
+      .map(project -> new ProjectResponseDTO(
+        project.getId(),
+        project.getName(),
+        project.getPriority().getValue(),
+        project.getCategory(),
+        project.getDescription(),
+        project.getBudget().toString(),
+        ConvertDateFormat.convertDateToFormattedString(project.getDeadline()),
+        project.getCreatedAt(),
+        project.getUpdatedAt(),
+        project.getOwner().getId(),
+        project.getWorkspace().getId()
+      ))
+      .toList();
+
+    Map<String, List<ProjectResponseDTO>> deletedProjects = new HashMap<>(1);
+    deletedProjects.put("deletedProjects", projectsDTO);
+
+    CustomResponseBody<Map<String, List<ProjectResponseDTO>>> response = new CustomResponseBody<>();
+    response.setStatus(ResponseConditionStatus.SUCCESS);
+    response.setCode(HttpStatus.OK);
+    response.setMessage("Todos os projetos do workspace de ID: '01' excluídos com sucesso");
+    response.setData(deletedProjects);
+
+    String jsonResponseBody = this.objectMapper.writeValueAsString(response);
+
+    when(this.projectService.deleteAllFromWorkspace("01")).thenReturn(projects);
+
+    this.mockMvc.perform(delete(this.baseUrl + "/workspaces/01")
+      .accept(MediaType.APPLICATION_JSON))
+      .andExpect(status().isOk())
+      .andExpect(content().json(jsonResponseBody));
+
+    verify(this.projectService, times(1)).deleteAllFromWorkspace("01");
+    verify(this.projectMapper, times(3)).toDTO(any(Project.class));
+  }
+
+  @Test
+  @DisplayName("deleteAllFromWorkspace - Should return an error response with forbidden status code")
+  void deleteAllFromWorkspaceFailsByNotBeingWorkspaceOwner() throws Exception {
+    when(this.projectService.deleteAllFromWorkspace("01"))
+      .thenThrow(new AccessDeniedException("Acesso negado: Você não tem permissão para remover este recurso"));
+
+    this.mockMvc.perform(delete(this.baseUrl + "/workspaces/01")
+      .accept(MediaType.APPLICATION_JSON))
+      .andExpect(status().isForbidden())
+      .andExpect(jsonPath("$.status").value(ResponseConditionStatus.ERROR.getValue()))
+      .andExpect(jsonPath("$.code").value(HttpStatus.FORBIDDEN.value()))
+      .andExpect(jsonPath("$.message").value("Acesso negado: Você não tem permissão para remover este recurso"))
+      .andExpect(jsonPath("$.data").doesNotExist());
+
+    verify(this.projectService, times(1)).deleteAllFromWorkspace("01");
+    verify(this.projectMapper, never()).toDTO(any(Project.class));
+  }
 }
