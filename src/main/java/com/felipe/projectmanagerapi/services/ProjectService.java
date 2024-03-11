@@ -163,6 +163,27 @@ public class ProjectService {
     return this.projectRepository.findAllByUserId(userPrincipal.getUser().getId());
   }
 
+  public Project delete(@NotNull String projectId) {
+    Authentication authentication = this.authorizationService.getAuthentication();
+    UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
+
+    Project project = this.projectRepository.findById(projectId)
+      .orElseThrow(() -> new RecordNotFoundException("Projeto de ID: '" + projectId + "' não encontrado"));
+
+    Workspace workspace = this.workspaceService.getById(project.getWorkspace().getId());
+
+    String authenticatedUserId = userPrincipal.getUser().getId();
+    String projectOwnerId = project.getOwner().getId();
+    String workspaceOwnerId = workspace.getOwner().getId();
+
+    if(!authenticatedUserId.equals(workspaceOwnerId) && !authenticatedUserId.equals(projectOwnerId)) {
+      throw new AccessDeniedException("Acesso negado: Você não tem permissão para remover este recurso");
+    }
+
+    this.projectRepository.deleteById(project.getId());
+    return project;
+  }
+
   public void deleteAllFromOwnerAndWorkspace(@NotNull String workspaceId, @NotNull String ownerId) {
     List<Project> projects = this.getAllByWorkspaceAndOwner(workspaceId, ownerId);
     this.projectRepository.deleteAll(projects);
