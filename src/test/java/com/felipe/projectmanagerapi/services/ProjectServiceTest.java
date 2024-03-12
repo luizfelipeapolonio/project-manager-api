@@ -374,7 +374,12 @@ public class ProjectServiceTest {
     when(this.projectRepository.findAllByWorkspaceIdAndOwnerId("01", "02")).thenReturn(projects);
     doNothing().when(this.projectRepository).deleteAll(projects);
 
-    this.projectService.deleteAllFromOwnerAndWorkspace("01", "02");
+    List<Project> deletedProjects = this.projectService.deleteAllFromOwnerAndWorkspace("01", "02");
+
+    assertThat(deletedProjects).allSatisfy(project -> {
+      assertThat(project.getOwner().getId()).isEqualTo(projectsOwner.getId());
+      assertThat(project.getWorkspace().getId()).isEqualTo(workspace.getId());
+    }).hasSize(2);
 
     verify(this.authorizationService, times(1)).getAuthentication();
     verify(this.authentication, times(1)).getPrincipal();
