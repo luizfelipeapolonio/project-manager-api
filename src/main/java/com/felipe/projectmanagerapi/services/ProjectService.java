@@ -198,6 +198,12 @@ public class ProjectService {
     return projects;
   }
 
+  public List<Project> deleteAllFromAuthenticatedUser() {
+    List<Project> projects = this.getAllFromAuthenticatedUser();
+    this.projectRepository.deleteAll(projects);
+    return projects;
+  }
+
   public void deleteAllFromOwnerAndWorkspace(@NotNull String workspaceId, @NotNull String ownerId) {
     List<Project> projects = this.getAllByWorkspaceAndOwner(workspaceId, ownerId);
     this.projectRepository.deleteAll(projects);

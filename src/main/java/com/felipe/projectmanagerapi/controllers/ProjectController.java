@@ -68,6 +68,23 @@ public class ProjectController {
     return response;
   }
 
+  @DeleteMapping
+  @ResponseStatus(HttpStatus.OK)
+  public CustomResponseBody<Map<String, List<ProjectResponseDTO>>> deleteAllFromAuthenticatedUser() {
+    List<Project> deletedProjects = this.projectService.deleteAllFromAuthenticatedUser();
+    List<ProjectResponseDTO> deletedProjectsDTO = deletedProjects.stream().map(this.projectMapper::toDTO).toList();
+
+    Map<String, List<ProjectResponseDTO>> deletedProjectsMap = new HashMap<>(1);
+    deletedProjectsMap.put("deletedProjects", deletedProjectsDTO);
+
+    CustomResponseBody<Map<String, List<ProjectResponseDTO>>> response = new CustomResponseBody<>();
+    response.setStatus(ResponseConditionStatus.SUCCESS);
+    response.setCode(HttpStatus.OK);
+    response.setMessage("Todos os seus projetos foram excluídos com sucesso");
+    response.setData(deletedProjectsMap);
+    return response;
+  }
+
   @PatchMapping("/{projectId}")
   @ResponseStatus(HttpStatus.OK)
   public CustomResponseBody<ProjectResponseDTO> update(
