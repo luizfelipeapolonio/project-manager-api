@@ -659,4 +659,45 @@ public class ProjectControllerTest {
     verify(this.projectService, times(1)).deleteAllFromWorkspace("01");
     verify(this.projectMapper, never()).toDTO(any(Project.class));
   }
+
+  @Test
+  @DisplayName("deleteAllFromAuthenticatedUser - Should return a success response with OK status code and the deleted projects")
+  void deleteAllFromAuthenticatedUserSuccess() throws Exception {
+    List<Project> projects = List.of(this.dataMock.getProjects().get(1), this.dataMock.getProjects().get(2));
+    List<ProjectResponseDTO> projectsDTO = projects.stream()
+      .map(project -> new ProjectResponseDTO(
+        project.getId(),
+        project.getName(),
+        project.getPriority().getValue(),
+        project.getCategory(),
+        project.getDescription(),
+        project.getBudget().toString(),
+        ConvertDateFormat.convertDateToFormattedString(project.getDeadline()),
+        project.getCreatedAt(),
+        project.getUpdatedAt(),
+        project.getOwner().getId(),
+        project.getWorkspace().getId()
+      ))
+      .toList();
+
+    Map<String, List<ProjectResponseDTO>> deletedProjects = new HashMap<>(1);
+    deletedProjects.put("deletedProjects", projectsDTO);
+
+    CustomResponseBody<Map<String, List<ProjectResponseDTO>>> response = new CustomResponseBody<>();
+    response.setStatus(ResponseConditionStatus.SUCCESS);
+    response.setCode(HttpStatus.OK);
+    response.setMessage("Todos os seus projetos foram excluídos com sucesso");
+    response.setData(deletedProjects);
+
+    String jsonResponseBody = this.objectMapper.writeValueAsString(response);
+
+    when(this.projectService.deleteAllFromAuthenticatedUser()).thenReturn(projects);
+
+    this.mockMvc.perform(delete(this.baseUrl).accept(MediaType.APPLICATION_JSON))
+      .andExpect(status().isOk())
+      .andExpect(content().json(jsonResponseBody));
+
+    verify(this.projectService, times(1)).deleteAllFromAuthenticatedUser();
+    verify(this.projectMapper, times(2)).toDTO(any(Project.class));
+  }
 }

@@ -627,4 +627,27 @@ public class ProjectServiceTest {
     verify(this.projectRepository, never()).findAllByWorkspaceId(anyString());
     verify(this.projectRepository, never()).deleteAll(any());
   }
+
+  @Test
+  @DisplayName("deleteAllFromAuthenticatedUser - Should successfully delete all authenticated user projects")
+  void deleteAllFromAuthenticatedUserSuccess() {
+    UserPrincipal userPrincipal = new UserPrincipal(this.dataMock.getUsers().get(1));
+    List<Project> projects = List.of(this.dataMock.getProjects().get(1), this.dataMock.getProjects().get(2));
+
+    when(this.authorizationService.getAuthentication()).thenReturn(this.authentication);
+    when(this.authentication.getPrincipal()).thenReturn(userPrincipal);
+    when(this.projectRepository.findAllByUserId("02")).thenReturn(projects);
+    doNothing().when(this.projectRepository).deleteAll(projects);
+
+    List<Project> deletedProjects = this.projectService.deleteAllFromAuthenticatedUser();
+
+    assertThat(deletedProjects)
+      .allSatisfy(project -> assertThat(project.getOwner().getId()).isEqualTo(userPrincipal.getUser().getId()))
+      .hasSize(2);
+
+    verify(this.authorizationService, times(1)).getAuthentication();
+    verify(this.authentication, times(1)).getPrincipal();
+    verify(this.projectRepository, times(1)).findAllByUserId("02");
+    verify(this.projectRepository, times(1)).deleteAll(projects);
+  }
 }
