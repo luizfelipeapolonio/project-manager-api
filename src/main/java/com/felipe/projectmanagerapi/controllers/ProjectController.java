@@ -182,4 +182,27 @@ public class ProjectController {
     response.setData(projectDTOs);
     return response;
   }
+
+  @DeleteMapping("/workspaces/{workspaceId}/owner/{ownerId}")
+  @ResponseStatus(HttpStatus.OK)
+  public CustomResponseBody<Map<String, List<ProjectResponseDTO>>> deleteAllFromOwnerAndWorkspace(
+    @PathVariable @NotNull @NotBlank String workspaceId,
+    @PathVariable @NotNull @NotBlank String ownerId
+  ) {
+    List<Project> deletedProjects = this.projectService.deleteAllFromOwnerAndWorkspace(workspaceId, ownerId);
+    List<ProjectResponseDTO> deletedProjectsDTO = deletedProjects.stream().map(this.projectMapper::toDTO).toList();
+
+    Map<String, List<ProjectResponseDTO>> deletedProjectsMap = new HashMap<>(1);
+    deletedProjectsMap.put("deletedProjects", deletedProjectsDTO);
+
+    CustomResponseBody<Map<String, List<ProjectResponseDTO>>> response = new CustomResponseBody<>();
+    response.setStatus(ResponseConditionStatus.SUCCESS);
+    response.setCode(HttpStatus.OK);
+    response.setMessage(
+      "Todos os projetos do usuário de ID '" + ownerId +
+      "' do workspace de ID '" + workspaceId + "' foram excluídos com sucesso"
+    );
+    response.setData(deletedProjectsMap);
+    return response;
+  }
 }
