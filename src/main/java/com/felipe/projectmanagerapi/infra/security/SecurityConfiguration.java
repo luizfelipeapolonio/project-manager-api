@@ -58,6 +58,7 @@ public class SecurityConfiguration {
         .requestMatchers(workspaceBaseUrl + "/{workspaceId}/members/**").hasRole("ADMIN")
         .requestMatchers(HttpMethod.POST, projectBaseUrl).hasAnyRole("ADMIN", "WRITE_READ")
         .requestMatchers(HttpMethod.GET, projectBaseUrl).hasAnyRole("ADMIN", "WRITE_READ")
+        .requestMatchers(HttpMethod.DELETE, projectBaseUrl).hasAnyRole("ADMIN", "WRITE_READ")
         .requestMatchers(HttpMethod.PATCH, projectBaseUrl + "/{projectId}").hasAnyRole("ADMIN", "WRITE_READ")
         .requestMatchers(HttpMethod.DELETE, projectBaseUrl + "/{projectId}").hasAnyRole("ADMIN", "WRITE_READ")
         .requestMatchers(projectBaseUrl + "/workspaces/{workspaceId}/owner/{ownerId}").hasRole("ADMIN")
