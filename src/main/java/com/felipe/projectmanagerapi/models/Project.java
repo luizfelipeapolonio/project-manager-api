@@ -9,14 +9,19 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Column;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.Convert;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.FetchType;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "project")
@@ -37,6 +42,9 @@ public class Project {
 
   @Column(nullable = false)
   private BigDecimal budget;
+
+  @Column(nullable = false)
+  private BigDecimal cost = BigDecimal.ZERO;
 
   @Convert(converter = PriorityLevelConverter.class)
   @Column(nullable = false)
@@ -60,6 +68,9 @@ public class Project {
   @ManyToOne(optional = false)
   @JoinColumn(name = "workspace_id", nullable = false)
   private Workspace workspace;
+
+  @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+  private List<Task> tasks = new ArrayList<>();
 
   public Project() {}
 
@@ -101,6 +112,14 @@ public class Project {
 
   public void setBudget(BigDecimal budget) {
     this.budget = budget;
+  }
+
+  public BigDecimal getCost() {
+    return this.cost;
+  }
+
+  public void setCost(BigDecimal cost) {
+    this.cost = cost;
   }
 
   public PriorityLevel getPriority() {
@@ -149,5 +168,13 @@ public class Project {
 
   public void setWorkspace(Workspace workspace) {
     this.workspace = workspace;
+  }
+
+  public List<Task> getTasks() {
+    return this.tasks;
+  }
+
+  public void setTasks(List<Task> tasks) {
+    this.tasks = tasks;
   }
 }
