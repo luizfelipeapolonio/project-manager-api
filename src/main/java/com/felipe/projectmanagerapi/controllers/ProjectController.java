@@ -1,6 +1,7 @@
 package com.felipe.projectmanagerapi.controllers;
 
 import com.felipe.projectmanagerapi.dtos.ProjectCreateDTO;
+import com.felipe.projectmanagerapi.dtos.ProjectFullResponseDTO;
 import com.felipe.projectmanagerapi.dtos.ProjectResponseDTO;
 import com.felipe.projectmanagerapi.dtos.ProjectUpdateDTO;
 import com.felipe.projectmanagerapi.dtos.mappers.ProjectMapper;
@@ -44,7 +45,7 @@ public class ProjectController {
   @ResponseStatus(HttpStatus.CREATED)
   public CustomResponseBody<ProjectResponseDTO> create(@RequestBody @NotNull @Valid ProjectCreateDTO project) {
     Project createdProject = this.projectService.create(project);
-    ProjectResponseDTO createdProjectResponseDTO = this.projectMapper.toDTO(createdProject);
+    ProjectResponseDTO createdProjectResponseDTO = this.projectMapper.toProjectResponseDTO(createdProject);
 
     CustomResponseBody<ProjectResponseDTO> response = new CustomResponseBody<>();
     response.setStatus(ResponseConditionStatus.SUCCESS);
@@ -58,7 +59,7 @@ public class ProjectController {
   @ResponseStatus(HttpStatus.OK)
   public CustomResponseBody<List<ProjectResponseDTO>> getAllFromAuthenticatedUser() {
     List<Project> projects = this.projectService.getAllFromAuthenticatedUser();
-    List<ProjectResponseDTO> projectsDTO = projects.stream().map(this.projectMapper::toDTO).toList();
+    List<ProjectResponseDTO> projectsDTO = projects.stream().map(this.projectMapper::toProjectResponseDTO).toList();
 
     CustomResponseBody<List<ProjectResponseDTO>> response = new CustomResponseBody<>();
     response.setStatus(ResponseConditionStatus.SUCCESS);
@@ -72,7 +73,9 @@ public class ProjectController {
   @ResponseStatus(HttpStatus.OK)
   public CustomResponseBody<Map<String, List<ProjectResponseDTO>>> deleteAllFromAuthenticatedUser() {
     List<Project> deletedProjects = this.projectService.deleteAllFromAuthenticatedUser();
-    List<ProjectResponseDTO> deletedProjectsDTO = deletedProjects.stream().map(this.projectMapper::toDTO).toList();
+    List<ProjectResponseDTO> deletedProjectsDTO = deletedProjects.stream()
+      .map(this.projectMapper::toProjectResponseDTO)
+      .toList();
 
     Map<String, List<ProjectResponseDTO>> deletedProjectsMap = new HashMap<>(1);
     deletedProjectsMap.put("deletedProjects", deletedProjectsDTO);
@@ -92,7 +95,7 @@ public class ProjectController {
     @RequestBody @NotNull @Valid ProjectUpdateDTO project
   ) {
     Project updatedProject = this.projectService.update(projectId, project);
-    ProjectResponseDTO projectResponseDTO = this.projectMapper.toDTO(updatedProject);
+    ProjectResponseDTO projectResponseDTO = this.projectMapper.toProjectResponseDTO(updatedProject);
 
     CustomResponseBody<ProjectResponseDTO> response = new CustomResponseBody<>();
     response.setStatus(ResponseConditionStatus.SUCCESS);
@@ -104,11 +107,11 @@ public class ProjectController {
 
   @GetMapping("/{projectId}")
   @ResponseStatus(HttpStatus.OK)
-  public CustomResponseBody<ProjectResponseDTO> getById(@PathVariable @NotNull @NotBlank String projectId) {
+  public CustomResponseBody<ProjectFullResponseDTO> getById(@PathVariable @NotNull @NotBlank String projectId) {
     Project project = this.projectService.getById(projectId);
-    ProjectResponseDTO projectResponseDTO = this.projectMapper.toDTO(project);
+    ProjectFullResponseDTO projectResponseDTO = this.projectMapper.toProjectFullResponseDTO(project);
 
-    CustomResponseBody<ProjectResponseDTO> response = new CustomResponseBody<>();
+    CustomResponseBody<ProjectFullResponseDTO> response = new CustomResponseBody<>();
     response.setStatus(ResponseConditionStatus.SUCCESS);
     response.setCode(HttpStatus.OK);
     response.setMessage("Projeto encontrado");
@@ -120,7 +123,7 @@ public class ProjectController {
   @ResponseStatus(HttpStatus.OK)
   public CustomResponseBody<Map<String, ProjectResponseDTO>> delete(@PathVariable @NotNull @NotBlank String projectId) {
     Project deletedProject = this.projectService.delete(projectId);
-    ProjectResponseDTO projectResponseDTO = this.projectMapper.toDTO(deletedProject);
+    ProjectResponseDTO projectResponseDTO = this.projectMapper.toProjectResponseDTO(deletedProject);
 
     Map<String, ProjectResponseDTO> deletedProjectMap = new HashMap<>(1);
     deletedProjectMap.put("deletedProject", projectResponseDTO);
@@ -139,7 +142,9 @@ public class ProjectController {
     @PathVariable @NotNull @NotBlank String workspaceId
   ) {
     List<Project> deletedProjects = this.projectService.deleteAllFromWorkspace(workspaceId);
-    List<ProjectResponseDTO> deletedProjectsDTO = deletedProjects.stream().map(this.projectMapper::toDTO).toList();
+    List<ProjectResponseDTO> deletedProjectsDTO = deletedProjects.stream()
+      .map(this.projectMapper::toProjectResponseDTO)
+      .toList();
 
     Map<String, List<ProjectResponseDTO>> deletedProjectsMap = new HashMap<>(1);
     deletedProjectsMap.put("deletedProjects", deletedProjectsDTO);
@@ -156,7 +161,7 @@ public class ProjectController {
   @ResponseStatus(HttpStatus.OK)
   public CustomResponseBody<List<ProjectResponseDTO>> getAllFromWorkspace(@PathVariable @NotNull @NotBlank String workspaceId) {
     List<Project> projects = this.projectService.getAllFromWorkspace(workspaceId);
-    List<ProjectResponseDTO> projectsDTO = projects.stream().map(this.projectMapper::toDTO).toList();
+    List<ProjectResponseDTO> projectsDTO = projects.stream().map(this.projectMapper::toProjectResponseDTO).toList();
 
     CustomResponseBody<List<ProjectResponseDTO>> response = new CustomResponseBody<>();
     response.setStatus(ResponseConditionStatus.SUCCESS);
@@ -173,7 +178,7 @@ public class ProjectController {
     @PathVariable @NotNull @NotBlank String ownerId
   ) {
     List<Project> projects = this.projectService.getAllByWorkspaceAndOwner(workspaceId, ownerId);
-    List<ProjectResponseDTO> projectDTOs = projects.stream().map(this.projectMapper::toDTO).toList();
+    List<ProjectResponseDTO> projectDTOs = projects.stream().map(this.projectMapper::toProjectResponseDTO).toList();
 
     CustomResponseBody<List<ProjectResponseDTO>> response = new CustomResponseBody<>();
     response.setStatus(ResponseConditionStatus.SUCCESS);
@@ -190,7 +195,9 @@ public class ProjectController {
     @PathVariable @NotNull @NotBlank String ownerId
   ) {
     List<Project> deletedProjects = this.projectService.deleteAllFromOwnerAndWorkspace(workspaceId, ownerId);
-    List<ProjectResponseDTO> deletedProjectsDTO = deletedProjects.stream().map(this.projectMapper::toDTO).toList();
+    List<ProjectResponseDTO> deletedProjectsDTO = deletedProjects.stream()
+      .map(this.projectMapper::toProjectResponseDTO)
+      .toList();
 
     Map<String, List<ProjectResponseDTO>> deletedProjectsMap = new HashMap<>(1);
     deletedProjectsMap.put("deletedProjects", deletedProjectsDTO);

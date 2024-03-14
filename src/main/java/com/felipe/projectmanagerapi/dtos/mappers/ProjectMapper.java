@@ -1,15 +1,19 @@
 package com.felipe.projectmanagerapi.dtos.mappers;
 
+import com.felipe.projectmanagerapi.dtos.ProjectFullResponseDTO;
 import com.felipe.projectmanagerapi.dtos.ProjectResponseDTO;
+import com.felipe.projectmanagerapi.dtos.TaskResponseDTO;
 import com.felipe.projectmanagerapi.enums.PriorityLevel;
 import com.felipe.projectmanagerapi.models.Project;
 import com.felipe.projectmanagerapi.utils.ConvertDateFormat;
 import jakarta.validation.constraints.NotNull;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
+
 @Component
 public class ProjectMapper {
-  public ProjectResponseDTO toDTO(Project project) {
+  public ProjectResponseDTO toProjectResponseDTO(Project project) {
     if(project == null) return null;
     return new ProjectResponseDTO(
       project.getId(),
@@ -25,6 +29,24 @@ public class ProjectMapper {
       project.getOwner().getId(),
       project.getWorkspace().getId()
     );
+  }
+
+  public ProjectFullResponseDTO toProjectFullResponseDTO(Project project) {
+    if(project == null) return null;
+    ProjectResponseDTO projectResponseDTO = this.toProjectResponseDTO(project);
+    List<TaskResponseDTO> taskResponseDTOs = project.getTasks().stream()
+      .map(task -> new TaskResponseDTO(
+        task.getId(),
+        task.getName(),
+        task.getDescription(),
+        task.getCost().toString(),
+        task.getCreatedAt(),
+        task.getUpdatedAt(),
+        task.getProject().getId(),
+        task.getOwner().getId()
+      ))
+      .toList();
+    return new ProjectFullResponseDTO(projectResponseDTO, taskResponseDTOs);
   }
 
   public PriorityLevel convertValueToPriorityLevel(@NotNull String value) {
