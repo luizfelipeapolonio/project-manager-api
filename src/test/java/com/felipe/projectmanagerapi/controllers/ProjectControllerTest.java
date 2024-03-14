@@ -99,6 +99,7 @@ public class ProjectControllerTest {
       project.getCategory(),
       project.getDescription(),
       project.getBudget().toString(),
+      project.getCost().toString(),
       ConvertDateFormat.convertDateToFormattedString(project.getDeadline()),
       project.getCreatedAt(),
       project.getUpdatedAt(),
@@ -123,6 +124,7 @@ public class ProjectControllerTest {
       .andExpect(jsonPath("$.data.category").value(projectResponseDTO.category()))
       .andExpect(jsonPath("$.data.description").value(projectResponseDTO.description()))
       .andExpect(jsonPath("$.data.budget").value(projectResponseDTO.budget()))
+      .andExpect(jsonPath("$.data.cost").value(projectResponseDTO.cost()))
       .andExpect(jsonPath("$.data.deadline").value(projectResponseDTO.deadline()))
       .andExpect(jsonPath("$.data.createdAt").value(projectResponseDTO.createdAt().toString()))
       .andExpect(jsonPath("$.data.updatedAt").value(projectResponseDTO.updatedAt().toString()))
@@ -190,6 +192,7 @@ public class ProjectControllerTest {
       project.getCategory(),
       project.getDescription(),
       project.getBudget().toString(),
+      project.getCost().toString(),
       ConvertDateFormat.convertDateToFormattedString(project.getDeadline()),
       project.getCreatedAt(),
       project.getUpdatedAt(),
@@ -214,6 +217,7 @@ public class ProjectControllerTest {
       .andExpect(jsonPath("$.data.category").value(projectResponseDTO.category()))
       .andExpect(jsonPath("$.data.description").value(projectResponseDTO.description()))
       .andExpect(jsonPath("$.data.budget").value(projectResponseDTO.budget()))
+      .andExpect(jsonPath("$.data.cost").value(projectResponseDTO.cost()))
       .andExpect(jsonPath("$.data.deadline").value(projectResponseDTO.deadline()))
       .andExpect(jsonPath("$.data.createdAt").value(projectResponseDTO.createdAt().toString()))
       .andExpect(jsonPath("$.data.updatedAt").value(projectResponseDTO.updatedAt().toString()))
@@ -335,6 +339,7 @@ public class ProjectControllerTest {
         project.getCategory(),
         project.getDescription(),
         project.getBudget().toString(),
+        project.getCost().toString(),
         ConvertDateFormat.convertDateToFormattedString(project.getDeadline()),
         project.getCreatedAt(),
         project.getUpdatedAt(),
@@ -391,6 +396,7 @@ public class ProjectControllerTest {
       project.getCategory(),
       project.getDescription(),
       project.getBudget().toString(),
+      project.getCost().toString(),
       ConvertDateFormat.convertDateToFormattedString(project.getDeadline()),
       project.getCreatedAt(),
       project.getUpdatedAt(),
@@ -413,6 +419,7 @@ public class ProjectControllerTest {
       .andExpect(jsonPath("$.data.category").value(projectResponseDTO.category()))
       .andExpect(jsonPath("$.data.description").value(projectResponseDTO.description()))
       .andExpect(jsonPath("$.data.budget").value(projectResponseDTO.budget()))
+      .andExpect(jsonPath("$.data.cost").value(projectResponseDTO.cost()))
       .andExpect(jsonPath("$.data.deadline").value(projectResponseDTO.deadline()))
       .andExpect(jsonPath("$.data.createdAt").value(projectResponseDTO.createdAt().toString()))
       .andExpect(jsonPath("$.data.updatedAt").value(projectResponseDTO.updatedAt().toString()))
@@ -453,6 +460,7 @@ public class ProjectControllerTest {
         project.getCategory(),
         project.getDescription(),
         project.getBudget().toString(),
+        project.getCost().toString(),
         ConvertDateFormat.convertDateToFormattedString(project.getDeadline()),
         project.getCreatedAt(),
         project.getUpdatedAt(),
@@ -492,6 +500,7 @@ public class ProjectControllerTest {
         project.getCategory(),
         project.getDescription(),
         project.getBudget().toString(),
+        project.getCost().toString(),
         ConvertDateFormat.convertDateToFormattedString(project.getDeadline()),
         project.getCreatedAt(),
         project.getUpdatedAt(),
@@ -529,6 +538,7 @@ public class ProjectControllerTest {
       project.getCategory(),
       project.getDescription(),
       project.getBudget().toString(),
+      project.getCost().toString(),
       ConvertDateFormat.convertDateToFormattedString(project.getDeadline()),
       project.getCreatedAt(),
       project.getUpdatedAt(),
@@ -554,6 +564,7 @@ public class ProjectControllerTest {
       .andExpect(jsonPath("$.data.deletedProject.category").value(responseMap.get("deletedProject").category()))
       .andExpect(jsonPath("$.data.deletedProject.description").value(responseMap.get("deletedProject").description()))
       .andExpect(jsonPath("$.data.deletedProject.budget").value(responseMap.get("deletedProject").budget()))
+      .andExpect(jsonPath("$.data.deletedProject.cost").value(responseMap.get("deletedProject").cost()))
       .andExpect(jsonPath("$.data.deletedProject.deadline").value(responseMap.get("deletedProject").deadline()))
       .andExpect(jsonPath("$.data.deletedProject.createdAt").value(responseMap.get("deletedProject").createdAt().toString()))
       .andExpect(jsonPath("$.data.deletedProject.updatedAt").value(responseMap.get("deletedProject").updatedAt().toString()))
@@ -612,6 +623,7 @@ public class ProjectControllerTest {
         project.getCategory(),
         project.getDescription(),
         project.getBudget().toString(),
+        project.getCost().toString(),
         ConvertDateFormat.convertDateToFormattedString(project.getDeadline()),
         project.getCreatedAt(),
         project.getUpdatedAt(),
@@ -672,6 +684,7 @@ public class ProjectControllerTest {
         project.getCategory(),
         project.getDescription(),
         project.getBudget().toString(),
+        project.getCost().toString(),
         ConvertDateFormat.convertDateToFormattedString(project.getDeadline()),
         project.getCreatedAt(),
         project.getUpdatedAt(),
@@ -713,6 +726,7 @@ public class ProjectControllerTest {
         project.getCategory(),
         project.getDescription(),
         project.getBudget().toString(),
+        project.getCost().toString(),
         ConvertDateFormat.convertDateToFormattedString(project.getDeadline()),
         project.getCreatedAt(),
         project.getUpdatedAt(),

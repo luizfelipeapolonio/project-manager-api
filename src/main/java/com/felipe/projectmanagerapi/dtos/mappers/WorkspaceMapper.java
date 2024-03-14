@@ -35,6 +35,7 @@ public class WorkspaceMapper {
         project.getCategory(),
         project.getDescription(),
         project.getBudget().toString(),
+        project.getCost().toString(),
         ConvertDateFormat.convertDateToFormattedString(project.getDeadline()),
         project.getCreatedAt(),
         project.getUpdatedAt(),

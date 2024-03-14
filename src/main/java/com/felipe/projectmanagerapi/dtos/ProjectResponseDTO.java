@@ -11,6 +11,7 @@ public record ProjectResponseDTO(
   String category,
   String description,
   String budget,
+  String cost,
   String deadline,
   LocalDateTime createdAt,
   LocalDateTime updatedAt,

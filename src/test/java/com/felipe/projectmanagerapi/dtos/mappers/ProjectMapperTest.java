@@ -51,6 +51,7 @@ public class ProjectMapperTest {
     assertThat(convertedProjectDTO.category()).isEqualTo(project.getCategory());
     assertThat(convertedProjectDTO.description()).isEqualTo(project.getDescription());
     assertThat(convertedProjectDTO.budget()).isEqualTo(project.getBudget().toString());
+    assertThat(convertedProjectDTO.cost()).isEqualTo(project.getCost().toString());
     assertThat(convertedProjectDTO.deadline())
       .isEqualTo(ConvertDateFormat.convertDateToFormattedString(project.getDeadline()));
     assertThat(convertedProjectDTO.createdAt()).isEqualTo(project.getCreatedAt());
