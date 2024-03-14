@@ -188,7 +188,7 @@ public class MemberServiceTest {
     when(this.authentication.getPrincipal()).thenReturn(userPrincipal);
     when(this.userService.getProfile("02")).thenReturn(workspaceMember);
     when(this.workspaceRepository.findById("01")).thenReturn(Optional.of(workspace));
-    doNothing().when(this.projectService).deleteAllFromOwnerAndWorkspace("01", "02");
+    when(this.projectService.deleteAllFromOwnerAndWorkspace("01", "02")).thenReturn(any());
     when(this.workspaceRepository.save(workspace)).thenReturn(workspace);
 
     Workspace updatedWorkspace = this.memberService.removeMember("01", "02");
