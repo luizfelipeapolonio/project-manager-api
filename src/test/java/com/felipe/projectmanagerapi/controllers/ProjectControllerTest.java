@@ -1,9 +1,7 @@
 package com.felipe.projectmanagerapi.controllers;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.felipe.projectmanagerapi.dtos.ProjectCreateDTO;
-import com.felipe.projectmanagerapi.dtos.ProjectResponseDTO;
-import com.felipe.projectmanagerapi.dtos.ProjectUpdateDTO;
+import com.felipe.projectmanagerapi.dtos.*;
 import com.felipe.projectmanagerapi.dtos.mappers.ProjectMapper;
 import com.felipe.projectmanagerapi.enums.ResponseConditionStatus;
 import com.felipe.projectmanagerapi.exceptions.InvalidDateException;
@@ -109,7 +107,7 @@ public class ProjectControllerTest {
     String jsonBody = this.objectMapper.writeValueAsString(projectCreateDTO);
 
     when(this.projectService.create(projectCreateDTO)).thenReturn(project);
-    when(this.projectMapper.toDTO(project)).thenReturn(projectResponseDTO);
+    when(this.projectMapper.toProjectResponseDTO(project)).thenReturn(projectResponseDTO);
 
     this.mockMvc.perform(post(this.baseUrl)
       .contentType(MediaType.APPLICATION_JSON).content(jsonBody)
@@ -132,7 +130,7 @@ public class ProjectControllerTest {
       .andExpect(jsonPath("$.data.workspaceId").value(projectResponseDTO.workspaceId()));
 
     verify(this.projectService, times(1)).create(projectCreateDTO);
-    verify(this.projectMapper, times(1)).toDTO(project);
+    verify(this.projectMapper, times(1)).toProjectResponseDTO(project);
   }
 
   @Test
@@ -170,7 +168,7 @@ public class ProjectControllerTest {
       .andExpect(jsonPath("$.data").doesNotExist());
 
     verify(this.projectService, times(1)).create(projectDTO);
-    verify(this.projectMapper, never()).toDTO(any(Project.class));
+    verify(this.projectMapper, never()).toProjectResponseDTO(any(Project.class));
   }
 
   @Test
@@ -202,7 +200,7 @@ public class ProjectControllerTest {
     String jsonBody = this.objectMapper.writeValueAsString(projectDTO);
 
     when(this.projectService.update("02", projectDTO)).thenReturn(project);
-    when(this.projectMapper.toDTO(project)).thenReturn(projectResponseDTO);
+    when(this.projectMapper.toProjectResponseDTO(project)).thenReturn(projectResponseDTO);
 
     this.mockMvc.perform(patch(this.baseUrl + "/02")
       .contentType(MediaType.APPLICATION_JSON).content(jsonBody)
@@ -225,7 +223,7 @@ public class ProjectControllerTest {
       .andExpect(jsonPath("$.data.workspaceId").value(projectResponseDTO.workspaceId()));
 
     verify(this.projectService, times(1)).update("02", projectDTO);
-    verify(this.projectMapper, times(1)).toDTO(project);
+    verify(this.projectMapper, times(1)).toProjectResponseDTO(project);
   }
 
   @Test
@@ -255,7 +253,7 @@ public class ProjectControllerTest {
       .andExpect(jsonPath("$.data").doesNotExist());
 
     verify(this.projectService, times(1)).update("02", projectDTO);
-    verify(this.projectMapper, never()).toDTO(any(Project.class));
+    verify(this.projectMapper, never()).toProjectResponseDTO(any(Project.class));
   }
 
   @Test
@@ -285,7 +283,7 @@ public class ProjectControllerTest {
       .andExpect(jsonPath("$.data").doesNotExist());
 
     verify(this.projectService, times(1)).update("02", projectDTO);
-    verify(this.projectMapper, never()).toDTO(any(Project.class));
+    verify(this.projectMapper, never()).toProjectResponseDTO(any(Project.class));
   }
 
   @Test
@@ -323,7 +321,7 @@ public class ProjectControllerTest {
       .andExpect(jsonPath("$.data").doesNotExist());
 
     verify(this.projectService, times(1)).update("02", projectDTO);
-    verify(this.projectMapper, never()).toDTO(any(Project.class));
+    verify(this.projectMapper, never()).toProjectResponseDTO(any(Project.class));
   }
 
   @Test
@@ -364,7 +362,7 @@ public class ProjectControllerTest {
       .andExpect(content().json(jsonResponseBody));
 
     verify(this.projectService, times(1)).getAllByWorkspaceAndOwner("01", "02");
-    verify(this.projectMapper, times(2)).toDTO(any(Project.class));
+    verify(this.projectMapper, times(2)).toProjectResponseDTO(any(Project.class));
   }
 
   @Test
@@ -382,13 +380,15 @@ public class ProjectControllerTest {
       .andExpect(jsonPath("$.data").doesNotExist());
 
     verify(this.projectService, times(1)).getAllByWorkspaceAndOwner("01", "02");
-    verify(this.projectMapper, never()).toDTO(any(Project.class));
+    verify(this.projectMapper, never()).toProjectResponseDTO(any(Project.class));
   }
 
   @Test
   @DisplayName("getById - Should return a success response with OK status code and the found project")
   void getByIdSuccess() throws Exception {
     Project project = this.dataMock.getProjects().get(0);
+    project.setTasks(this.dataMock.getTasks());
+
     ProjectResponseDTO projectResponseDTO = new ProjectResponseDTO(
       project.getId(),
       project.getName(),
@@ -403,31 +403,39 @@ public class ProjectControllerTest {
       project.getOwner().getId(),
       project.getWorkspace().getId()
     );
+    List<TaskResponseDTO> taskResponseDTOs = project.getTasks()
+      .stream()
+      .map(task -> new TaskResponseDTO(
+        task.getId(),
+        task.getName(),
+        task.getDescription(),
+        task.getCost().toString(),
+        task.getCreatedAt(),
+        task.getUpdatedAt(),
+        task.getProject().getId(),
+        task.getOwner().getId()
+      ))
+      .toList();
+
+    ProjectFullResponseDTO projectFullResponseDTO = new ProjectFullResponseDTO(projectResponseDTO, taskResponseDTOs);
+
+    CustomResponseBody<ProjectFullResponseDTO> response = new CustomResponseBody<>();
+    response.setStatus(ResponseConditionStatus.SUCCESS);
+    response.setCode(HttpStatus.OK);
+    response.setMessage("Projeto encontrado");
+    response.setData(projectFullResponseDTO);
+
+    String jsonResponseBody = this.objectMapper.writeValueAsString(response);
 
     when(this.projectService.getById("01")).thenReturn(project);
-    when(this.projectMapper.toDTO(project)).thenReturn(projectResponseDTO);
 
     this.mockMvc.perform(get(this.baseUrl + "/01")
       .accept(MediaType.APPLICATION_JSON))
       .andExpect(status().isOk())
-      .andExpect(jsonPath("$.status").value(ResponseConditionStatus.SUCCESS.getValue()))
-      .andExpect(jsonPath("$.code").value(HttpStatus.OK.value()))
-      .andExpect(jsonPath("$.message").value("Projeto encontrado"))
-      .andExpect(jsonPath("$.data.id").value(projectResponseDTO.id()))
-      .andExpect(jsonPath("$.data.name").value(projectResponseDTO.name()))
-      .andExpect(jsonPath("$.data.priority").value(projectResponseDTO.priority()))
-      .andExpect(jsonPath("$.data.category").value(projectResponseDTO.category()))
-      .andExpect(jsonPath("$.data.description").value(projectResponseDTO.description()))
-      .andExpect(jsonPath("$.data.budget").value(projectResponseDTO.budget()))
-      .andExpect(jsonPath("$.data.cost").value(projectResponseDTO.cost()))
-      .andExpect(jsonPath("$.data.deadline").value(projectResponseDTO.deadline()))
-      .andExpect(jsonPath("$.data.createdAt").value(projectResponseDTO.createdAt().toString()))
-      .andExpect(jsonPath("$.data.updatedAt").value(projectResponseDTO.updatedAt().toString()))
-      .andExpect(jsonPath("$.data.ownerId").value(projectResponseDTO.ownerId()))
-      .andExpect(jsonPath("$.data.workspaceId").value(projectResponseDTO.workspaceId()));
+      .andExpect(content().json(jsonResponseBody));
 
     verify(this.projectService, times(1)).getById("01");
-    verify(this.projectMapper, times(1)).toDTO(project);
+    verify(this.projectMapper, times(1)).toProjectFullResponseDTO(project);
   }
 
   @Test
@@ -445,7 +453,7 @@ public class ProjectControllerTest {
       .andExpect(jsonPath("$.data").doesNotExist());
 
     verify(this.projectService, times(1)).getById("01");
-    verify(this.projectMapper, never()).toDTO(any(Project.class));
+    verify(this.projectMapper, never()).toProjectResponseDTO(any(Project.class));
   }
 
   @Test
@@ -485,7 +493,7 @@ public class ProjectControllerTest {
       .andExpect(content().json(jsonResponseBody));
 
     verify(this.projectService, times(1)).getAllFromWorkspace("01");
-    verify(this.projectMapper, times(3)).toDTO(any(Project.class));
+    verify(this.projectMapper, times(3)).toProjectResponseDTO(any(Project.class));
   }
 
   @Test
@@ -524,7 +532,7 @@ public class ProjectControllerTest {
       .andExpect(content().json(jsonResponseBody));
 
     verify(this.projectService, times(1)).getAllFromAuthenticatedUser();
-    verify(this.projectMapper, times(2)).toDTO(any(Project.class));
+    verify(this.projectMapper, times(2)).toProjectResponseDTO(any(Project.class));
   }
 
   @Test
@@ -550,7 +558,7 @@ public class ProjectControllerTest {
     responseMap.put("deletedProject", projectResponseDTO);
 
     when(this.projectService.delete("01")).thenReturn(project);
-    when(this.projectMapper.toDTO(project)).thenReturn(projectResponseDTO);
+    when(this.projectMapper.toProjectResponseDTO(project)).thenReturn(projectResponseDTO);
 
     this.mockMvc.perform(delete(this.baseUrl + "/01")
       .accept(MediaType.APPLICATION_JSON))
@@ -572,7 +580,7 @@ public class ProjectControllerTest {
       .andExpect(jsonPath("$.data.deletedProject.workspaceId").value(responseMap.get("deletedProject").workspaceId()));
 
     verify(this.projectService, times(1)).delete("01");
-    verify(this.projectMapper, times(1)).toDTO(project);
+    verify(this.projectMapper, times(1)).toProjectResponseDTO(project);
   }
 
   @Test
@@ -590,7 +598,7 @@ public class ProjectControllerTest {
       .andExpect(jsonPath("$.data").doesNotExist());
 
     verify(this.projectService, times(1)).delete("01");
-    verify(this.projectMapper, never()).toDTO(any(Project.class));
+    verify(this.projectMapper, never()).toProjectResponseDTO(any(Project.class));
   }
 
   @Test
@@ -608,7 +616,7 @@ public class ProjectControllerTest {
       .andExpect(jsonPath("$.data").doesNotExist());
 
     verify(this.projectService, times(1)).delete("01");
-    verify(this.projectMapper, never()).toDTO(any(Project.class));
+    verify(this.projectMapper, never()).toProjectResponseDTO(any(Project.class));
   }
 
   @Test
@@ -651,7 +659,7 @@ public class ProjectControllerTest {
       .andExpect(content().json(jsonResponseBody));
 
     verify(this.projectService, times(1)).deleteAllFromWorkspace("01");
-    verify(this.projectMapper, times(3)).toDTO(any(Project.class));
+    verify(this.projectMapper, times(3)).toProjectResponseDTO(any(Project.class));
   }
 
   @Test
@@ -669,7 +677,7 @@ public class ProjectControllerTest {
       .andExpect(jsonPath("$.data").doesNotExist());
 
     verify(this.projectService, times(1)).deleteAllFromWorkspace("01");
-    verify(this.projectMapper, never()).toDTO(any(Project.class));
+    verify(this.projectMapper, never()).toProjectResponseDTO(any(Project.class));
   }
 
   @Test
@@ -711,7 +719,7 @@ public class ProjectControllerTest {
       .andExpect(content().json(jsonResponseBody));
 
     verify(this.projectService, times(1)).deleteAllFromAuthenticatedUser();
-    verify(this.projectMapper, times(2)).toDTO(any(Project.class));
+    verify(this.projectMapper, times(2)).toProjectResponseDTO(any(Project.class));
   }
 
   @Test
@@ -754,6 +762,6 @@ public class ProjectControllerTest {
       .andExpect(content().json(jsonResponseBody));
 
     verify(this.projectService, times(1)).deleteAllFromOwnerAndWorkspace("01", "02");
-    verify(this.projectMapper, times(2)).toDTO(any(Project.class));
+    verify(this.projectMapper, times(2)).toProjectResponseDTO(any(Project.class));
   }
 }
