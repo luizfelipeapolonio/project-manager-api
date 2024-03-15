@@ -3,6 +3,7 @@ package com.felipe.projectmanagerapi.utils;
 import com.felipe.projectmanagerapi.enums.PriorityLevel;
 import com.felipe.projectmanagerapi.enums.Role;
 import com.felipe.projectmanagerapi.models.Project;
+import com.felipe.projectmanagerapi.models.Task;
 import com.felipe.projectmanagerapi.models.User;
 import com.felipe.projectmanagerapi.models.Workspace;
 
@@ -17,11 +18,13 @@ public class GenerateMocks {
   private final List<User> users;
   private final List<Workspace> workspaces;
   private final List<Project> projects;
+  private final List<Task> tasks;
 
   public GenerateMocks() {
     this.users = this.generateUsers();
     this.workspaces = this.generateWorkspaces();
     this.projects = this.generateProjects();
+    this.tasks = this.generateTasks();
   }
 
   public List<User> getUsers() {
@@ -34,6 +37,10 @@ public class GenerateMocks {
 
   public List<Project> getProjects() {
     return this.projects;
+  }
+
+  public List<Task> getTasks() {
+    return this.tasks;
   }
 
   private List<User> generateUsers() {
@@ -160,5 +167,35 @@ public class GenerateMocks {
     projects.add(p2);
     projects.add(p3);
     return projects;
+  }
+
+  private List<Task> generateTasks() {
+    List<Task> tasks = new ArrayList<>();
+    LocalDateTime mockDateTime = LocalDateTime.parse("2024-01-01T12:00:00.123456");
+
+    Task task1 = new Task();
+    task1.setId("01");
+    task1.setName("Task 1");
+    task1.setDescription("Descrição da task 1");
+    task1.setCost(new BigDecimal("1200.00"));
+    task1.setCreatedAt(mockDateTime);
+    task1.setUpdatedAt(mockDateTime);
+    task1.setProject(this.projects.get(1));
+    task1.setOwner(this.users.get(1));
+
+    Task task2 = new Task();
+    task2.setId("02");
+    task2.setName("Task 2");
+    task2.setDescription("Descrição da task 2");
+    task2.setCost(new BigDecimal("2500.00"));
+    task2.setCreatedAt(mockDateTime);
+    task2.setUpdatedAt(mockDateTime);
+    task2.setProject(this.projects.get(1));
+    task2.setOwner(this.users.get(1));
+
+    tasks.add(task1);
+    tasks.add(task2);
+
+    return tasks;
   }
 }
