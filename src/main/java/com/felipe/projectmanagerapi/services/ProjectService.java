@@ -3,11 +3,14 @@ package com.felipe.projectmanagerapi.services;
 import com.felipe.projectmanagerapi.dtos.ProjectCreateDTO;
 import com.felipe.projectmanagerapi.dtos.ProjectUpdateDTO;
 import com.felipe.projectmanagerapi.dtos.mappers.ProjectMapper;
+import com.felipe.projectmanagerapi.exceptions.InvalidCostException;
 import com.felipe.projectmanagerapi.exceptions.InvalidDateException;
+import com.felipe.projectmanagerapi.exceptions.OutOfBudgetException;
 import com.felipe.projectmanagerapi.exceptions.RecordNotFoundException;
 import com.felipe.projectmanagerapi.infra.security.AuthorizationService;
 import com.felipe.projectmanagerapi.infra.security.UserPrincipal;
 import com.felipe.projectmanagerapi.models.Project;
+import com.felipe.projectmanagerapi.models.Task;
 import com.felipe.projectmanagerapi.models.User;
 import com.felipe.projectmanagerapi.models.Workspace;
 import com.felipe.projectmanagerapi.repositories.ProjectRepository;
@@ -18,6 +21,7 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -209,4 +213,27 @@ public class ProjectService {
     this.projectRepository.deleteAll(projects);
     return projects;
   }
+
+  public void addCost(Project project, BigDecimal newCost) {
+    if(newCost.compareTo(project.getBudget()) > 0) {
+      throw new OutOfBudgetException(project.getBudget(), newCost);
+    }
+    if(newCost.compareTo(BigDecimal.ZERO) < 0) {
+      throw new InvalidCostException("Custo inválido! Valores negativos não são permitidos. Custo: R$ " + newCost);
+    }
+    project.setCost(project.getCost().add(newCost));
+    this.projectRepository.save(project);
+  }
+
+//  public void updateCost(Project project, Task task, BigDecimal newCost) {
+//    BigDecimal oldCost = project.getCost().subtract(task.getCost());
+//    BigDecimal updatedCost = oldCost.add(newCost);
+//    project.setCost(updatedCost);
+//    this.projectRepository.save(project);
+//  }
+//
+//  public void subtractCost(Project project, Task task) {
+//    project.setCost(project.getCost().subtract(task.getCost()));
+//    this.projectRepository.save(project);
+//  }
 }
