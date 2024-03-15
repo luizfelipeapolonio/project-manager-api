@@ -4,7 +4,9 @@ import com.felipe.projectmanagerapi.dtos.ProjectCreateDTO;
 import com.felipe.projectmanagerapi.dtos.ProjectUpdateDTO;
 import com.felipe.projectmanagerapi.dtos.mappers.ProjectMapper;
 import com.felipe.projectmanagerapi.enums.PriorityLevel;
+import com.felipe.projectmanagerapi.exceptions.InvalidCostException;
 import com.felipe.projectmanagerapi.exceptions.InvalidDateException;
+import com.felipe.projectmanagerapi.exceptions.OutOfBudgetException;
 import com.felipe.projectmanagerapi.exceptions.RecordNotFoundException;
 import com.felipe.projectmanagerapi.infra.security.AuthorizationService;
 import com.felipe.projectmanagerapi.infra.security.UserPrincipal;
@@ -20,13 +22,15 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
 import org.mockito.Spy;
+import org.mockito.MockitoAnnotations;
+import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -111,6 +115,7 @@ public class ProjectServiceTest {
     assertThat(createdProject.getCategory()).isEqualTo(project.getCategory());
     assertThat(createdProject.getDescription()).isEqualTo(project.getDescription());
     assertThat(createdProject.getBudget()).isEqualTo(project.getBudget());
+    assertThat(createdProject.getCost()).isEqualTo(project.getCost());
     assertThat(createdProject.getDeadline()).isEqualTo(project.getDeadline());
     assertThat(createdProject.getCreatedAt()).isEqualTo(project.getCreatedAt());
     assertThat(createdProject.getUpdatedAt()).isEqualTo(project.getUpdatedAt());
@@ -407,6 +412,7 @@ public class ProjectServiceTest {
     assertThat(foundProject.getPriority()).isEqualTo(project.getPriority());
     assertThat(foundProject.getDescription()).isEqualTo(project.getDescription());
     assertThat(foundProject.getBudget()).isEqualTo(project.getBudget());
+    assertThat(foundProject.getCost()).isEqualTo(project.getCost());
     assertThat(foundProject.getDeadline()).isEqualTo(project.getDeadline());
     assertThat(foundProject.getCreatedAt()).isEqualTo(project.getCreatedAt());
     assertThat(foundProject.getUpdatedAt()).isEqualTo(project.getUpdatedAt());
@@ -524,6 +530,7 @@ public class ProjectServiceTest {
     assertThat(deletedProject.getPriority()).isEqualTo(project.getPriority());
     assertThat(deletedProject.getDescription()).isEqualTo(project.getDescription());
     assertThat(deletedProject.getBudget()).isEqualTo(project.getBudget());
+    assertThat(deletedProject.getCost()).isEqualTo(project.getCost());
     assertThat(deletedProject.getDeadline()).isEqualTo(project.getDeadline());
     assertThat(deletedProject.getCreatedAt()).isEqualTo(project.getCreatedAt());
     assertThat(deletedProject.getUpdatedAt()).isEqualTo(project.getUpdatedAt());
@@ -654,5 +661,55 @@ public class ProjectServiceTest {
     verify(this.authentication, times(1)).getPrincipal();
     verify(this.projectRepository, times(1)).findAllByUserId("02");
     verify(this.projectRepository, times(1)).deleteAll(projects);
+  }
+
+  @Test
+  @DisplayName("addCost - Should successfully update the project cost adding the new cost to it")
+  void addCostSuccess() {
+    Project project = this.dataMock.getProjects().get(1);
+    BigDecimal cost = new BigDecimal("800").setScale(2, RoundingMode.FLOOR);
+    BigDecimal newCost = project.getCost().add(cost);
+    ArgumentCaptor<Project> projectCapture = ArgumentCaptor.forClass(Project.class);
+
+    when(this.projectRepository.save(projectCapture.capture())).thenReturn(any(Project.class));
+
+    this.projectService.addCost(project, cost);
+
+    assertThat(projectCapture.getValue().getCost()).isEqualTo(newCost);
+    verify(this.projectRepository, times(1)).save(project);
+  }
+
+  @Test
+  @DisplayName("addCost - Should throw an OutOfBudgetException if the cost is greater than the project buget")
+  void addCostFailsByCostOutOfBudget() {
+    Project project = this.dataMock.getProjects().get(1);
+    BigDecimal cost = new BigDecimal("1100").setScale(2, RoundingMode.FLOOR);
+
+    Exception thrown = catchException(() -> this.projectService.addCost(project, cost));
+
+    assertThat(thrown)
+      .isExactlyInstanceOf(OutOfBudgetException.class)
+      .hasMessage(
+        "Operação inválida! Custo acima do orçamento do projeto.\n" +
+        "Orçamento: R$ 1000.00" + "\n" +
+        "Custo: R$ 1100.00"
+      );
+
+    verify(this.projectRepository, never()).save(any(Project.class));
+  }
+
+  @Test
+  @DisplayName("addCost - Should throw an InvalidCostException if the cost value is less than 0")
+  void addCostFailsByNegativeCostValue() {
+    Project project = this.dataMock.getProjects().get(1);
+    BigDecimal cost = new BigDecimal("-1");
+
+    Exception thrown = catchException(() -> this.projectService.addCost(project, cost));
+
+    assertThat(thrown)
+      .isExactlyInstanceOf(InvalidCostException.class)
+      .hasMessage("Custo inválido! Valores negativos não são permitidos. Custo: R$ -1");
+
+    verify(this.projectRepository, never()).save(any(Project.class));
   }
 }
