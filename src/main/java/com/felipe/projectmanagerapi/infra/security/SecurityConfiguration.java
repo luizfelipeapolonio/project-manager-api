@@ -38,6 +38,7 @@ public class SecurityConfiguration {
     String userBaseUrl = "/api/users";
     String workspaceBaseUrl = "/api/workspaces";
     String projectBaseUrl = "/api/projects";
+    String taskBaseUrl = "/api/tasks";
     return http
       .csrf(AbstractHttpConfigurer::disable)
       .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
@@ -65,6 +66,7 @@ public class SecurityConfiguration {
         .requestMatchers(HttpMethod.GET, projectBaseUrl + "/{projectId}").hasAnyRole("ADMIN", "WRITE_READ", "READ_ONLY")
         .requestMatchers(HttpMethod.GET, projectBaseUrl + "/workspaces/{workspaceId").hasAnyRole("ADMIN", "WRITE_READ", "READ_ONLY")
         .requestMatchers(HttpMethod.DELETE, projectBaseUrl + "/workspaces/{workspaceId}").hasRole("ADMIN")
+        .requestMatchers(HttpMethod.POST, taskBaseUrl).hasAnyRole("ADMIN", "WRITE_READ")
         .requestMatchers(HttpMethod.POST, "/api/projects/test").permitAll()
         .anyRequest().authenticated())
       .addFilterBefore(this.securityFilter, UsernamePasswordAuthenticationFilter.class)
