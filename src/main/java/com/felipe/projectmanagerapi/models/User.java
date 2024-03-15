@@ -60,6 +60,9 @@ public class User {
   @OneToMany(mappedBy = "owner", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
   private List<Project> myProjects = new ArrayList<>();
 
+  @OneToMany(mappedBy = "owner", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+  private List<Task> myTasks = new ArrayList<>();
+
   public User() {}
 
   public User(String id, String name, String email, String password, Role role) {
@@ -148,5 +151,13 @@ public class User {
 
   public void setMyProjects(List<Project> myProjects) {
     this.myProjects = myProjects;
+  }
+
+  public List<Task> getMyTasks() {
+    return this.myTasks;
+  }
+
+  public void setMyTasks(List<Task> myTasks) {
+    this.myTasks = myTasks;
   }
 }
