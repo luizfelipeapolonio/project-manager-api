@@ -172,6 +172,17 @@ public class ExceptionControllerAdvice {
     return response;
   }
 
+  @ExceptionHandler({OutOfBudgetException.class, InvalidCostException.class})
+  @ResponseStatus(HttpStatus.BAD_REQUEST)
+  public CustomResponseBody<Void> handleBudgetAndCostExceptions(Exception e) {
+    CustomResponseBody<Void> response = new CustomResponseBody<>();
+    response.setStatus(ResponseConditionStatus.ERROR);
+    response.setCode(HttpStatus.BAD_REQUEST);
+    response.setMessage(e.getMessage());
+    response.setData(null);
+    return response;
+  }
+
   @ExceptionHandler(Exception.class)
   @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
   public CustomResponseBody<Void> handleUncaughtException() {
