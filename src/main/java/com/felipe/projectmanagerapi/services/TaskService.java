@@ -6,6 +6,7 @@ import com.felipe.projectmanagerapi.infra.security.UserPrincipal;
 import com.felipe.projectmanagerapi.models.Project;
 import com.felipe.projectmanagerapi.models.Task;
 import com.felipe.projectmanagerapi.repositories.TaskRepository;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
@@ -30,7 +31,7 @@ public class TaskService {
     this.projectService = projectService;
   }
 
-  public Task create(@NotNull TaskCreateDTO task) {
+  public Task create(@NotNull @Valid TaskCreateDTO task) {
     Authentication authentication = this.authorizationService.getAuthentication();
     UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
 
