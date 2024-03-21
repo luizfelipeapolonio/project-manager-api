@@ -8,8 +8,12 @@ import com.felipe.projectmanagerapi.models.Task;
 import com.felipe.projectmanagerapi.services.TaskService;
 import com.felipe.projectmanagerapi.utils.CustomResponseBody;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -39,6 +43,20 @@ public class TaskController {
     response.setStatus(ResponseConditionStatus.SUCCESS);
     response.setCode(HttpStatus.CREATED);
     response.setMessage("Task criada com sucesso");
+    response.setData(taskResponseDTO);
+    return response;
+  }
+
+  @GetMapping("/{taskId}")
+  @ResponseStatus(HttpStatus.OK)
+  public CustomResponseBody<TaskResponseDTO> getById(@PathVariable @NotNull @NotBlank String taskId) {
+    Task task = this.taskService.getById(taskId);
+    TaskResponseDTO taskResponseDTO = this.taskMapper.toDTO(task);
+
+    CustomResponseBody<TaskResponseDTO> response = new CustomResponseBody<>();
+    response.setStatus(ResponseConditionStatus.SUCCESS);
+    response.setCode(HttpStatus.OK);
+    response.setMessage("Task encontrada");
     response.setData(taskResponseDTO);
     return response;
   }
