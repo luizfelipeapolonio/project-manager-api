@@ -11,6 +11,7 @@ import com.felipe.projectmanagerapi.exceptions.RecordNotFoundException;
 import com.felipe.projectmanagerapi.infra.security.AuthorizationService;
 import com.felipe.projectmanagerapi.infra.security.UserPrincipal;
 import com.felipe.projectmanagerapi.models.Project;
+import com.felipe.projectmanagerapi.models.Task;
 import com.felipe.projectmanagerapi.models.User;
 import com.felipe.projectmanagerapi.models.Workspace;
 import com.felipe.projectmanagerapi.repositories.ProjectRepository;
@@ -711,5 +712,23 @@ public class ProjectServiceTest {
       .hasMessage("Custo inválido! Valores negativos não são permitidos. Custo: R$ -1");
 
     verify(this.projectRepository, never()).save(any(Project.class));
+  }
+
+  @Test
+  @DisplayName("subtractCost - Should successfully subtract the task cost value from project cost")
+  void subtractCostSuccess() {
+    Task task = this.dataMock.getTasks().get(0);
+    task.setCost(new BigDecimal("800").setScale(2, RoundingMode.FLOOR));
+
+    Project project = this.dataMock.getProjects().get(1);
+    BigDecimal newCost = project.getCost().subtract(task.getCost());
+    ArgumentCaptor<Project> projectCapture = ArgumentCaptor.forClass(Project.class);
+
+    when(this.projectRepository.save(projectCapture.capture())).thenReturn(any(Project.class));
+
+    this.projectService.subtractCost(project, task);
+
+    assertThat(projectCapture.getValue().getCost()).isEqualTo(newCost);
+    verify(this.projectRepository, times(1)).save(project);
   }
 }
