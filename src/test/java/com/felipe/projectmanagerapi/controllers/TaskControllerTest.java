@@ -25,6 +25,10 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.util.HashMap;
+import java.util.Map;
+
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -182,6 +186,82 @@ public class TaskControllerTest {
       .andExpect(jsonPath("$.data").doesNotExist());
 
     verify(this.taskService, times(1)).getById("01");
+    verify(this.taskMapper, never()).toDTO(any(Task.class));
+  }
+
+  @Test
+  @DisplayName("delete - Should return a success response with OK status code and the deleted task")
+  void deleteSuccess() throws Exception {
+    Task task = this.dataMock.getTasks().get(0);
+    TaskResponseDTO taskResponseDTO = new TaskResponseDTO(
+      task.getId(),
+      task.getName(),
+      task.getDescription(),
+      task.getCost().toString(),
+      task.getCreatedAt(),
+      task.getUpdatedAt(),
+      task.getProject().getId(),
+      task.getOwner().getId()
+    );
+
+    Map<String, TaskResponseDTO> taskResponseMap = new HashMap<>(1);
+    taskResponseMap.put("deletedTask", taskResponseDTO);
+
+    when(this.taskService.delete("01")).thenReturn(task);
+    when(this.taskMapper.toDTO(task)).thenReturn(taskResponseDTO);
+
+    this.mockMvc.perform(delete(BASE_URL + "/01")
+      .accept(MediaType.APPLICATION_JSON))
+      .andExpect(status().isOk())
+      .andExpect(jsonPath("$.status").value(ResponseConditionStatus.SUCCESS.getValue()))
+      .andExpect(jsonPath("$.code").value(HttpStatus.OK.value()))
+      .andExpect(jsonPath("$.message").value("Task excluída com sucesso"))
+      .andExpect(jsonPath("$.data.deletedTask.id").value(taskResponseMap.get("deletedTask").id()))
+      .andExpect(jsonPath("$.data.deletedTask.name").value(taskResponseMap.get("deletedTask").name()))
+      .andExpect(jsonPath("$.data.deletedTask.description").value(taskResponseMap.get("deletedTask").description()))
+      .andExpect(jsonPath("$.data.deletedTask.cost").value(taskResponseMap.get("deletedTask").cost()))
+      .andExpect(jsonPath("$.data.deletedTask.createdAt").value(taskResponseMap.get("deletedTask").createdAt().toString()))
+      .andExpect(jsonPath("$.data.deletedTask.updatedAt").value(taskResponseMap.get("deletedTask").updatedAt().toString()))
+      .andExpect(jsonPath("$.data.deletedTask.projectId").value(taskResponseMap.get("deletedTask").projectId()))
+      .andExpect(jsonPath("$.data.deletedTask.ownerId").value(taskResponseMap.get("deletedTask").ownerId()));
+
+    verify(this.taskService, times(1)).delete("01");
+    verify(this.taskMapper, times(1)).toDTO(task);
+  }
+
+  @Test
+  @DisplayName("delete - Should return an error response with forbidden status code")
+  void deleteFailsByAccessDenied() throws Exception {
+    when(this.taskService.delete("01"))
+      .thenThrow(new AccessDeniedException("Acesso negado: Você não tem permissão para remover este recurso"));
+
+    this.mockMvc.perform(delete(BASE_URL + "/01")
+      .accept(MediaType.APPLICATION_JSON))
+      .andExpect(status().isForbidden())
+      .andExpect(jsonPath("$.status").value(ResponseConditionStatus.ERROR.getValue()))
+      .andExpect(jsonPath("$.code").value(HttpStatus.FORBIDDEN.value()))
+      .andExpect(jsonPath("$.message").value("Acesso negado: Você não tem permissão para remover este recurso"))
+      .andExpect(jsonPath("$.data").doesNotExist());
+
+    verify(this.taskService, times(1)).delete("01");
+    verify(this.taskMapper, never()).toDTO(any(Task.class));
+  }
+
+  @Test
+  @DisplayName("delete - Should return en error response with not found status code")
+  void deleteFailsByTaskNotFound() throws Exception {
+    when(this.taskService.delete("01"))
+      .thenThrow(new RecordNotFoundException("Task de ID: '01' não encontrada"));
+
+    this.mockMvc.perform(delete(BASE_URL + "/01")
+      .accept(MediaType.APPLICATION_JSON))
+      .andExpect(status().isNotFound())
+      .andExpect(jsonPath("$.status").value(ResponseConditionStatus.ERROR.getValue()))
+      .andExpect(jsonPath("$.code").value(HttpStatus.NOT_FOUND.value()))
+      .andExpect(jsonPath("$.message").value("Task de ID: '01' não encontrada"))
+      .andExpect(jsonPath("$.data").doesNotExist());
+
+    verify(this.taskService, times(1)).delete("01");
     verify(this.taskMapper, never()).toDTO(any(Task.class));
   }
 }
