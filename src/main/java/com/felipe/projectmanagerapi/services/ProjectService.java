@@ -232,8 +232,9 @@ public class ProjectService {
 //    this.projectRepository.save(project);
 //  }
 //
-//  public void subtractCost(Project project, Task task) {
-//    project.setCost(project.getCost().subtract(task.getCost()));
-//    this.projectRepository.save(project);
-//  }
+
+  public void subtractCost(Project project, Task task) {
+    project.setCost(project.getCost().subtract(task.getCost()));
+    this.projectRepository.save(project);
+  }
 }
