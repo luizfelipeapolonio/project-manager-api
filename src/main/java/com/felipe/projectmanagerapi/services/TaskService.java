@@ -61,7 +61,6 @@ public class TaskService {
     return this.taskRepository.findById(taskId)
       .map(task -> {
         Workspace workspace = task.getProject().getWorkspace();
-
         String authenticatedUserId = userPrincipal.getUser().getId();
         String workspaceOwnerId = workspace.getOwner().getId();
 
@@ -77,5 +76,37 @@ public class TaskService {
         return task;
       })
       .orElseThrow(() -> new RecordNotFoundException("Task de ID: '" + taskId + "' não encontrada"));
+  }
+
+  public Task delete(@NotNull String taskId) {
+    // TODO: Deve ser o dono do workspace, do projeto ou da task
+    Authentication authentication = this.authorizationService.getAuthentication();
+    UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
+
+    Task task = this.taskRepository.findById(taskId)
+      .orElseThrow(() -> new RecordNotFoundException("Task de ID: '" + taskId + "' não encontrada"));
+
+    Project project = task.getProject();
+    Workspace workspace = project.getWorkspace();
+    String workspaceOwnerId = workspace.getOwner().getId();
+    String projectOwnerId = project.getOwner().getId();
+    String authenticatedUserId = userPrincipal.getUser().getId();
+    String taskOwnerId = task.getOwner().getId();
+
+    Optional<User> existingMember = workspace.getMembers()
+      .stream()
+      .filter(member -> member.getId().equals(authenticatedUserId))
+      .findFirst();
+
+    if(!workspaceOwnerId.equals(authenticatedUserId) && existingMember.isEmpty() ||
+       !workspaceOwnerId.equals(authenticatedUserId) && !projectOwnerId.equals(authenticatedUserId) &&
+       !taskOwnerId.equals(authenticatedUserId)
+    ) {
+      throw new AccessDeniedException("Acesso negado: Você não tem permissão para remover este recurso");
+    }
+
+    this.projectService.subtractCost(project, task);
+    this.taskRepository.deleteById(task.getId());
+    return task;
   }
 }
