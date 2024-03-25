@@ -27,15 +27,18 @@ public class TaskService {
   private final TaskRepository taskRepository;
   private final AuthorizationService authorizationService;
   private final ProjectService projectService;
+  private final UserService userService;
 
   public TaskService(
     TaskRepository taskRepository,
     AuthorizationService authorizationService,
-    ProjectService projectService
+    ProjectService projectService,
+    UserService userService
   ) {
     this.taskRepository = taskRepository;
     this.authorizationService = authorizationService;
     this.projectService = projectService;
+    this.userService = userService;
   }
 
   public Task create(@NotNull @Valid TaskCreateDTO task) {
@@ -133,6 +136,11 @@ public class TaskService {
     Authentication authentication = this.authorizationService.getAuthentication();
     UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
     return this.taskRepository.findAllByOwnerId(userPrincipal.getUser().getId());
+  }
+
+  public List<Task> getAllFromOwner(@NotNull String ownerId) {
+    User tasksOwner = this.userService.getProfile(ownerId);
+    return this.taskRepository.findAllByOwnerId(tasksOwner.getId());
   }
 
   private boolean isNotAllowed(Task task, UserPrincipal authenticatedUser) {

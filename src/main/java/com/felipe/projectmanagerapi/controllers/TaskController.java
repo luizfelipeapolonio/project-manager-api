@@ -129,4 +129,18 @@ public class TaskController {
     response.setData(allTasksDTO);
     return response;
   }
+
+  @GetMapping("/owner/{ownerId}")
+  @ResponseStatus(HttpStatus.OK)
+  public CustomResponseBody<List<TaskResponseDTO>> getAllFromOwner(@PathVariable @NotNull @NotBlank String ownerId) {
+    List<Task> allTasks = this.taskService.getAllFromOwner(ownerId);
+    List<TaskResponseDTO> allTasksDTO = allTasks.stream().map(this.taskMapper::toDTO).toList();
+
+    CustomResponseBody<List<TaskResponseDTO>> response = new CustomResponseBody<>();
+    response.setStatus(ResponseConditionStatus.SUCCESS);
+    response.setCode(HttpStatus.OK);
+    response.setMessage("Todas as tasks do usuário de ID: '" + ownerId + "'");
+    response.setData(allTasksDTO);
+    return response;
+  }
 }
