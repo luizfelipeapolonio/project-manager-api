@@ -143,6 +143,24 @@ public class TaskService {
     return this.taskRepository.findAllByOwnerId(tasksOwner.getId());
   }
 
+  public List<Task> deleteAllFromProject(@NotNull String projectId) {
+    Authentication authentication = this.authorizationService.getAuthentication();
+    UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
+    Project project = this.projectService.getById(projectId);
+    String projectOwnerId = project.getOwner().getId();
+    String workspaceOwnerId = project.getWorkspace().getOwner().getId();
+    String authenticatedUserId = userPrincipal.getUser().getId();
+
+    if(!workspaceOwnerId.equals(authenticatedUserId) && !projectOwnerId.equals(authenticatedUserId)) {
+      throw new AccessDeniedException("Acesso negado: Você não tem permissão para remover estes recursos");
+    }
+
+    List<Task> tasks = this.taskRepository.findAllByProjectId(project.getId());
+    this.taskRepository.deleteAll(tasks);
+    this.projectService.resetCost(project);
+    return tasks;
+  }
+
   private boolean isNotAllowed(Task task, UserPrincipal authenticatedUser) {
     Project project = task.getProject();
     Workspace workspace = project.getWorkspace();

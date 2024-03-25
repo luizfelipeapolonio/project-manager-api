@@ -130,6 +130,25 @@ public class TaskController {
     return response;
   }
 
+  @DeleteMapping("/projects/{projectId}")
+  @ResponseStatus(HttpStatus.OK)
+  public CustomResponseBody<Map<String, List<TaskResponseDTO>>> deleteAllFromProject(
+    @PathVariable @NotNull @NotBlank String projectId
+  ) {
+    List<Task> allDeletedTasks = this.taskService.deleteAllFromProject(projectId);
+    List<TaskResponseDTO> allDeletedTasksDTO = allDeletedTasks.stream().map(this.taskMapper::toDTO).toList();
+
+    Map<String, List<TaskResponseDTO>> deletedTasksMap = new HashMap<>(1);
+    deletedTasksMap.put("deletedTasks", allDeletedTasksDTO);
+
+    CustomResponseBody<Map<String, List<TaskResponseDTO>>> response = new CustomResponseBody<>();
+    response.setStatus(ResponseConditionStatus.SUCCESS);
+    response.setCode(HttpStatus.OK);
+    response.setMessage("Todas as tasks do projeto de ID: '" + projectId + "' foram excluídas com sucesso");
+    response.setData(deletedTasksMap);
+    return response;
+  }
+
   @GetMapping("/owner/{ownerId}")
   @ResponseStatus(HttpStatus.OK)
   public CustomResponseBody<List<TaskResponseDTO>> getAllFromOwner(@PathVariable @NotNull @NotBlank String ownerId) {
