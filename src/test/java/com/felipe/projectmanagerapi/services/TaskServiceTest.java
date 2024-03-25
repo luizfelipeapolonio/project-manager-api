@@ -1,6 +1,7 @@
 package com.felipe.projectmanagerapi.services;
 
 import com.felipe.projectmanagerapi.dtos.TaskCreateDTO;
+import com.felipe.projectmanagerapi.dtos.TaskUpdateDTO;
 import com.felipe.projectmanagerapi.exceptions.RecordNotFoundException;
 import com.felipe.projectmanagerapi.infra.security.AuthorizationService;
 import com.felipe.projectmanagerapi.infra.security.UserPrincipal;
@@ -180,7 +181,6 @@ public class TaskServiceTest {
   @Test
   @DisplayName("delete - Should successfully delete a task and return it")
   void deleteSuccess() {
-    // TODO: Deve ser o dono do workspace, do projeto ou da task
     UserPrincipal userPrincipal = new UserPrincipal(this.dataMock.getUsers().get(1));
     Project project = this.dataMock.getProjects().get(1);
     Task task = this.dataMock.getTasks().get(0);
@@ -280,5 +280,138 @@ public class TaskServiceTest {
     verify(this.taskRepository, times(1)).findById("01");
     verify(this.projectService, never()).subtractCost(any(Project.class), any(Task.class));
     verify(this.taskRepository, never()).deleteById(anyString());
+  }
+
+  @Test
+  @DisplayName("update - Should successfully update a task and return it")
+  void updateSuccess() {
+    // TODO: Apenas o dono do workspace, do projeto ou da task
+    UserPrincipal userPrincipal = new UserPrincipal(this.dataMock.getUsers().get(1));
+    Project project = this.dataMock.getProjects().get(1);
+    Task task = this.dataMock.getTasks().get(0);
+    TaskUpdateDTO taskUpdateDTO = new TaskUpdateDTO(
+      "Task atualizada",
+      "Descrição atualizada",
+      "1300.00"
+    );
+    BigDecimal newCost = new BigDecimal("1300").setScale(2, RoundingMode.FLOOR);
+    Task updatedTaskEntity = new Task();
+    updatedTaskEntity.setId(task.getId());
+    updatedTaskEntity.setName(taskUpdateDTO.name());
+    updatedTaskEntity.setDescription(taskUpdateDTO.description());
+    updatedTaskEntity.setCost(newCost);
+    updatedTaskEntity.setCreatedAt(task.getCreatedAt());
+    updatedTaskEntity.setUpdatedAt(task.getUpdatedAt());
+    updatedTaskEntity.setProject(task.getProject());
+    updatedTaskEntity.setOwner(task.getOwner());
+
+    when(this.authorizationService.getAuthentication()).thenReturn(this.authentication);
+    when(this.authentication.getPrincipal()).thenReturn(userPrincipal);
+    when(this.taskRepository.findById("01")).thenReturn(Optional.of(task));
+    doNothing().when(this.projectService).updateCost(project, task, newCost);
+    when(this.taskRepository.save(task)).thenReturn(task);
+
+    Task updatedTask = this.taskService.update("01", taskUpdateDTO);
+
+    assertThat(updatedTask.getId()).isEqualTo(updatedTaskEntity.getId());
+    assertThat(updatedTask.getName()).isEqualTo(updatedTaskEntity.getName());
+    assertThat(updatedTask.getDescription()).isEqualTo(updatedTaskEntity.getDescription());
+    assertThat(updatedTask.getCost()).isEqualTo(updatedTaskEntity.getCost());
+    assertThat(updatedTask.getCreatedAt()).isEqualTo(updatedTaskEntity.getCreatedAt());
+    assertThat(updatedTask.getUpdatedAt()).isEqualTo(updatedTaskEntity.getUpdatedAt());
+    assertThat(updatedTask.getProject().getId()).isEqualTo(updatedTaskEntity.getProject().getId());
+    assertThat(updatedTask.getOwner().getId()).isEqualTo(updatedTaskEntity.getOwner().getId());
+
+    verify(this.authorizationService, times(1)).getAuthentication();
+    verify(this.authentication, times(1)).getPrincipal();
+    verify(this.taskRepository, times(1)).findById("01");
+    verify(this.projectService, times(1)).updateCost(project, task, newCost);
+    verify(this.taskRepository, times(1)).save(task);
+  }
+
+  @Test
+  @DisplayName("update - Should throw a RecordNotFoundException if the task is not found")
+  void updateFailsByTaskNotFound() {
+    UserPrincipal userPrincipal = new UserPrincipal(this.dataMock.getUsers().get(1));
+    TaskUpdateDTO taskUpdateDTO = new TaskUpdateDTO(
+      "Task atualizada",
+      "Descrição atualizada",
+      "1300.00"
+    );
+
+    when(this.authorizationService.getAuthentication()).thenReturn(this.authentication);
+    when(this.authentication.getPrincipal()).thenReturn(userPrincipal);
+    when(this.taskRepository.findById("01")).thenReturn(Optional.empty());
+
+    Exception thrown = catchException(() -> this.taskService.update("01", taskUpdateDTO));
+
+    assertThat(thrown)
+      .isExactlyInstanceOf(RecordNotFoundException.class)
+      .hasMessage("Task de ID: '01' não encontrada");
+
+    verify(this.authorizationService, times(1)).getAuthentication();
+    verify(this.authentication, times(1)).getPrincipal();
+    verify(this.taskRepository, times(1)).findById("01");
+    verify(this.projectService, never()).updateCost(any(Project.class), any(Task.class), any(BigDecimal.class));
+    verify(this.taskRepository, never()).save(any(Task.class));
+  }
+
+  @Test
+  @DisplayName("update - Should throw an AccessDeniedException if the authenticated user is not the workspace owner or member")
+  void updateFailsByNotBeingWorkspaceOwnerOrMember() {
+    UserPrincipal userPrincipal = new UserPrincipal(this.dataMock.getUsers().get(2));
+    Task task = this.dataMock.getTasks().get(0);
+    TaskUpdateDTO taskUpdateDTO = new TaskUpdateDTO(
+      "Task atualizada",
+      "Descrição atualizada",
+      "1300.00"
+    );
+
+    Workspace workspace = this.dataMock.getWorkspaces().get(0);
+    workspace.setMembers(List.of(this.dataMock.getUsers().get(1)));
+
+    when(this.authorizationService.getAuthentication()).thenReturn(this.authentication);
+    when(this.authentication.getPrincipal()).thenReturn(userPrincipal);
+    when(this.taskRepository.findById("01")).thenReturn(Optional.of(task));
+
+    Exception thrown = catchException(() -> this.taskService.update("01", taskUpdateDTO));
+
+    assertThat(thrown)
+      .isExactlyInstanceOf(AccessDeniedException.class)
+      .hasMessage("Acesso negado: Você não tem permissão para atualizar este recurso");
+
+    verify(this.authorizationService, times(1)).getAuthentication();
+    verify(this.authentication, times(1)).getPrincipal();
+    verify(this.taskRepository, times(1)).findById("01");
+    verify(this.projectService, never()).updateCost(any(Project.class), any(Task.class), any(BigDecimal.class));
+    verify(this.taskRepository, never()).save(any(Task.class));
+  }
+
+  @Test
+  @DisplayName("update - Should throw an AccessDeniedException if the authenticated user is not the project or task owner")
+  void updateFailsByNotBeingProjectOrTaskOwner() {
+    UserPrincipal userPrincipal = new UserPrincipal(this.dataMock.getUsers().get(2));
+    Task task = this.dataMock.getTasks().get(0);
+    TaskUpdateDTO taskUpdateDTO = new TaskUpdateDTO(
+      "Task atualizada",
+      "Descrição atualizada",
+      "1300.00"
+    );
+
+    when(this.authorizationService.getAuthentication()).thenReturn(this.authentication);
+    when(this.authentication.getPrincipal()).thenReturn(userPrincipal);
+    when(this.taskRepository.findById("01")).thenReturn(Optional.of(task));
+
+    Exception thrown = catchException(() -> this.taskService.update("01", taskUpdateDTO));
+
+    assertThat(thrown)
+      .isExactlyInstanceOf(AccessDeniedException.class)
+      .hasMessage("Acesso negado: Você não tem permissão para atualizar este recurso");
+
+    verify(this.authorizationService, times(1)).getAuthentication();
+    verify(this.authentication, times(1)).getPrincipal();
+    verify(this.taskRepository, times(1)).findById("01");
+    verify(this.projectService, never()).updateCost(any(Project.class), any(Task.class), any(BigDecimal.class));
+    verify(this.taskRepository, never()).save(any(Task.class));
   }
 }

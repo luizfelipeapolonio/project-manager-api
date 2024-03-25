@@ -3,6 +3,7 @@ package com.felipe.projectmanagerapi.controllers;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.felipe.projectmanagerapi.dtos.TaskCreateDTO;
 import com.felipe.projectmanagerapi.dtos.TaskResponseDTO;
+import com.felipe.projectmanagerapi.dtos.TaskUpdateDTO;
 import com.felipe.projectmanagerapi.dtos.mappers.TaskMapper;
 import com.felipe.projectmanagerapi.enums.ResponseConditionStatus;
 import com.felipe.projectmanagerapi.exceptions.RecordNotFoundException;
@@ -30,6 +31,7 @@ import java.util.Map;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -262,6 +264,104 @@ public class TaskControllerTest {
       .andExpect(jsonPath("$.data").doesNotExist());
 
     verify(this.taskService, times(1)).delete("01");
+    verify(this.taskMapper, never()).toDTO(any(Task.class));
+  }
+
+  @Test
+  @DisplayName("update - Should return a success response with OK status code and the updated task")
+  void updateSuccess() throws Exception {
+    Task task = this.dataMock.getTasks().get(0);
+    TaskUpdateDTO taskUpdateDTO = new TaskUpdateDTO(
+      task.getName(),
+      task.getDescription(),
+      task.getCost().toString()
+    );
+    TaskResponseDTO taskResponseDTO = new TaskResponseDTO(
+      task.getId(),
+      task.getName(),
+      task.getDescription(),
+      task.getCost().toString(),
+      task.getCreatedAt(),
+      task.getUpdatedAt(),
+      task.getProject().getId(),
+      task.getOwner().getId()
+    );
+    String jsonBody = this.objectMapper.writeValueAsString(taskUpdateDTO);
+
+    when(this.taskService.update("01", taskUpdateDTO)).thenReturn(task);
+    when(this.taskMapper.toDTO(task)).thenReturn(taskResponseDTO);
+
+    this.mockMvc.perform(patch(BASE_URL + "/01")
+      .contentType(MediaType.APPLICATION_JSON).content(jsonBody)
+      .accept(MediaType.APPLICATION_JSON))
+      .andExpect(status().isOk())
+      .andExpect(jsonPath("$.status").value(ResponseConditionStatus.SUCCESS.getValue()))
+      .andExpect(jsonPath("$.code").value(HttpStatus.OK.value()))
+      .andExpect(jsonPath("$.message").value("Task atualizada com sucesso"))
+      .andExpect(jsonPath("$.data.id").value(taskResponseDTO.id()))
+      .andExpect(jsonPath("$.data.name").value(taskResponseDTO.name()))
+      .andExpect(jsonPath("$.data.description").value(taskResponseDTO.description()))
+      .andExpect(jsonPath("$.data.cost").value(taskResponseDTO.cost()))
+      .andExpect(jsonPath("$.data.createdAt").value(taskResponseDTO.createdAt().toString()))
+      .andExpect(jsonPath("$.data.updatedAt").value(taskResponseDTO.updatedAt().toString()))
+      .andExpect(jsonPath("$.data.projectId").value(taskResponseDTO.projectId()))
+      .andExpect(jsonPath("$.data.ownerId").value(taskResponseDTO.ownerId()));
+
+    verify(this.taskService, times(1)).update("01", taskUpdateDTO);
+    verify(this.taskMapper, times(1)).toDTO(task);
+  }
+
+  @Test
+  @DisplayName("update - Should return an error response with forbidden status code")
+  void updateFailsByAccessDenied() throws Exception {
+    Task task = this.dataMock.getTasks().get(0);
+    TaskUpdateDTO taskUpdateDTO = new TaskUpdateDTO(
+      task.getName(),
+      task.getDescription(),
+      task.getCost().toString()
+    );
+    String jsonBody = this.objectMapper.writeValueAsString(taskUpdateDTO);
+
+    when(this.taskService.update("01", taskUpdateDTO))
+      .thenThrow(new AccessDeniedException("Acesso negado: Você não tem permissão para atualizar este recurso"));
+
+    this.mockMvc.perform(patch(BASE_URL + "/01")
+      .contentType(MediaType.APPLICATION_JSON).content(jsonBody)
+      .accept(MediaType.APPLICATION_JSON))
+      .andExpect(status().isForbidden())
+      .andExpect(jsonPath("$.status").value(ResponseConditionStatus.ERROR.getValue()))
+      .andExpect(jsonPath("$.code").value(HttpStatus.FORBIDDEN.value()))
+      .andExpect(jsonPath("$.message").value("Acesso negado: Você não tem permissão para atualizar este recurso"))
+      .andExpect(jsonPath("$.data").doesNotExist());
+
+    verify(this.taskService, times(1)).update("01", taskUpdateDTO);
+    verify(this.taskMapper, never()).toDTO(any(Task.class));
+  }
+
+  @Test
+  @DisplayName("update - Should return an error response with not found status code")
+  void updateFailsByTaskNotFound() throws Exception {
+    Task task = this.dataMock.getTasks().get(0);
+    TaskUpdateDTO taskUpdateDTO = new TaskUpdateDTO(
+      task.getName(),
+      task.getDescription(),
+      task.getCost().toString()
+    );
+    String jsonBody = this.objectMapper.writeValueAsString(taskUpdateDTO);
+
+    when(this.taskService.update("01", taskUpdateDTO))
+      .thenThrow(new RecordNotFoundException("Task de ID: '01' não encontrada"));
+
+    this.mockMvc.perform(patch(BASE_URL + "/01")
+      .contentType(MediaType.APPLICATION_JSON).content(jsonBody)
+      .accept(MediaType.APPLICATION_JSON))
+      .andExpect(status().isNotFound())
+      .andExpect(jsonPath("$.status").value(ResponseConditionStatus.ERROR.getValue()))
+      .andExpect(jsonPath("$.code").value(HttpStatus.NOT_FOUND.value()))
+      .andExpect(jsonPath("$.message").value("Task de ID: '01' não encontrada"))
+      .andExpect(jsonPath("$.data").doesNotExist());
+
+    verify(this.taskService, times(1)).update("01", taskUpdateDTO);
     verify(this.taskMapper, never()).toDTO(any(Task.class));
   }
 }
