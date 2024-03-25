@@ -129,6 +129,12 @@ public class TaskService {
     return this.taskRepository.findAllByProjectId(project.getId());
   }
 
+  public List<Task> getAllFromAuthenticatedUser() {
+    Authentication authentication = this.authorizationService.getAuthentication();
+    UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
+    return this.taskRepository.findAllByOwnerId(userPrincipal.getUser().getId());
+  }
+
   private boolean isNotAllowed(Task task, UserPrincipal authenticatedUser) {
     Project project = task.getProject();
     Workspace workspace = project.getWorkspace();

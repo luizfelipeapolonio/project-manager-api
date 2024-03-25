@@ -54,6 +54,20 @@ public class TaskController {
     return response;
   }
 
+  @GetMapping
+  @ResponseStatus(HttpStatus.OK)
+  public CustomResponseBody<List<TaskResponseDTO>> getAllFromAuthenticatedUser() {
+    List<Task> allTasks = this.taskService.getAllFromAuthenticatedUser();
+    List<TaskResponseDTO> allTasksDTO = allTasks.stream().map(this.taskMapper::toDTO).toList();
+
+    CustomResponseBody<List<TaskResponseDTO>> response = new CustomResponseBody<>();
+    response.setStatus(ResponseConditionStatus.SUCCESS);
+    response.setCode(HttpStatus.OK);
+    response.setMessage("Todas as suas tasks");
+    response.setData(allTasksDTO);
+    return response;
+  }
+
   @GetMapping("/{taskId}")
   @ResponseStatus(HttpStatus.OK)
   public CustomResponseBody<TaskResponseDTO> getById(@PathVariable @NotNull @NotBlank String taskId) {
