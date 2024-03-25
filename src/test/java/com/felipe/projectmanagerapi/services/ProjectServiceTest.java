@@ -681,7 +681,7 @@ public class ProjectServiceTest {
   }
 
   @Test
-  @DisplayName("addCost - Should throw an OutOfBudgetException if the cost is greater than the project buget")
+  @DisplayName("addCost - Should throw an OutOfBudgetException if the cost is greater than the project budget")
   void addCostFailsByCostOutOfBudget() {
     Project project = this.dataMock.getProjects().get(1);
     BigDecimal cost = new BigDecimal("1100").setScale(2, RoundingMode.FLOOR);
@@ -730,5 +730,61 @@ public class ProjectServiceTest {
 
     assertThat(projectCapture.getValue().getCost()).isEqualTo(newCost);
     verify(this.projectRepository, times(1)).save(project);
+  }
+
+  @Test
+  @DisplayName("updateCost - Should successfully update the project cost")
+  void updateCostSuccess() {
+    Project project = this.dataMock.getProjects().get(1);
+    project.setBudget(new BigDecimal("2000").setScale(2, RoundingMode.FLOOR));
+    project.setCost(new BigDecimal("2000").setScale(2, RoundingMode.FLOOR));
+
+    Task task = this.dataMock.getTasks().get(0);
+    BigDecimal cost = new BigDecimal("800").setScale(2, RoundingMode.FLOOR);
+    BigDecimal newCost = new BigDecimal("1600").setScale(2, RoundingMode.FLOOR);
+    ArgumentCaptor<Project> projectCapture = ArgumentCaptor.forClass(Project.class);
+
+    when(this.projectRepository.save(projectCapture.capture())).thenReturn(any(Project.class));
+
+    this.projectService.updateCost(project, task, cost);
+
+    assertThat(projectCapture.getValue().getCost()).isEqualTo(newCost);
+    verify(this.projectRepository, times(1)).save(project);
+  }
+
+  @Test
+  @DisplayName("updateCost - Should throw an OutOfBudgetException if the cost is greater than the project budget")
+  void updateCostFailsByCostOutOfBudget() {
+    Project project = this.dataMock.getProjects().get(1);
+    Task task = this.dataMock.getTasks().get(0);
+    BigDecimal cost = new BigDecimal("1500").setScale(2, RoundingMode.FLOOR);
+
+    Exception thrown = catchException(() -> this.projectService.updateCost(project, task, cost));
+
+    assertThat(thrown)
+      .isExactlyInstanceOf(OutOfBudgetException.class)
+      .hasMessage(
+        "Operação inválida! Custo acima do orçamento do projeto.\n" +
+        "Orçamento: R$ 1000.00" + "\n" +
+        "Custo: R$ 1500.00"
+      );
+
+    verify(this.projectRepository, never()).save(any(Project.class));
+  }
+
+  @Test
+  @DisplayName("updateCost - Should throw an InvalidCostException if the cost value is less than 0")
+  void updateCostFailsByNegativeCostValue() {
+    Project project = this.dataMock.getProjects().get(1);
+    Task task = this.dataMock.getTasks().get(0);
+    BigDecimal cost = new BigDecimal("-1");
+
+    Exception thrown = catchException(() -> this.projectService.updateCost(project, task, cost));
+
+    assertThat(thrown)
+      .isExactlyInstanceOf(InvalidCostException.class)
+      .hasMessage("Custo inválido! Valores negativos não são permitidos. Custo: R$ -1");
+
+    verify(this.projectRepository, never()).save(any(Project.class));
   }
 }
