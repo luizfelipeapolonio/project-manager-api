@@ -29,7 +29,7 @@ public class TaskRepositoryTest {
   private final GenerateMocks dataMock = new GenerateMocks();
 
   @Test
-  @DisplayName("getAllFromProject - Should return all tasks from a specific project")
+  @DisplayName("getAllFromProject - Should successfully return all tasks from a specific project")
   void getAllFromProjectSuccess() {
     User workspaceOwnerMock = this.dataMock.getUsers().get(0);
     User projectOwnerMock = this.dataMock.getUsers().get(1);
@@ -59,6 +59,38 @@ public class TaskRepositoryTest {
 
     assertThat(allTasksFromProject)
       .allSatisfy(task -> assertThat(task.getProject().getId()).isEqualTo(project.getId()))
+      .hasSize(2);
+  }
+
+  @Test
+  @DisplayName("findAllByOwnerId - Should successfully return all authenticated user tasks")
+  void findAllByOwnerIdSuccess() {
+    User workspaceOwnerMock = this.dataMock.getUsers().get(0);
+    User projectAndTaskOwnerMock = this.dataMock.getUsers().get(1);
+    Workspace workspaceMock = this.dataMock.getWorkspaces().get(0);
+    Project projectMock = this.dataMock.getProjects().get(1);
+    Task taskMock1 = this.dataMock.getTasks().get(0);
+    Task taskMock2 = this.dataMock.getTasks().get(1);
+
+    User workspaceOwner = this.generateUserByMock(workspaceOwnerMock);
+    User projectAndTaskOwner = this.generateUserByMock(projectAndTaskOwnerMock);
+    Workspace workspace = this.generateWorkspaceByMock(workspaceMock, workspaceOwner);
+    Project project = this.generateProjectByMock(projectMock, workspace, projectAndTaskOwner);
+    Task task1 = this.generateTaskByMock(taskMock1, project, projectAndTaskOwner);
+    Task task2 = this.generateTaskByMock(taskMock2, project, projectAndTaskOwner);
+
+    this.entityManager.persist(workspaceOwner);
+    this.entityManager.persist(projectAndTaskOwner);
+    this.entityManager.persist(projectAndTaskOwner);
+    this.entityManager.persist(workspace);
+    this.entityManager.persist(project);
+    this.entityManager.persist(task1);
+    this.entityManager.persist(task2);
+
+    List<Task> allTasks = this.taskRepository.findAllByOwnerId(projectAndTaskOwner.getId());
+
+    assertThat(allTasks)
+      .allSatisfy(task -> assertThat(task.getOwner().getId()).isEqualTo(projectAndTaskOwner.getId()))
       .hasSize(2);
   }
 
