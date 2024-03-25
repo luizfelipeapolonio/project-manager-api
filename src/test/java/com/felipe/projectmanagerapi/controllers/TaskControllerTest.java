@@ -9,6 +9,7 @@ import com.felipe.projectmanagerapi.enums.ResponseConditionStatus;
 import com.felipe.projectmanagerapi.exceptions.RecordNotFoundException;
 import com.felipe.projectmanagerapi.models.Task;
 import com.felipe.projectmanagerapi.services.TaskService;
+import com.felipe.projectmanagerapi.utils.CustomResponseBody;
 import com.felipe.projectmanagerapi.utils.GenerateMocks;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -27,12 +28,14 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.mockito.Mockito.when;
@@ -363,5 +366,41 @@ public class TaskControllerTest {
 
     verify(this.taskService, times(1)).update("01", taskUpdateDTO);
     verify(this.taskMapper, never()).toDTO(any(Task.class));
+  }
+
+  @Test
+  @DisplayName("getAllFromProject - Should return a success response with OK status code and a list of tasks")
+  void getAllFromProjectSuccess() throws Exception {
+    List<Task> tasks = this.dataMock.getTasks();
+    List<TaskResponseDTO> tasksResponseDTO = tasks.stream()
+      .map(task -> new TaskResponseDTO(
+        task.getId(),
+        task.getName(),
+        task.getDescription(),
+        task.getCost().toString(),
+        task.getCreatedAt(),
+        task.getUpdatedAt(),
+        task.getProject().getId(),
+        task.getOwner().getId()
+      ))
+      .toList();
+
+    CustomResponseBody<List<TaskResponseDTO>> response = new CustomResponseBody<>();
+    response.setStatus(ResponseConditionStatus.SUCCESS);
+    response.setCode(HttpStatus.OK);
+    response.setMessage("Todas as tasks do projeto de ID: '02'");
+    response.setData(tasksResponseDTO);
+
+    String jsonResponseBody = this.objectMapper.writeValueAsString(response);
+
+    when(this.taskService.getAllFromProject("02")).thenReturn(tasks);
+
+    this.mockMvc.perform(get(BASE_URL + "/projects/02")
+      .accept(MediaType.APPLICATION_JSON))
+      .andExpect(status().isOk())
+      .andExpect(content().json(jsonResponseBody));
+
+    verify(this.taskService, times(1)).getAllFromProject("02");
+    verify(this.taskMapper, times(2)).toDTO(any(Task.class));
   }
 }

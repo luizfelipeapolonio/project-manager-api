@@ -414,4 +414,25 @@ public class TaskServiceTest {
     verify(this.projectService, never()).updateCost(any(Project.class), any(Task.class), any(BigDecimal.class));
     verify(this.taskRepository, never()).save(any(Task.class));
   }
+
+  @Test
+  @DisplayName("getAllFromProject - Should return all tasks from a specific project")
+  void getAllFromProjectSuccess() {
+    Project project = this.dataMock.getProjects().get(1);
+    project.setTasks(List.of(this.dataMock.getTasks().get(0), this.dataMock.getTasks().get(1)));
+
+    List<Task> tasks = project.getTasks();
+
+    when(this.projectService.getById("02")).thenReturn(project);
+    when(this.taskRepository.findAllByProjectId("02")).thenReturn(tasks);
+
+    List<Task> allTasks = this.taskService.getAllFromProject("02");
+
+    assertThat(allTasks)
+      .allSatisfy(task -> assertThat(task.getProject().getId()).isEqualTo(project.getId()))
+      .hasSize(2);
+
+    verify(this.projectService, times(1)).getById("02");
+    verify(this.taskRepository, times(1)).findAllByProjectId("02");
+  }
 }
