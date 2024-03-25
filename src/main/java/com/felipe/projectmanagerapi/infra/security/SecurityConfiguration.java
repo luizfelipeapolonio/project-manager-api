@@ -72,6 +72,7 @@ public class SecurityConfiguration {
         .requestMatchers(HttpMethod.DELETE, taskBaseUrl + "/{taskId}").hasAnyRole("ADMIN", "WRITE_READ")
         .requestMatchers(HttpMethod.PATCH, taskBaseUrl + "/{taskId}").hasAnyRole("ADMIN", "WRITE_READ")
         .requestMatchers(HttpMethod.GET, taskBaseUrl + "/projects/{projectId}").hasAnyRole("ADMIN", "WRITE_READ", "READ_ONLY")
+        .requestMatchers(HttpMethod.GET, taskBaseUrl + "/owner/{ownerId}").hasRole("ADMIN")
         .requestMatchers(HttpMethod.POST, "/api/projects/test").permitAll()
         .anyRequest().authenticated())
       .addFilterBefore(this.securityFilter, UsernamePasswordAuthenticationFilter.class)
