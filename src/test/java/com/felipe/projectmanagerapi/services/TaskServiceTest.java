@@ -7,6 +7,7 @@ import com.felipe.projectmanagerapi.infra.security.AuthorizationService;
 import com.felipe.projectmanagerapi.infra.security.UserPrincipal;
 import com.felipe.projectmanagerapi.models.Project;
 import com.felipe.projectmanagerapi.models.Task;
+import com.felipe.projectmanagerapi.models.User;
 import com.felipe.projectmanagerapi.models.Workspace;
 import com.felipe.projectmanagerapi.repositories.TaskRepository;
 import com.felipe.projectmanagerapi.utils.GenerateMocks;
@@ -50,6 +51,9 @@ public class TaskServiceTest {
 
   @Mock
   ProjectService projectService;
+
+  @Mock
+  UserService userService;
 
   @Mock
   Authentication authentication;
@@ -454,6 +458,25 @@ public class TaskServiceTest {
 
     verify(this.authorizationService, times(1)).getAuthentication();
     verify(this.authentication, times(1)).getPrincipal();
+    verify(this.taskRepository, times(1)).findAllByOwnerId("02");
+  }
+
+  @Test
+  @DisplayName("getAllFromOwner - Should successfully return all tasks that belong to a specific user")
+  void getAllFromOwnerSuccess() {
+    User tasksOwner = this.dataMock.getUsers().get(1);
+    List<Task> tasks = this.dataMock.getTasks();
+
+    when(this.userService.getProfile("02")).thenReturn(tasksOwner);
+    when(this.taskRepository.findAllByOwnerId(tasksOwner.getId())).thenReturn(tasks);
+
+    List<Task> allTasks = this.taskService.getAllFromOwner("02");
+
+    assertThat(allTasks)
+      .allSatisfy(task -> assertThat(task.getOwner().getId()).isEqualTo(tasksOwner.getId()))
+      .hasSize(2);
+
+    verify(this.userService, times(1)).getProfile("02");
     verify(this.taskRepository, times(1)).findAllByOwnerId("02");
   }
 }

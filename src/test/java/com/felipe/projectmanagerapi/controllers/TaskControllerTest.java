@@ -438,4 +438,40 @@ public class TaskControllerTest {
     verify(this.taskService, times(1)).getAllFromAuthenticatedUser();
     verify(this.taskMapper, times(2)).toDTO(any(Task.class));
   }
+
+  @Test
+  @DisplayName("getAllFromOwner - Should return a success response with OK status code and a list of tasks")
+  void getAllFromOwnerSuccess() throws Exception {
+    List<Task> tasks = this.dataMock.getTasks();
+    List<TaskResponseDTO> tasksResponseDTO = tasks.stream()
+      .map(task -> new TaskResponseDTO(
+        task.getId(),
+        task.getName(),
+        task.getDescription(),
+        task.getCost().toString(),
+        task.getCreatedAt(),
+        task.getUpdatedAt(),
+        task.getProject().getId(),
+        task.getOwner().getId()
+      ))
+      .toList();
+
+    CustomResponseBody<List<TaskResponseDTO>> response = new CustomResponseBody<>();
+    response.setStatus(ResponseConditionStatus.SUCCESS);
+    response.setCode(HttpStatus.OK);
+    response.setMessage("Todas as tasks do usuário de ID: '02'");
+    response.setData(tasksResponseDTO);
+
+    String jsonResponseBody = this.objectMapper.writeValueAsString(response);
+
+    when(this.taskService.getAllFromOwner("02")).thenReturn(tasks);
+
+    this.mockMvc.perform(get(BASE_URL + "/owner/02")
+      .accept(MediaType.APPLICATION_JSON))
+      .andExpect(status().isOk())
+      .andExpect(content().json(jsonResponseBody));
+
+    verify(this.taskService, times(1)).getAllFromOwner("02");
+    verify(this.taskMapper, times(2)).toDTO(any(Task.class));
+  }
 }
