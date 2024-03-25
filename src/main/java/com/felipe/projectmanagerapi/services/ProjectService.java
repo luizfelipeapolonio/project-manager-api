@@ -225,13 +225,18 @@ public class ProjectService {
     this.projectRepository.save(project);
   }
 
-//  public void updateCost(Project project, Task task, BigDecimal newCost) {
-//    BigDecimal oldCost = project.getCost().subtract(task.getCost());
-//    BigDecimal updatedCost = oldCost.add(newCost);
-//    project.setCost(updatedCost);
-//    this.projectRepository.save(project);
-//  }
-//
+  public void updateCost(Project project, Task task, BigDecimal newCost) {
+    if(newCost.compareTo(project.getBudget()) > 0) {
+      throw new OutOfBudgetException(project.getBudget(), newCost);
+    }
+    if(newCost.compareTo(BigDecimal.ZERO) < 0) {
+      throw new InvalidCostException("Custo inválido! Valores negativos não são permitidos. Custo: R$ " + newCost);
+    }
+    BigDecimal oldCost = project.getCost().subtract(task.getCost());
+    BigDecimal updatedCost = oldCost.add(newCost);
+    project.setCost(updatedCost);
+    this.projectRepository.save(project);
+  }
 
   public void subtractCost(Project project, Task task) {
     project.setCost(project.getCost().subtract(task.getCost()));
