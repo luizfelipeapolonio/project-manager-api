@@ -416,7 +416,7 @@ public class TaskServiceTest {
   }
 
   @Test
-  @DisplayName("getAllFromProject - Should return all tasks from a specific project")
+  @DisplayName("getAllFromProject - Should successfully return all tasks from a specific project")
   void getAllFromProjectSuccess() {
     Project project = this.dataMock.getProjects().get(1);
     project.setTasks(List.of(this.dataMock.getTasks().get(0), this.dataMock.getTasks().get(1)));
@@ -434,5 +434,26 @@ public class TaskServiceTest {
 
     verify(this.projectService, times(1)).getById("02");
     verify(this.taskRepository, times(1)).findAllByProjectId("02");
+  }
+
+  @Test
+  @DisplayName("getAllFromAuthenticatedUser - Should successfully return all authenticated user tasks")
+  void getAllFromAuthenticatedUserSuccess() {
+    UserPrincipal userPrincipal = new UserPrincipal(this.dataMock.getUsers().get(1));
+    List<Task> tasks = this.dataMock.getTasks();
+
+    when(this.authorizationService.getAuthentication()).thenReturn(this.authentication);
+    when(this.authentication.getPrincipal()).thenReturn(userPrincipal);
+    when(this.taskRepository.findAllByOwnerId("02")).thenReturn(tasks);
+
+    List<Task> allTasks = this.taskService.getAllFromAuthenticatedUser();
+
+    assertThat(allTasks)
+      .allSatisfy(task -> assertThat(task.getOwner().getId()).isEqualTo(userPrincipal.getUser().getId()))
+      .hasSize(2);
+
+    verify(this.authorizationService, times(1)).getAuthentication();
+    verify(this.authentication, times(1)).getPrincipal();
+    verify(this.taskRepository, times(1)).findAllByOwnerId("02");
   }
 }
