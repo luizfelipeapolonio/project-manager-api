@@ -787,4 +787,20 @@ public class ProjectServiceTest {
 
     verify(this.projectRepository, never()).save(any(Project.class));
   }
+
+  @Test
+  @DisplayName("resetCost - Should successfully set the project cost to BigDecimal zero")
+  void resetCostSuccess() {
+    Project project = this.dataMock.getProjects().get(1);
+    project.setCost(new BigDecimal("1200").setScale(2, RoundingMode.FLOOR));
+
+    ArgumentCaptor<Project> projectCapture = ArgumentCaptor.forClass(Project.class);
+
+    when(this.projectRepository.save(projectCapture.capture())).thenReturn(any(Project.class));
+
+    this.projectService.resetCost(project);
+
+    assertThat(projectCapture.getValue().getCost()).isEqualTo(BigDecimal.ZERO);
+    verify(this.projectRepository, times(1)).save(project);
+  }
 }
