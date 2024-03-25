@@ -24,6 +24,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @Validated
@@ -98,6 +99,20 @@ public class TaskController {
     response.setCode(HttpStatus.OK);
     response.setMessage("Task atualizada com sucesso");
     response.setData(taskResponseDTO);
+    return response;
+  }
+
+  @GetMapping("/projects/{projectId}")
+  @ResponseStatus(HttpStatus.OK)
+  public CustomResponseBody<List<TaskResponseDTO>> getAllFromProject(@PathVariable @NotNull @NotBlank String projectId) {
+    List<Task> allTasks = this.taskService.getAllFromProject(projectId);
+    List<TaskResponseDTO> allTasksDTO = allTasks.stream().map(this.taskMapper::toDTO).toList();
+
+    CustomResponseBody<List<TaskResponseDTO>> response = new CustomResponseBody<>();
+    response.setStatus(ResponseConditionStatus.SUCCESS);
+    response.setCode(HttpStatus.OK);
+    response.setMessage("Todas as tasks do projeto de ID: '" + projectId + "'");
+    response.setData(allTasksDTO);
     return response;
   }
 }

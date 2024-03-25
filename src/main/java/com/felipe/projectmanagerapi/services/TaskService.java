@@ -18,6 +18,7 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -121,6 +122,11 @@ public class TaskService {
         return this.taskRepository.save(task);
       })
       .orElseThrow(() -> new RecordNotFoundException("Task de ID: '" + taskId + "' não encontrada"));
+  }
+
+  public List<Task> getAllFromProject(@NotNull String projectId) {
+    Project project = this.projectService.getById(projectId);
+    return this.taskRepository.findAllByProjectId(project.getId());
   }
 
   private boolean isNotAllowed(Task task, UserPrincipal authenticatedUser) {
