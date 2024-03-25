@@ -474,4 +474,61 @@ public class TaskControllerTest {
     verify(this.taskService, times(1)).getAllFromOwner("02");
     verify(this.taskMapper, times(2)).toDTO(any(Task.class));
   }
+
+  @Test
+  @DisplayName("deleteAllFromProject - Should return a success response with OK status code and a map with a list of deleted tasks")
+  void deleteAllFromProjectSuccess() throws Exception {
+    List<Task> tasks = this.dataMock.getTasks();
+    List<TaskResponseDTO> tasksResponseDTO = tasks.stream()
+      .map(task -> new TaskResponseDTO(
+        task.getId(),
+        task.getName(),
+        task.getDescription(),
+        task.getCost().toString(),
+        task.getCreatedAt(),
+        task.getUpdatedAt(),
+        task.getProject().getId(),
+        task.getOwner().getId()
+      ))
+      .toList();
+
+    Map<String, List<TaskResponseDTO>> deletedTasksMap = new HashMap<>(1);
+    deletedTasksMap.put("deletedTasks", tasksResponseDTO);
+
+    CustomResponseBody<Map<String, List<TaskResponseDTO>>> response = new CustomResponseBody<>();
+    response.setStatus(ResponseConditionStatus.SUCCESS);
+    response.setCode(HttpStatus.OK);
+    response.setMessage("Todas as tasks do projeto de ID: '02' foram excluídas com sucesso");
+    response.setData(deletedTasksMap);
+
+    String jsonResponseBody = this.objectMapper.writeValueAsString(response);
+
+    when(this.taskService.deleteAllFromProject("02")).thenReturn(tasks);
+
+    this.mockMvc.perform(delete(BASE_URL + "/projects/02")
+      .accept(MediaType.APPLICATION_JSON))
+      .andExpect(status().isOk())
+      .andExpect(content().json(jsonResponseBody));
+
+    verify(this.taskService, times(1)).deleteAllFromProject("02");
+    verify(this.taskMapper, times(2)).toDTO(any(Task.class));
+  }
+
+  @Test
+  @DisplayName("deleteAllFromProject - Should return an error response with forbidden status code")
+  void deleteAllFromProjectFailsByAccessDenied() throws Exception {
+    when(this.taskService.deleteAllFromProject("02"))
+      .thenThrow(new AccessDeniedException("Acesso negado: Você não tem permissão para remover estes recursos"));
+
+    this.mockMvc.perform(delete(BASE_URL + "/projects/02")
+      .accept(MediaType.APPLICATION_JSON))
+      .andExpect(status().isForbidden())
+      .andExpect(jsonPath("$.status").value(ResponseConditionStatus.ERROR.getValue()))
+      .andExpect(jsonPath("$.code").value(HttpStatus.FORBIDDEN.value()))
+      .andExpect(jsonPath("$.message").value("Acesso negado: Você não tem permissão para remover estes recursos"))
+      .andExpect(jsonPath("$.data").doesNotExist());
+
+    verify(this.taskService, times(1)).deleteAllFromProject("02");
+    verify(this.taskMapper, never()).toDTO(any(Task.class));
+  }
 }

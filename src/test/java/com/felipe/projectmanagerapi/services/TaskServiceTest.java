@@ -33,6 +33,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyString;
+import static org.mockito.Mockito.anyCollection;
 import static org.mockito.Mockito.doNothing;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchException;
@@ -478,5 +479,58 @@ public class TaskServiceTest {
 
     verify(this.userService, times(1)).getProfile("02");
     verify(this.taskRepository, times(1)).findAllByOwnerId("02");
+  }
+
+  @Test
+  @DisplayName("deleteAllFromProject - Should successfully delete all tasks from a project and return it")
+  void deleteAllFromProjectSuccess() {
+    UserPrincipal userPrincipal = new UserPrincipal(this.dataMock.getUsers().get(1));
+    Project project = this.dataMock.getProjects().get(1);
+    project.setTasks(List.of(this.dataMock.getTasks().get(0), this.dataMock.getTasks().get(1)));
+
+    List<Task> tasks = project.getTasks();
+
+    when(this.authorizationService.getAuthentication()).thenReturn(this.authentication);
+    when(this.authentication.getPrincipal()).thenReturn(userPrincipal);
+    when(this.projectService.getById("02")).thenReturn(project);
+    doNothing().when(this.projectService).resetCost(project);
+    when(this.taskRepository.findAllByProjectId("02")).thenReturn(tasks);
+    doNothing().when(this.taskRepository).deleteAll(tasks);
+
+    List<Task> deletedTasks = this.taskService.deleteAllFromProject("02");
+
+    assertThat(deletedTasks)
+      .allSatisfy(task -> assertThat(task.getProject().getId()).isEqualTo(project.getId()))
+      .hasSize(2);
+
+    verify(this.authorizationService, times(1)).getAuthentication();
+    verify(this.authentication, times(1)).getPrincipal();
+    verify(this.projectService, times(1)).getById("02");
+    verify(this.projectService, times(1)).resetCost(project);
+    verify(this.taskRepository, times(1)).findAllByProjectId("02");
+    verify(this.taskRepository, times(1)).deleteAll(tasks);
+  }
+
+  @Test
+  @DisplayName("deleteAllFromProject - Should throw an AccessDeniedException if the authenticated user is not the workspace or project owner")
+  void deleteAllFromProjectFailsByNotBeingWorkspaceOrProjectOwner() {
+    UserPrincipal userPrincipal = new UserPrincipal(this.dataMock.getUsers().get(2));
+    Project project = this.dataMock.getProjects().get(1);
+
+    when(this.authorizationService.getAuthentication()).thenReturn(this.authentication);
+    when(this.authentication.getPrincipal()).thenReturn(userPrincipal);
+    when(this.projectService.getById("02")).thenReturn(project);
+
+    Exception thrown = catchException(() -> this.taskService.deleteAllFromProject("02"));
+
+    assertThat(thrown)
+      .isExactlyInstanceOf(AccessDeniedException.class)
+      .hasMessage("Acesso negado: Você não tem permissão para remover estes recursos");
+
+    verify(this.authorizationService, times(1)).getAuthentication();
+    verify(this.authentication, times(1)).getPrincipal();
+    verify(this.projectService, times(1)).getById("02");
+    verify(this.taskRepository, never()).findAllByProjectId(anyString());
+    verify(this.taskRepository, never()).deleteAll(anyCollection());
   }
 }
