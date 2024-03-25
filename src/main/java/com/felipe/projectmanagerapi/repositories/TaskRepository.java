@@ -11,4 +11,7 @@ public interface TaskRepository extends JpaRepository<Task, String> {
 
   @Query("SELECT t FROM Task t WHERE t.project.id=:projectId")
   List<Task> findAllByProjectId(@Param("projectId") String projectId);
+
+  @Query("SELECT t FROM Task t WHERE t.owner.id=:ownerId")
+  List<Task> findAllByOwnerId(@Param("ownerId") String ownerId);
 }
