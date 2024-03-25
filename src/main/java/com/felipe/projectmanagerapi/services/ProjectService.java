@@ -242,4 +242,9 @@ public class ProjectService {
     project.setCost(project.getCost().subtract(task.getCost()));
     this.projectRepository.save(project);
   }
+
+  public void resetCost(Project project) {
+    project.setCost(BigDecimal.ZERO);
+    this.projectRepository.save(project);
+  }
 }
