@@ -2,6 +2,7 @@ package com.felipe.projectmanagerapi.controllers;
 
 import com.felipe.projectmanagerapi.dtos.TaskCreateDTO;
 import com.felipe.projectmanagerapi.dtos.TaskResponseDTO;
+import com.felipe.projectmanagerapi.dtos.TaskUpdateDTO;
 import com.felipe.projectmanagerapi.dtos.mappers.TaskMapper;
 import com.felipe.projectmanagerapi.enums.ResponseConditionStatus;
 import com.felipe.projectmanagerapi.models.Task;
@@ -14,6 +15,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -79,6 +81,23 @@ public class TaskController {
     response.setCode(HttpStatus.OK);
     response.setMessage("Task excluída com sucesso");
     response.setData(taskResponseMap);
+    return response;
+  }
+
+  @PatchMapping("/{taskId}")
+  @ResponseStatus(HttpStatus.OK)
+  public CustomResponseBody<TaskResponseDTO> update(
+    @PathVariable @NotNull @NotBlank String taskId,
+    @RequestBody @NotNull @Valid TaskUpdateDTO task
+  ) {
+    Task updatedTask = this.taskService.update(taskId, task);
+    TaskResponseDTO taskResponseDTO = this.taskMapper.toDTO(updatedTask);
+
+    CustomResponseBody<TaskResponseDTO> response = new CustomResponseBody<>();
+    response.setStatus(ResponseConditionStatus.SUCCESS);
+    response.setCode(HttpStatus.OK);
+    response.setMessage("Task atualizada com sucesso");
+    response.setData(taskResponseDTO);
     return response;
   }
 }

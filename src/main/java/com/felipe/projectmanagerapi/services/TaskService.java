@@ -1,6 +1,7 @@
 package com.felipe.projectmanagerapi.services;
 
 import com.felipe.projectmanagerapi.dtos.TaskCreateDTO;
+import com.felipe.projectmanagerapi.dtos.TaskUpdateDTO;
 import com.felipe.projectmanagerapi.exceptions.RecordNotFoundException;
 import com.felipe.projectmanagerapi.infra.security.AuthorizationService;
 import com.felipe.projectmanagerapi.infra.security.UserPrincipal;
@@ -79,7 +80,6 @@ public class TaskService {
   }
 
   public Task delete(@NotNull String taskId) {
-    // TODO: Deve ser o dono do workspace, do projeto ou da task
     Authentication authentication = this.authorizationService.getAuthentication();
     UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
 
@@ -87,10 +87,48 @@ public class TaskService {
       .orElseThrow(() -> new RecordNotFoundException("Task de ID: '" + taskId + "' não encontrada"));
 
     Project project = task.getProject();
+
+    if(this.isNotAllowed(task, userPrincipal)) {
+      throw new AccessDeniedException("Acesso negado: Você não tem permissão para remover este recurso");
+    }
+
+    this.projectService.subtractCost(project, task);
+    this.taskRepository.deleteById(task.getId());
+    return task;
+  }
+
+  public Task update(@NotNull String taskId, @NotNull @Valid TaskUpdateDTO taskUpdateDTO) {
+    Authentication authentication = this.authorizationService.getAuthentication();
+    UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
+
+    return this.taskRepository.findById(taskId)
+      .map(task -> {
+        if(this.isNotAllowed(task, userPrincipal)) {
+          throw new AccessDeniedException("Acesso negado: Você não tem permissão para atualizar este recurso");
+        }
+
+        if(taskUpdateDTO.name() != null) {
+          task.setName(taskUpdateDTO.name());
+        }
+        if(taskUpdateDTO.description() != null) {
+          task.setDescription(taskUpdateDTO.description());
+        }
+        if(taskUpdateDTO.cost() != null) {
+          BigDecimal newCost = new BigDecimal(taskUpdateDTO.cost()).setScale(2, RoundingMode.FLOOR);
+          this.projectService.updateCost(task.getProject(), task, newCost);
+          task.setCost(newCost);
+        }
+        return this.taskRepository.save(task);
+      })
+      .orElseThrow(() -> new RecordNotFoundException("Task de ID: '" + taskId + "' não encontrada"));
+  }
+
+  private boolean isNotAllowed(Task task, UserPrincipal authenticatedUser) {
+    Project project = task.getProject();
     Workspace workspace = project.getWorkspace();
     String workspaceOwnerId = workspace.getOwner().getId();
     String projectOwnerId = project.getOwner().getId();
-    String authenticatedUserId = userPrincipal.getUser().getId();
+    String authenticatedUserId = authenticatedUser.getUser().getId();
     String taskOwnerId = task.getOwner().getId();
 
     Optional<User> existingMember = workspace.getMembers()
@@ -102,11 +140,8 @@ public class TaskService {
        !workspaceOwnerId.equals(authenticatedUserId) && !projectOwnerId.equals(authenticatedUserId) &&
        !taskOwnerId.equals(authenticatedUserId)
     ) {
-      throw new AccessDeniedException("Acesso negado: Você não tem permissão para remover este recurso");
+      return true;
     }
-
-    this.projectService.subtractCost(project, task);
-    this.taskRepository.deleteById(task.getId());
-    return task;
+    return false;
   }
 }
