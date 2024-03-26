@@ -12,8 +12,10 @@ import com.felipe.projectmanagerapi.utils.CustomResponseBody;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -159,8 +161,13 @@ public class ProjectController {
 
   @GetMapping("/workspaces/{workspaceId}")
   @ResponseStatus(HttpStatus.OK)
-  public CustomResponseBody<List<ProjectResponseDTO>> getAllFromWorkspace(@PathVariable @NotNull @NotBlank String workspaceId) {
-    List<Project> projects = this.projectService.getAllFromWorkspace(workspaceId);
+  public CustomResponseBody<List<ProjectResponseDTO>> getAllFromWorkspace(
+    @PathVariable @NotNull @NotBlank String workspaceId,
+    @RequestParam(defaultValue = "asc", name = "sortingOrder")
+    @Pattern(regexp = "asc|desc", message = "Os parâmetros aceitos são: asc, desc")
+    String sortingOrder
+  ) {
+    List<Project> projects = this.projectService.getAllFromWorkspace(workspaceId, sortingOrder);
     List<ProjectResponseDTO> projectsDTO = projects.stream().map(this.projectMapper::toProjectResponseDTO).toList();
 
     CustomResponseBody<List<ProjectResponseDTO>> response = new CustomResponseBody<>();

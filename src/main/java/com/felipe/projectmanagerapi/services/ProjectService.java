@@ -17,6 +17,7 @@ import com.felipe.projectmanagerapi.repositories.ProjectRepository;
 import com.felipe.projectmanagerapi.utils.ConvertDateFormat;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
@@ -156,9 +157,10 @@ public class ProjectService {
     return project;
   }
 
-  public List<Project> getAllFromWorkspace(@NotNull String workspaceId) {
+  public List<Project> getAllFromWorkspace(@NotNull String workspaceId, String sortDirection) {
     Workspace workspace = this.workspaceService.getById(workspaceId);
-    return this.projectRepository.findAllByWorkspaceId(workspace.getId());
+    Sort sort = this.sortingOrder(sortDirection);
+    return this.projectRepository.findAllByWorkspaceId(workspace.getId(), sort);
   }
 
   public List<Project> getAllFromAuthenticatedUser() {
@@ -192,12 +194,13 @@ public class ProjectService {
     Authentication authentication = this.authorizationService.getAuthentication();
     UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
     Workspace workspace = this.workspaceService.getById(workspaceId);
+    Sort sort = this.sortingOrder("asc");
 
     if(!userPrincipal.getUser().getId().equals(workspace.getOwner().getId())) {
       throw new AccessDeniedException("Acesso negado: Você não tem permissão para remover este recurso");
     }
 
-    List<Project> projects = this.projectRepository.findAllByWorkspaceId(workspace.getId());
+    List<Project> projects = this.projectRepository.findAllByWorkspaceId(workspace.getId(), sort);
     this.projectRepository.deleteAll(projects);
     return projects;
   }
@@ -246,5 +249,9 @@ public class ProjectService {
   public void resetCost(Project project) {
     project.setCost(BigDecimal.ZERO);
     this.projectRepository.save(project);
+  }
+
+  private Sort sortingOrder(String sortDirection) {
+    return Sort.by(Sort.Direction.fromString(sortDirection.toUpperCase()), "priority");
   }
 }
