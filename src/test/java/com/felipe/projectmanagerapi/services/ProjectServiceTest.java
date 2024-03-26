@@ -27,6 +27,7 @@ import org.mockito.Spy;
 import org.mockito.MockitoAnnotations;
 import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 
@@ -477,16 +478,16 @@ public class ProjectServiceTest {
     workspace.setProjects(this.dataMock.getProjects());
 
     when(this.workspaceService.getById("01")).thenReturn(workspace);
-    when(this.projectRepository.findAllByWorkspaceId("01")).thenReturn(workspace.getProjects());
+    when(this.projectRepository.findAllByWorkspaceId(eq("01"), any(Sort.class))).thenReturn(workspace.getProjects());
 
-    List<Project> foundProjects = this.projectService.getAllFromWorkspace("01");
+    List<Project> foundProjects = this.projectService.getAllFromWorkspace("01", "ASC");
 
     assertThat(foundProjects)
       .allSatisfy(project -> assertThat(project.getWorkspace().getId()).isEqualTo(workspace.getId()))
       .hasSize(3);
 
     verify(this.workspaceService, times(1)).getById("01");
-    verify(this.projectRepository, times(1)).findAllByWorkspaceId("01");
+    verify(this.projectRepository, times(1)).findAllByWorkspaceId(eq("01"), any(Sort.class));
   }
 
   @Test
@@ -602,7 +603,7 @@ public class ProjectServiceTest {
     when(this.authorizationService.getAuthentication()).thenReturn(this.authentication);
     when(this.authentication.getPrincipal()).thenReturn(userPrincipal);
     when(this.workspaceService.getById("01")).thenReturn(workspace);
-    when(this.projectRepository.findAllByWorkspaceId("01")).thenReturn(projects);
+    when(this.projectRepository.findAllByWorkspaceId(eq("01"), any(Sort.class))).thenReturn(projects);
     doNothing().when(this.projectRepository).deleteAll(projects);
 
     List<Project> deletedProjects = this.projectService.deleteAllFromWorkspace("01");
@@ -614,7 +615,7 @@ public class ProjectServiceTest {
     verify(this.authorizationService, times(1)).getAuthentication();
     verify(this.authentication, times(1)).getPrincipal();
     verify(this.workspaceService, times(1)).getById("01");
-    verify(this.projectRepository, times(1)).findAllByWorkspaceId("01");
+    verify(this.projectRepository, times(1)).findAllByWorkspaceId(eq("01"), any(Sort.class));
     verify(this.projectRepository, times(1)).deleteAll(projects);
   }
 
@@ -637,7 +638,7 @@ public class ProjectServiceTest {
     verify(this.authorizationService, times(1)).getAuthentication();
     verify(this.authentication, times(1)).getPrincipal();
     verify(this.workspaceService, times(1)).getById("01");
-    verify(this.projectRepository, never()).findAllByWorkspaceId(anyString());
+    verify(this.projectRepository, never()).findAllByWorkspaceId(anyString(), any(Sort.class));
     verify(this.projectRepository, never()).deleteAll(any());
   }
 

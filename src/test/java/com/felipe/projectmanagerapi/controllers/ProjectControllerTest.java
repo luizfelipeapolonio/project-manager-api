@@ -43,6 +43,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.anyString;
+import static org.mockito.Mockito.eq;
 
 @SpringBootTest
 @AutoConfigureMockMvc(addFilters = false)
@@ -485,14 +487,14 @@ public class ProjectControllerTest {
 
     String jsonResponseBody = this.objectMapper.writeValueAsString(response);
 
-    when(this.projectService.getAllFromWorkspace("01")).thenReturn(projects);
+    when(this.projectService.getAllFromWorkspace(eq("01"), anyString())).thenReturn(projects);
 
     this.mockMvc.perform(get(this.baseUrl + "/workspaces/01")
       .accept(MediaType.APPLICATION_JSON))
       .andExpect(status().isOk())
       .andExpect(content().json(jsonResponseBody));
 
-    verify(this.projectService, times(1)).getAllFromWorkspace("01");
+    verify(this.projectService, times(1)).getAllFromWorkspace(eq("01"), anyString());
     verify(this.projectMapper, times(3)).toProjectResponseDTO(any(Project.class));
   }
 

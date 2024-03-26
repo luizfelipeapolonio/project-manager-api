@@ -9,6 +9,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.data.domain.Sort;
 import org.springframework.test.context.ActiveProfiles;
 
 import java.util.List;
@@ -85,7 +86,9 @@ public class ProjectRepositoryTest {
     this.entityManager.persist(project2);
     this.entityManager.persist(project3);
 
-    List<Project> workspaceProjects = this.projectRepository.findAllByWorkspaceId(workspace.getId());
+    Sort sort = Sort.by(Sort.Direction.ASC, "priority");
+
+    List<Project> workspaceProjects = this.projectRepository.findAllByWorkspaceId(workspace.getId(), sort);
 
     assertThat(workspaceProjects)
       .allSatisfy(project -> assertThat(project.getWorkspace().getId()).isEqualTo(workspace.getId()))
