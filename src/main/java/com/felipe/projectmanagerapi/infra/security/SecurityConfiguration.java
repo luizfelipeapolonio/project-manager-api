@@ -4,6 +4,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -41,6 +42,7 @@ public class SecurityConfiguration {
     String taskBaseUrl = "/api/tasks";
     return http
       .csrf(AbstractHttpConfigurer::disable)
+      .cors(Customizer.withDefaults())
       .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
       .authorizeHttpRequests(authorizeHttpRequests -> authorizeHttpRequests
         .requestMatchers(HttpMethod.POST, authBaseUrl + "/register").hasRole("ADMIN")
@@ -74,7 +76,7 @@ public class SecurityConfiguration {
         .requestMatchers(HttpMethod.GET, taskBaseUrl + "/projects/{projectId}").hasAnyRole("ADMIN", "WRITE_READ", "READ_ONLY")
         .requestMatchers(HttpMethod.DELETE, taskBaseUrl + "/projects/{projectId}").hasAnyRole("ADMIN", "WRITE_READ")
         .requestMatchers(HttpMethod.GET, taskBaseUrl + "/owner/{ownerId}").hasRole("ADMIN")
-        .requestMatchers(HttpMethod.POST, "/api/projects/test").permitAll()
+        .requestMatchers("/api/auth/test").permitAll()
         .anyRequest().authenticated())
       .addFilterBefore(this.securityFilter, UsernamePasswordAuthenticationFilter.class)
       .exceptionHandling(exceptionHandling -> exceptionHandling
