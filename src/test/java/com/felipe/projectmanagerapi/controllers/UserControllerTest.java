@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.felipe.projectmanagerapi.dtos.*;
 import com.felipe.projectmanagerapi.dtos.mappers.UserMapper;
 import com.felipe.projectmanagerapi.enums.ResponseConditionStatus;
+import com.felipe.projectmanagerapi.exceptions.ExistingResourcesException;
 import com.felipe.projectmanagerapi.exceptions.RecordNotFoundException;
 import com.felipe.projectmanagerapi.exceptions.UserAlreadyExistsException;
 import com.felipe.projectmanagerapi.models.User;
@@ -533,6 +534,23 @@ public class UserControllerTest {
       .andExpect(jsonPath("$.status").value(ResponseConditionStatus.ERROR.getValue()))
       .andExpect(jsonPath("$.code").value(HttpStatus.NOT_FOUND.value()))
       .andExpect(jsonPath("$.message").value("Usuário não encontrado"))
+      .andExpect(jsonPath("$.data").doesNotExist());
+
+    verify(this.userService, times(1)).delete("02");
+    verify(this.userMapper, never()).toDTO(any(User.class));
+  }
+
+  @Test
+  @DisplayName("delete - Should return an error response with bad request status code")
+  void deleteUserFailsByExistingResources() throws Exception {
+    when(this.userService.delete("02"))
+      .thenThrow(new ExistingResourcesException(1, 2, 4));
+
+    this.mockMvc.perform(delete(this.baseUrl + "/users/02")
+      .accept(MediaType.APPLICATION_JSON))
+      .andExpect(jsonPath("$.status").value(ResponseConditionStatus.ERROR.getValue()))
+      .andExpect(jsonPath("$.code").value(HttpStatus.BAD_REQUEST.value()))
+      .andExpect(jsonPath("$.message").value("Não foi possível excluir! O usuário ainda possui: 1 workspace(s), 2 projeto(s), 4 task(s)"))
       .andExpect(jsonPath("$.data").doesNotExist());
 
     verify(this.userService, times(1)).delete("02");

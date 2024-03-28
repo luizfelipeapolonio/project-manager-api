@@ -3,6 +3,7 @@ package com.felipe.projectmanagerapi.services;
 import com.felipe.projectmanagerapi.dtos.*;
 import com.felipe.projectmanagerapi.dtos.mappers.UserMapper;
 import com.felipe.projectmanagerapi.enums.Role;
+import com.felipe.projectmanagerapi.exceptions.ExistingResourcesException;
 import com.felipe.projectmanagerapi.exceptions.RecordNotFoundException;
 import com.felipe.projectmanagerapi.exceptions.UserAlreadyExistsException;
 import com.felipe.projectmanagerapi.infra.security.AuthorizationService;
@@ -448,5 +449,59 @@ public class UserServiceTest {
 
     verify(this.userRepository, times(1)).findById("02");
     verify(this.userRepository, never()).deleteById("02");
+  }
+
+  @Test
+  @DisplayName("delete - Should throw an ExistingResourcesException if user has workspaces")
+  void deleteUserFailsByExistingWorkspace() {
+    User user = this.dataMock.getUsers().get(1);
+    user.setMyWorkspaces(List.of(this.dataMock.getWorkspaces().get(1)));
+
+    when(this.userRepository.findById("02")).thenReturn(Optional.of(user));
+
+    Exception thrown = catchException(() -> this.userService.delete("02"));
+
+    assertThat(thrown)
+      .isExactlyInstanceOf(ExistingResourcesException.class)
+      .hasMessage("Não foi possível excluir! O usuário ainda possui: 1 workspace(s), 0 projeto(s), 0 task(s)");
+
+    verify(this.userRepository, times(1)).findById("02");
+    verify(this.userRepository, never()).deleteById(anyString());
+  }
+
+  @Test
+  @DisplayName("delete - Should throw an ExistingResourcesException if user has projects")
+  void deleteUserFailsByExistingProject() {
+    User user = this.dataMock.getUsers().get(1);
+    user.setMyProjects(List.of(this.dataMock.getProjects().get(1)));
+
+    when(this.userRepository.findById("02")).thenReturn(Optional.of(user));
+
+    Exception thrown = catchException(() -> this.userService.delete("02"));
+
+    assertThat(thrown)
+      .isExactlyInstanceOf(ExistingResourcesException.class)
+      .hasMessage("Não foi possível excluir! O usuário ainda possui: 0 workspace(s), 1 projeto(s), 0 task(s)");
+
+    verify(this.userRepository, times(1)).findById("02");
+    verify(this.userRepository, never()).deleteById(anyString());
+  }
+
+  @Test
+  @DisplayName("delete - Should throw an ExistingResourcesException if user has tasks")
+  void deleteUserFailsByExistingTask() {
+    User user = this.dataMock.getUsers().get(1);
+    user.setMyTasks(List.of(this.dataMock.getTasks().get(0)));
+
+    when(this.userRepository.findById("02")).thenReturn(Optional.of(user));
+
+    Exception thrown = catchException(() -> this.userService.delete("02"));
+
+    assertThat(thrown)
+      .isExactlyInstanceOf(ExistingResourcesException.class)
+      .hasMessage("Não foi possível excluir! O usuário ainda possui: 0 workspace(s), 0 projeto(s), 1 task(s)");
+
+    verify(this.userRepository, times(1)).findById("02");
+    verify(this.userRepository, never()).deleteById(anyString());
   }
 }
