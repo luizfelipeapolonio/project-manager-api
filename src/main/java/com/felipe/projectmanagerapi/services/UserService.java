@@ -2,12 +2,14 @@ package com.felipe.projectmanagerapi.services;
 
 import com.felipe.projectmanagerapi.dtos.*;
 import com.felipe.projectmanagerapi.dtos.mappers.UserMapper;
+import com.felipe.projectmanagerapi.exceptions.ExistingResourcesException;
 import com.felipe.projectmanagerapi.exceptions.RecordNotFoundException;
 import com.felipe.projectmanagerapi.exceptions.UserAlreadyExistsException;
 import com.felipe.projectmanagerapi.infra.security.AuthorizationService;
 import com.felipe.projectmanagerapi.infra.security.TokenService;
 import com.felipe.projectmanagerapi.infra.security.UserPrincipal;
 import com.felipe.projectmanagerapi.models.User;
+import com.felipe.projectmanagerapi.models.Workspace;
 import com.felipe.projectmanagerapi.repositories.UserRepository;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
@@ -137,6 +139,20 @@ public class UserService {
   public Map<String, User> delete(@NotNull String userId) {
     User user = this.userRepository.findById(userId)
       .orElseThrow(() -> new RecordNotFoundException("Usuário não encontrado"));
+
+    int workspaceCount = user.getMyWorkspaces().size();
+    int projectCount = user.getMyProjects().size();
+    int taskCount = user.getMyTasks().size();
+
+    if(workspaceCount > 0 || projectCount > 0 || taskCount > 0) {
+      throw new ExistingResourcesException(workspaceCount, projectCount, taskCount);
+    }
+
+    if(!user.getMemberOfWorkspaces().isEmpty()) {
+      for(Workspace workspace : user.getMemberOfWorkspaces()) {
+        workspace.removeMember(user);
+      }
+    }
 
     this.userRepository.deleteById(user.getId());
 
