@@ -183,6 +183,17 @@ public class ExceptionControllerAdvice {
     return response;
   }
 
+  @ExceptionHandler(ExistingResourcesException.class)
+  @ResponseStatus(HttpStatus.BAD_REQUEST)
+  public CustomResponseBody<Void> handleExistingResourcesException(ExistingResourcesException e) {
+    CustomResponseBody<Void> response = new CustomResponseBody<>();
+    response.setStatus(ResponseConditionStatus.ERROR);
+    response.setCode(HttpStatus.BAD_REQUEST);
+    response.setMessage(e.getMessage());
+    response.setData(null);
+    return response;
+  }
+
   @ExceptionHandler(Exception.class)
   @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
   public CustomResponseBody<Void> handleUncaughtException() {
