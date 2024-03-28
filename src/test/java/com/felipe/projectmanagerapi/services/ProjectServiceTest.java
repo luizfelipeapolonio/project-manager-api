@@ -4,6 +4,7 @@ import com.felipe.projectmanagerapi.dtos.ProjectCreateDTO;
 import com.felipe.projectmanagerapi.dtos.ProjectUpdateDTO;
 import com.felipe.projectmanagerapi.dtos.mappers.ProjectMapper;
 import com.felipe.projectmanagerapi.enums.PriorityLevel;
+import com.felipe.projectmanagerapi.exceptions.InvalidBudgetException;
 import com.felipe.projectmanagerapi.exceptions.InvalidCostException;
 import com.felipe.projectmanagerapi.exceptions.InvalidDateException;
 import com.felipe.projectmanagerapi.exceptions.OutOfBudgetException;
@@ -98,7 +99,7 @@ public class ProjectServiceTest {
       project.getName(),
       project.getCategory(),
       project.getDescription(),
-      project.getBudget(),
+      project.getBudget().toString(),
       project.getPriority().getValue(),
       "01-01-2025",
       workspace.getId()
@@ -142,7 +143,7 @@ public class ProjectServiceTest {
       project.getName(),
       project.getCategory(),
       project.getDescription(),
-      project.getBudget(),
+      project.getBudget().toString(),
       project.getPriority().getValue(),
       "21-02-2024",
       workspace.getId()
@@ -174,21 +175,22 @@ public class ProjectServiceTest {
   void updateProjectSuccess() {
     UserPrincipal userPrincipal = new UserPrincipal(this.dataMock.getUsers().get(1));
     Project project = this.dataMock.getProjects().get(1);
+    project.setCost(new BigDecimal("1000").setScale(2, RoundingMode.FLOOR));
 
     ProjectUpdateDTO projectUpdateDTO = new ProjectUpdateDTO(
       "Updated Project",
       "Infra",
       "Updated description",
-      new BigDecimal("2500.00"),
+      "2500.00",
       "media",
-      "27-10-2025"
+      "27-10-2035"
     );
     Project updatedProjectEntity = new Project();
     updatedProjectEntity.setId(project.getId());
     updatedProjectEntity.setName(projectUpdateDTO.name());
     updatedProjectEntity.setCategory(projectUpdateDTO.category());
     updatedProjectEntity.setDescription(projectUpdateDTO.description());
-    updatedProjectEntity.setBudget(projectUpdateDTO.budget());
+    updatedProjectEntity.setBudget(new BigDecimal("2500").setScale(2, RoundingMode.FLOOR));
     updatedProjectEntity.setPriority(PriorityLevel.MEDIUM);
     updatedProjectEntity.setDeadline(ConvertDateFormat.convertFormattedStringToDate(projectUpdateDTO.deadline()));
     updatedProjectEntity.setCreatedAt(project.getCreatedAt());
@@ -230,7 +232,7 @@ public class ProjectServiceTest {
       projectMock.getName(),
       projectMock.getCategory(),
       projectMock.getDescription(),
-      projectMock.getBudget(),
+      projectMock.getBudget().toString(),
       projectMock.getPriority().getValue(),
       "01-01-2025"
     );
@@ -260,7 +262,7 @@ public class ProjectServiceTest {
       project.getName(),
       project.getCategory(),
       project.getDescription(),
-      project.getBudget(),
+      project.getBudget().toString(),
       project.getPriority().getValue(),
       "01-01-2025"
     );
@@ -290,7 +292,7 @@ public class ProjectServiceTest {
       project.getName(),
       project.getCategory(),
       project.getDescription(),
-      project.getBudget(),
+      project.getBudget().toString(),
       project.getPriority().getValue(),
       "26-02-2024"
     );
@@ -308,6 +310,44 @@ public class ProjectServiceTest {
         "Data inválida. O prazo de entrega do projeto não deve ser antes da data atual" +
         "\nData atual: " + today +
         "\nPrazo do projeto: 26-02-2024"
+      );
+
+    verify(this.authorizationService, times(1)).getAuthentication();
+    verify(this.authentication, times(1)).getPrincipal();
+    verify(this.projectRepository, times(1)).findById("02");
+    verify(this.projectRepository, never()).save(any(Project.class));
+  }
+
+  @Test
+  @DisplayName("update - Should throw an InvalidBudgetException if the new budget is less than current project cost")
+  void updateProjectFailsByInvalidBudget() {
+    UserPrincipal userPrincipal = new UserPrincipal(this.dataMock.getUsers().get(1));
+    Project project = this.dataMock.getProjects().get(1);
+    project.setCost(new BigDecimal("1000").setScale(2, RoundingMode.FLOOR));
+
+    String deadline = LocalDate.now().plusYears(10).format(DateTimeFormatter.ofPattern("dd-MM-yyyy"));
+
+    ProjectUpdateDTO projectDTO = new ProjectUpdateDTO(
+      project.getName(),
+      project.getCategory(),
+      project.getDescription(),
+      "800.00",
+      project.getPriority().getValue(),
+      deadline
+    );
+
+    when(this.authorizationService.getAuthentication()).thenReturn(this.authentication);
+    when(this.authentication.getPrincipal()).thenReturn(userPrincipal);
+    when(this.projectRepository.findById("02")).thenReturn(Optional.of(project));
+
+    Exception thrown = catchException(() -> this.projectService.update("02", projectDTO));
+
+    assertThat(thrown)
+      .isExactlyInstanceOf(InvalidBudgetException.class)
+      .hasMessage(
+        "O novo orçamento é menor do que o custo atual do projeto. " +
+        "Novo orçamento: R$ 800.00" +
+        "Custo atual: R$ 1000.00"
       );
 
     verify(this.authorizationService, times(1)).getAuthentication();

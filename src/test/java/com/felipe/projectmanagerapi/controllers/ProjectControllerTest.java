@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.felipe.projectmanagerapi.dtos.*;
 import com.felipe.projectmanagerapi.dtos.mappers.ProjectMapper;
 import com.felipe.projectmanagerapi.enums.ResponseConditionStatus;
+import com.felipe.projectmanagerapi.exceptions.InvalidBudgetException;
 import com.felipe.projectmanagerapi.exceptions.InvalidDateException;
 import com.felipe.projectmanagerapi.exceptions.RecordNotFoundException;
 import com.felipe.projectmanagerapi.models.Project;
@@ -87,7 +88,7 @@ public class ProjectControllerTest {
       project.getName(),
       project.getCategory(),
       project.getDescription(),
-      project.getBudget(),
+      project.getBudget().toString(),
       project.getPriority().getValue(),
       "01-01-2025",
       project.getWorkspace().getId()
@@ -143,7 +144,7 @@ public class ProjectControllerTest {
       project.getName(),
       project.getCategory(),
       project.getDescription(),
-      project.getBudget(),
+      project.getBudget().toString(),
       project.getPriority().getValue(),
       "23-02-2024",
       this.dataMock.getWorkspaces().get(0).getId()
@@ -181,7 +182,7 @@ public class ProjectControllerTest {
       project.getName(),
       project.getCategory(),
       project.getDescription(),
-      project.getBudget(),
+      project.getBudget().toString(),
       project.getPriority().getValue(),
       "27-02-2024"
     );
@@ -236,7 +237,7 @@ public class ProjectControllerTest {
       project.getName(),
       project.getCategory(),
       project.getDescription(),
-      project.getBudget(),
+      project.getBudget().toString(),
       project.getPriority().getValue(),
       "01-01-2025"
     );
@@ -266,7 +267,7 @@ public class ProjectControllerTest {
       project.getName(),
       project.getCategory(),
       project.getDescription(),
-      project.getBudget(),
+      project.getBudget().toString(),
       project.getPriority().getValue(),
       "01-01-2025"
     );
@@ -296,7 +297,7 @@ public class ProjectControllerTest {
       project.getName(),
       project.getCategory(),
       project.getDescription(),
-      project.getBudget(),
+      project.getBudget().toString(),
       project.getPriority().getValue(),
       "01-01-2025"
     );
@@ -319,6 +320,42 @@ public class ProjectControllerTest {
         "Data inválida. O prazo de entrega do projeto não deve ser antes da data atual" +
         "\nData atual: 24-02-2024" +
         "\nPrazo do projeto: 23-02-2024"
+      ))
+      .andExpect(jsonPath("$.data").doesNotExist());
+
+    verify(this.projectService, times(1)).update("02", projectDTO);
+    verify(this.projectMapper, never()).toProjectResponseDTO(any(Project.class));
+  }
+
+  @Test
+  @DisplayName("update - Should return an error response with bad request status code")
+  void updateProjectFailsByInvalidBudget() throws Exception {
+    Project project = this.dataMock.getProjects().get(1);
+    ProjectUpdateDTO projectDTO = new ProjectUpdateDTO(
+      project.getName(),
+      project.getCategory(),
+      project.getDescription(),
+      project.getBudget().toString(),
+      project.getPriority().getValue(),
+      "01-01-2025"
+    );
+    String jsonBody = this.objectMapper.writeValueAsString(projectDTO);
+
+    when(this.projectService.update("02", projectDTO))
+      .thenThrow(new InvalidBudgetException(
+        "O novo orçamento é menor do que o custo atual do projeto. " +
+        "Novo orçamento: R$ 10000.00" + " Custo atual: R$ " + project.getCost()
+      ));
+
+    this.mockMvc.perform(patch(this.baseUrl + "/02")
+      .contentType(MediaType.APPLICATION_JSON).content(jsonBody)
+      .accept(MediaType.APPLICATION_JSON))
+      .andExpect(status().isBadRequest())
+      .andExpect(jsonPath("$.status").value(ResponseConditionStatus.ERROR.getValue()))
+      .andExpect(jsonPath("$.code").value(HttpStatus.BAD_REQUEST.value()))
+      .andExpect(jsonPath("$.message").value(
+        "O novo orçamento é menor do que o custo atual do projeto. " +
+          "Novo orçamento: R$ 10000.00" + " Custo atual: R$ " + project.getCost()
       ))
       .andExpect(jsonPath("$.data").doesNotExist());
 
