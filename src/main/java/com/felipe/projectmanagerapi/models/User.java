@@ -54,7 +54,7 @@ public class User {
   @OneToMany(mappedBy = "owner", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
   private List<Workspace> myWorkspaces = new ArrayList<>();
 
-  @ManyToMany(mappedBy = "members", cascade = CascadeType.ALL)
+  @ManyToMany(mappedBy = "members")
   private List<Workspace> memberOfWorkspaces = new ArrayList<>();
 
   @OneToMany(mappedBy = "owner", cascade = CascadeType.ALL, fetch = FetchType.LAZY)

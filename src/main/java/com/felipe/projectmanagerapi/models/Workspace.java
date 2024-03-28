@@ -43,7 +43,7 @@ public class Workspace {
   @JoinColumn(name = "owner_id", nullable = false)
   private User owner;
 
-  @ManyToMany
+  @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
   @JoinTable(
     name = "workspace_members",
     joinColumns = @JoinColumn(name = "workspace_id"),
