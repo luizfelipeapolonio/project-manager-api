@@ -130,6 +130,17 @@ public class ExceptionControllerAdvice {
     return response;
   }
 
+  @ExceptionHandler(InvalidBudgetException.class)
+  @ResponseStatus(HttpStatus.BAD_REQUEST)
+  public CustomResponseBody<Void> handleInvalidBudgetException(InvalidBudgetException e) {
+    CustomResponseBody<Void> response = new CustomResponseBody<>();
+    response.setStatus(ResponseConditionStatus.ERROR);
+    response.setCode(HttpStatus.BAD_REQUEST);
+    response.setMessage(e.getMessage());
+    response.setData(null);
+    return response;
+  }
+
   @ExceptionHandler(IllegalArgumentException.class)
   @ResponseStatus(HttpStatus.BAD_REQUEST)
   public CustomResponseBody<Void> handleIllegalArgumentException(IllegalArgumentException e) {
