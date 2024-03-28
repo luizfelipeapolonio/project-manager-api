@@ -3,6 +3,7 @@ package com.felipe.projectmanagerapi.services;
 import com.felipe.projectmanagerapi.dtos.ProjectCreateDTO;
 import com.felipe.projectmanagerapi.dtos.ProjectUpdateDTO;
 import com.felipe.projectmanagerapi.dtos.mappers.ProjectMapper;
+import com.felipe.projectmanagerapi.exceptions.InvalidBudgetException;
 import com.felipe.projectmanagerapi.exceptions.InvalidCostException;
 import com.felipe.projectmanagerapi.exceptions.InvalidDateException;
 import com.felipe.projectmanagerapi.exceptions.OutOfBudgetException;
@@ -23,6 +24,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -72,7 +74,7 @@ public class ProjectService {
     newProject.setCategory(project.category());
     newProject.setDescription(project.description());
     newProject.setPriority(this.projectMapper.convertValueToPriorityLevel(project.priority()));
-    newProject.setBudget(project.budget());
+    newProject.setBudget(new BigDecimal(project.budget()).setScale(2, RoundingMode.FLOOR));
     newProject.setDeadline(projectDeadline);
     newProject.setOwner(userPrincipal.getUser());
     newProject.setWorkspace(currentWorkspace);
@@ -101,7 +103,15 @@ public class ProjectService {
           project.setDescription(projectUpdate.description());
         }
         if(projectUpdate.budget() != null) {
-          project.setBudget(projectUpdate.budget());
+          BigDecimal newBudget = new BigDecimal(projectUpdate.budget()).setScale(2, RoundingMode.FLOOR);
+          if(newBudget.compareTo(project.getCost()) < 0) {
+            throw new InvalidBudgetException(
+              "O novo orçamento é menor do que o custo atual do projeto. " +
+              "Novo orçamento: R$ " + newBudget +
+              " Custo atual: R$ " + project.getCost()
+            );
+          }
+          project.setBudget(newBudget);
         }
         if(projectUpdate.priority() != null) {
           project.setPriority(this.projectMapper.convertValueToPriorityLevel(projectUpdate.priority()));
