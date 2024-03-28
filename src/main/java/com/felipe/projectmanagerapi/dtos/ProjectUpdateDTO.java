@@ -3,10 +3,8 @@ package com.felipe.projectmanagerapi.dtos;
 import com.felipe.projectmanagerapi.enums.validation.ValueOfPriorityLevel;
 import com.felipe.projectmanagerapi.utils.ValueOfDeadline;
 import jakarta.annotation.Nullable;
-import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.Pattern;
 import org.hibernate.validator.constraints.Length;
-
-import java.math.BigDecimal;
 
 public record ProjectUpdateDTO(
 
@@ -22,8 +20,8 @@ public record ProjectUpdateDTO(
   String description,
 
   @Nullable
-  @DecimalMin(value = "0.00", message = "O valor mínimo aceito é 0.00")
-  BigDecimal budget,
+  @Pattern(regexp = "^\\d+\\.\\d{2}$", message = "Custo inválido! Digite no formato válido. Ex: 1200.00")
+  String budget,
 
   @Nullable
   @ValueOfPriorityLevel
