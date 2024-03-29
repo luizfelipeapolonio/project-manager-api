@@ -64,14 +64,13 @@ public class UserControllerTest {
   UserMapper userMapper;
 
   private AutoCloseable closeable;
-  private String baseUrl;
   private LocalDateTime mockDateTime;
   private GenerateMocks dataMock;
+  private final String BASE_URL = "/api";
 
   @BeforeEach
   void setUp() {
     this.closeable = MockitoAnnotations.openMocks(this);
-    this.baseUrl = "/api";
     this.mockDateTime = LocalDateTime.parse("2024-01-01T12:00:00.123456");
     this.dataMock = new GenerateMocks();
   }
@@ -112,7 +111,7 @@ public class UserControllerTest {
     when(this.userService.register(data)).thenReturn(user);
     when(this.userMapper.toDTO(user)).thenReturn(createdUserDTO);
 
-    this.mockMvc.perform(post(this.baseUrl + "/auth/register")
+    this.mockMvc.perform(post(BASE_URL + "/auth/register")
       .contentType(MediaType.APPLICATION_JSON).content(jsonBody)
       .accept(MediaType.APPLICATION_JSON))
       .andExpect(status().isCreated())
@@ -138,7 +137,7 @@ public class UserControllerTest {
 
     when(this.userService.register(registerDTO)).thenThrow(new UserAlreadyExistsException());
 
-    this.mockMvc.perform(post(this.baseUrl + "/auth/register")
+    this.mockMvc.perform(post(BASE_URL + "/auth/register")
       .contentType(MediaType.APPLICATION_JSON).content(jsonBody)
       .accept(MediaType.APPLICATION_JSON))
       .andExpect(status().isConflict())
@@ -174,7 +173,7 @@ public class UserControllerTest {
     when(this.userService.login(login)).thenReturn(loginResponseMap);
     when(this.userMapper.toDTO((User) loginResponseMap.get("user"))).thenReturn(userResponseDTO);
 
-    this.mockMvc.perform(post(this.baseUrl + "/auth/login")
+    this.mockMvc.perform(post(BASE_URL + "/auth/login")
       .contentType(MediaType.APPLICATION_JSON).content(jsonBody)
       .accept(MediaType.APPLICATION_JSON))
       .andExpect(status().isOk())
@@ -201,7 +200,7 @@ public class UserControllerTest {
 
     when(this.userService.login(login)).thenThrow(new RecordNotFoundException("Usuário não encontrado"));
 
-    this.mockMvc.perform(post(this.baseUrl + "/auth/login")
+    this.mockMvc.perform(post(BASE_URL + "/auth/login")
       .contentType(MediaType.APPLICATION_JSON).content(jsonBody)
       .accept(MediaType.APPLICATION_JSON))
       .andExpect(status().isNotFound())
@@ -222,7 +221,7 @@ public class UserControllerTest {
 
     when(this.userService.login(login)).thenThrow(new BadCredentialsException("Usuário ou senha inválidos"));
 
-    this.mockMvc.perform(post(this.baseUrl + "/auth/login")
+    this.mockMvc.perform(post(BASE_URL + "/auth/login")
       .contentType(MediaType.APPLICATION_JSON).content(jsonBody)
       .accept(MediaType.APPLICATION_JSON))
       .andExpect(status().isUnauthorized())
@@ -260,7 +259,7 @@ public class UserControllerTest {
 
     when(this.userService.getAllUsers()).thenReturn(users);
 
-    this.mockMvc.perform(get(this.baseUrl + "/users").accept(MediaType.APPLICATION_JSON))
+    this.mockMvc.perform(get(BASE_URL + "/users").accept(MediaType.APPLICATION_JSON))
       .andExpect(status().isOk())
       .andExpect(content().json(jsonResponseBody));
 
@@ -284,7 +283,7 @@ public class UserControllerTest {
     when(this.userService.getAuthenticatedUserProfile()).thenReturn(user);
     when(this.userMapper.toDTO(user)).thenReturn(userDTO);
 
-    this.mockMvc.perform(get(this.baseUrl + "/users/me")
+    this.mockMvc.perform(get(BASE_URL + "/users/me")
       .accept(MediaType.APPLICATION_JSON))
       .andExpect(status().isOk())
       .andExpect(jsonPath("$.status").value(ResponseConditionStatus.SUCCESS.getValue()))
@@ -317,7 +316,7 @@ public class UserControllerTest {
     when(this.userService.getProfile("02")).thenReturn(user);
     when(this.userMapper.toDTO(user)).thenReturn(userResponse);
 
-    this.mockMvc.perform(get(this.baseUrl + "/users/02")
+    this.mockMvc.perform(get(BASE_URL + "/users/02")
       .accept(MediaType.APPLICATION_JSON))
       .andExpect(status().isOk())
       .andExpect(jsonPath("$.status").value(ResponseConditionStatus.SUCCESS.getValue()))
@@ -339,7 +338,7 @@ public class UserControllerTest {
   void getUserProfileFailsByUserNotFound() throws Exception {
     when(this.userService.getProfile("02")).thenThrow(new RecordNotFoundException("Usuário não encontrado"));
 
-    this.mockMvc.perform(get(this.baseUrl + "/users/02")
+    this.mockMvc.perform(get(BASE_URL + "/users/02")
       .accept(MediaType.APPLICATION_JSON))
       .andExpect(status().isNotFound())
       .andExpect(jsonPath("$.status").value(ResponseConditionStatus.ERROR.getValue()))
@@ -369,7 +368,7 @@ public class UserControllerTest {
     when(this.userService.updateAuthenticatedUser("02", userData)).thenReturn(user);
     when(this.userMapper.toDTO(user)).thenReturn(updatedUser);
 
-    this.mockMvc.perform(patch(this.baseUrl + "/users/02")
+    this.mockMvc.perform(patch(BASE_URL + "/users/02")
       .contentType(MediaType.APPLICATION_JSON).content(jsonBody)
       .accept(MediaType.APPLICATION_JSON))
       .andExpect(status().isOk())
@@ -395,7 +394,7 @@ public class UserControllerTest {
 
     when(this.userService.updateAuthenticatedUser("01", updateDTO)).thenThrow(new AccessDeniedException("Acesso negado"));
 
-    this.mockMvc.perform(patch(this.baseUrl + "/users/01")
+    this.mockMvc.perform(patch(BASE_URL + "/users/01")
       .contentType(MediaType.APPLICATION_JSON).content(jsonBody)
       .accept(MediaType.APPLICATION_JSON))
       .andExpect(status().isForbidden())
@@ -416,7 +415,7 @@ public class UserControllerTest {
 
     when(this.userService.updateAuthenticatedUser("01", userData)).thenThrow(new RecordNotFoundException("Usuário não encontrado"));
 
-    this.mockMvc.perform(patch(this.baseUrl + "/users/01")
+    this.mockMvc.perform(patch(BASE_URL + "/users/01")
       .contentType(MediaType.APPLICATION_JSON).content(jsonBody)
       .accept(MediaType.APPLICATION_JSON))
       .andExpect(status().isNotFound())
@@ -449,7 +448,7 @@ public class UserControllerTest {
     when(this.userService.updateRole("03", roleData)).thenReturn(user);
     when(this.userMapper.toDTO(user)).thenReturn(userResponse);
 
-    this.mockMvc.perform(patch(this.baseUrl + "/users/03/role")
+    this.mockMvc.perform(patch(BASE_URL + "/users/03/role")
       .contentType(MediaType.APPLICATION_JSON).content(jsonBody)
       .accept(MediaType.APPLICATION_JSON))
       .andExpect(status().isOk())
@@ -475,7 +474,7 @@ public class UserControllerTest {
 
     when(this.userService.updateRole("03", roleData)).thenThrow(new RecordNotFoundException("Usuário não encontrado"));
 
-    this.mockMvc.perform(patch(this.baseUrl + "/users/03/role")
+    this.mockMvc.perform(patch(BASE_URL + "/users/03/role")
       .contentType(MediaType.APPLICATION_JSON).content(jsonBody)
       .accept(MediaType.APPLICATION_JSON))
       .andExpect(status().isNotFound())
@@ -506,7 +505,7 @@ public class UserControllerTest {
     when(this.userService.delete("02")).thenReturn(response);
     when(this.userMapper.toDTO(response.get("deletedUser"))).thenReturn(deletedUser);
 
-    this.mockMvc.perform(delete(this.baseUrl + "/users/02")
+    this.mockMvc.perform(delete(BASE_URL + "/users/02")
       .accept(MediaType.APPLICATION_JSON))
       .andExpect(status().isOk())
       .andExpect(jsonPath("$.status").value(ResponseConditionStatus.SUCCESS.getValue()))
@@ -528,7 +527,7 @@ public class UserControllerTest {
   void deleteUserFailsByUserNotFound() throws Exception {
     when(this.userService.delete("02")).thenThrow(new RecordNotFoundException("Usuário não encontrado"));
 
-    this.mockMvc.perform(delete(this.baseUrl + "/users/02")
+    this.mockMvc.perform(delete(BASE_URL + "/users/02")
       .accept(MediaType.APPLICATION_JSON))
       .andExpect(status().isNotFound())
       .andExpect(jsonPath("$.status").value(ResponseConditionStatus.ERROR.getValue()))
@@ -546,7 +545,7 @@ public class UserControllerTest {
     when(this.userService.delete("02"))
       .thenThrow(new ExistingResourcesException(1, 2, 4));
 
-    this.mockMvc.perform(delete(this.baseUrl + "/users/02")
+    this.mockMvc.perform(delete(BASE_URL + "/users/02")
       .accept(MediaType.APPLICATION_JSON))
       .andExpect(jsonPath("$.status").value(ResponseConditionStatus.ERROR.getValue()))
       .andExpect(jsonPath("$.code").value(HttpStatus.BAD_REQUEST.value()))

@@ -66,13 +66,12 @@ public class ProjectControllerTest {
 
   private AutoCloseable closeable;
   private GenerateMocks dataMock;
-  private String baseUrl;
+  private final String BASE_URL = "/api/projects";
 
   @BeforeEach
   void setUp() {
     this.closeable = MockitoAnnotations.openMocks(this);
     this.dataMock = new GenerateMocks();
-    this.baseUrl = "/api/projects";
   }
 
   @AfterEach
@@ -112,7 +111,7 @@ public class ProjectControllerTest {
     when(this.projectService.create(projectCreateDTO)).thenReturn(project);
     when(this.projectMapper.toProjectResponseDTO(project)).thenReturn(projectResponseDTO);
 
-    this.mockMvc.perform(post(this.baseUrl)
+    this.mockMvc.perform(post(BASE_URL)
       .contentType(MediaType.APPLICATION_JSON).content(jsonBody)
       .accept(MediaType.APPLICATION_JSON))
       .andExpect(status().isCreated())
@@ -158,7 +157,7 @@ public class ProjectControllerTest {
         "\nPrazo do projeto: 23-02-2024"
       ));
 
-    this.mockMvc.perform(post(this.baseUrl)
+    this.mockMvc.perform(post(BASE_URL)
       .contentType(MediaType.APPLICATION_JSON).content(jsonBody)
       .accept(MediaType.APPLICATION_JSON))
       .andExpect(status().isBadRequest())
@@ -205,7 +204,7 @@ public class ProjectControllerTest {
     when(this.projectService.update("02", projectDTO)).thenReturn(project);
     when(this.projectMapper.toProjectResponseDTO(project)).thenReturn(projectResponseDTO);
 
-    this.mockMvc.perform(patch(this.baseUrl + "/02")
+    this.mockMvc.perform(patch(BASE_URL + "/02")
       .contentType(MediaType.APPLICATION_JSON).content(jsonBody)
       .accept(MediaType.APPLICATION_JSON))
       .andExpect(status().isOk())
@@ -246,7 +245,7 @@ public class ProjectControllerTest {
     when(this.projectService.update("02", projectDTO))
       .thenThrow(new RecordNotFoundException("Projeto de ID: '02' não encontrado"));
 
-    this.mockMvc.perform(patch(this.baseUrl + "/02")
+    this.mockMvc.perform(patch(BASE_URL + "/02")
       .contentType(MediaType.APPLICATION_JSON).content(jsonBody)
       .accept(MediaType.APPLICATION_JSON))
       .andExpect(status().isNotFound())
@@ -276,7 +275,7 @@ public class ProjectControllerTest {
     when(this.projectService.update("02", projectDTO))
       .thenThrow(new AccessDeniedException("Acesso negado: Você não tem permissão para alterar este recurso"));
 
-    this.mockMvc.perform(patch(this.baseUrl + "/02")
+    this.mockMvc.perform(patch(BASE_URL + "/02")
       .contentType(MediaType.APPLICATION_JSON).content(jsonBody)
       .accept(MediaType.APPLICATION_JSON))
       .andExpect(status().isForbidden())
@@ -310,7 +309,7 @@ public class ProjectControllerTest {
         "\nPrazo do projeto: 23-02-2024"
       ));
 
-    this.mockMvc.perform(patch(this.baseUrl + "/02")
+    this.mockMvc.perform(patch(BASE_URL + "/02")
       .contentType(MediaType.APPLICATION_JSON).content(jsonBody)
       .accept(MediaType.APPLICATION_JSON))
       .andExpect(status().isBadRequest())
@@ -347,7 +346,7 @@ public class ProjectControllerTest {
         "Novo orçamento: R$ 10000.00" + " Custo atual: R$ " + project.getCost()
       ));
 
-    this.mockMvc.perform(patch(this.baseUrl + "/02")
+    this.mockMvc.perform(patch(BASE_URL + "/02")
       .contentType(MediaType.APPLICATION_JSON).content(jsonBody)
       .accept(MediaType.APPLICATION_JSON))
       .andExpect(status().isBadRequest())
@@ -395,7 +394,7 @@ public class ProjectControllerTest {
 
     when(this.projectService.getAllByWorkspaceAndOwner("01", "02")).thenReturn(projects);
 
-    this.mockMvc.perform(get(this.baseUrl + "/workspaces/01/owner/02")
+    this.mockMvc.perform(get(BASE_URL + "/workspaces/01/owner/02")
       .accept(MediaType.APPLICATION_JSON))
       .andExpect(status().isOk())
       .andExpect(content().json(jsonResponseBody));
@@ -410,7 +409,7 @@ public class ProjectControllerTest {
     when(this.projectService.getAllByWorkspaceAndOwner("01", "02"))
       .thenThrow(new AccessDeniedException("Acesso negado: Você não tem permissão para acessar este recurso"));
 
-    this.mockMvc.perform(get(this.baseUrl + "/workspaces/01/owner/02")
+    this.mockMvc.perform(get(BASE_URL + "/workspaces/01/owner/02")
       .accept(MediaType.APPLICATION_JSON))
       .andExpect(status().isForbidden())
       .andExpect(jsonPath("$.status").value(ResponseConditionStatus.ERROR.getValue()))
@@ -468,7 +467,7 @@ public class ProjectControllerTest {
 
     when(this.projectService.getById("01")).thenReturn(project);
 
-    this.mockMvc.perform(get(this.baseUrl + "/01")
+    this.mockMvc.perform(get(BASE_URL + "/01")
       .accept(MediaType.APPLICATION_JSON))
       .andExpect(status().isOk())
       .andExpect(content().json(jsonResponseBody));
@@ -483,7 +482,7 @@ public class ProjectControllerTest {
     when(this.projectService.getById("01"))
       .thenThrow(new RecordNotFoundException("Projeto de ID: '01' não encontrado"));
 
-    this.mockMvc.perform(get(this.baseUrl + "/01")
+    this.mockMvc.perform(get(BASE_URL + "/01")
       .accept(MediaType.APPLICATION_JSON))
       .andExpect(status().isNotFound())
       .andExpect(jsonPath("$.status").value(ResponseConditionStatus.ERROR.getValue()))
@@ -526,7 +525,7 @@ public class ProjectControllerTest {
 
     when(this.projectService.getAllFromWorkspace(eq("01"), anyString())).thenReturn(projects);
 
-    this.mockMvc.perform(get(this.baseUrl + "/workspaces/01")
+    this.mockMvc.perform(get(BASE_URL + "/workspaces/01")
       .accept(MediaType.APPLICATION_JSON))
       .andExpect(status().isOk())
       .andExpect(content().json(jsonResponseBody));
@@ -566,7 +565,7 @@ public class ProjectControllerTest {
 
     when(this.projectService.getAllFromAuthenticatedUser()).thenReturn(projects);
 
-    this.mockMvc.perform(get(this.baseUrl).accept(MediaType.APPLICATION_JSON))
+    this.mockMvc.perform(get(BASE_URL).accept(MediaType.APPLICATION_JSON))
       .andExpect(status().isOk())
       .andExpect(content().json(jsonResponseBody));
 
@@ -599,7 +598,7 @@ public class ProjectControllerTest {
     when(this.projectService.delete("01")).thenReturn(project);
     when(this.projectMapper.toProjectResponseDTO(project)).thenReturn(projectResponseDTO);
 
-    this.mockMvc.perform(delete(this.baseUrl + "/01")
+    this.mockMvc.perform(delete(BASE_URL + "/01")
       .accept(MediaType.APPLICATION_JSON))
       .andExpect(status().isOk())
       .andExpect(jsonPath("$.status").value(ResponseConditionStatus.SUCCESS.getValue()))
@@ -628,7 +627,7 @@ public class ProjectControllerTest {
     when(this.projectService.delete("01"))
       .thenThrow(new RecordNotFoundException("Projeto de ID: '01' não encontrado"));
 
-    this.mockMvc.perform(delete(this.baseUrl + "/01")
+    this.mockMvc.perform(delete(BASE_URL + "/01")
       .accept(MediaType.APPLICATION_JSON))
       .andExpect(status().isNotFound())
       .andExpect(jsonPath("$.status").value(ResponseConditionStatus.ERROR.getValue()))
@@ -646,7 +645,7 @@ public class ProjectControllerTest {
     when(this.projectService.delete("01"))
       .thenThrow(new AccessDeniedException("Acesso negado: Você não tem permissão para remover este recurso"));
 
-    this.mockMvc.perform(delete(this.baseUrl + "/01")
+    this.mockMvc.perform(delete(BASE_URL + "/01")
       .accept(MediaType.APPLICATION_JSON))
       .andExpect(status().isForbidden())
       .andExpect(jsonPath("$.status").value(ResponseConditionStatus.ERROR.getValue()))
@@ -692,7 +691,7 @@ public class ProjectControllerTest {
 
     when(this.projectService.deleteAllFromWorkspace("01")).thenReturn(projects);
 
-    this.mockMvc.perform(delete(this.baseUrl + "/workspaces/01")
+    this.mockMvc.perform(delete(BASE_URL + "/workspaces/01")
       .accept(MediaType.APPLICATION_JSON))
       .andExpect(status().isOk())
       .andExpect(content().json(jsonResponseBody));
@@ -707,7 +706,7 @@ public class ProjectControllerTest {
     when(this.projectService.deleteAllFromWorkspace("01"))
       .thenThrow(new AccessDeniedException("Acesso negado: Você não tem permissão para remover este recurso"));
 
-    this.mockMvc.perform(delete(this.baseUrl + "/workspaces/01")
+    this.mockMvc.perform(delete(BASE_URL + "/workspaces/01")
       .accept(MediaType.APPLICATION_JSON))
       .andExpect(status().isForbidden())
       .andExpect(jsonPath("$.status").value(ResponseConditionStatus.ERROR.getValue()))
@@ -753,7 +752,7 @@ public class ProjectControllerTest {
 
     when(this.projectService.deleteAllFromAuthenticatedUser()).thenReturn(projects);
 
-    this.mockMvc.perform(delete(this.baseUrl).accept(MediaType.APPLICATION_JSON))
+    this.mockMvc.perform(delete(BASE_URL).accept(MediaType.APPLICATION_JSON))
       .andExpect(status().isOk())
       .andExpect(content().json(jsonResponseBody));
 
@@ -795,7 +794,7 @@ public class ProjectControllerTest {
 
     when(this.projectService.deleteAllFromOwnerAndWorkspace("01", "02")).thenReturn(projects);
 
-    this.mockMvc.perform(delete(this.baseUrl + "/workspaces/01/owner/02")
+    this.mockMvc.perform(delete(BASE_URL + "/workspaces/01/owner/02")
       .accept(MediaType.APPLICATION_JSON))
       .andExpect(status().isOk())
       .andExpect(content().json(jsonResponseBody));

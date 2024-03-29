@@ -72,13 +72,12 @@ public class WorkspaceControllerTest {
   UserMapper userMapper;
 
   private AutoCloseable closeable;
-  private String baseUrl;
   private GenerateMocks dataMock;
+  private final String BASE_URL = "/api/workspaces";
 
   @BeforeEach
   void setUp() {
     this.closeable = MockitoAnnotations.openMocks(this);
-    this.baseUrl = "/api/workspaces";
     this.dataMock = new GenerateMocks();
   }
 
@@ -104,7 +103,7 @@ public class WorkspaceControllerTest {
     when(this.workspaceService.create(workspaceDTO)).thenReturn(workspace);
     when(this.workspaceMapper.toWorkspaceResponseDTO(workspace)).thenReturn(createdWorkspace);
 
-    this.mockMvc.perform(post(this.baseUrl)
+    this.mockMvc.perform(post(BASE_URL)
       .contentType(MediaType.APPLICATION_JSON).content(jsonBody)
       .accept(MediaType.APPLICATION_JSON))
       .andExpect(status().isCreated())
@@ -140,7 +139,7 @@ public class WorkspaceControllerTest {
     when(this.workspaceService.update("01", workspaceDTO)).thenReturn(workspace);
     when(this.workspaceMapper.toWorkspaceResponseDTO(workspace)).thenReturn(updatedWorkspace);
 
-    this.mockMvc.perform(patch(this.baseUrl + "/01")
+    this.mockMvc.perform(patch(BASE_URL + "/01")
       .contentType(MediaType.APPLICATION_JSON).content(jsonBody)
       .accept(MediaType.APPLICATION_JSON))
       .andExpect(status().isOk())
@@ -166,7 +165,7 @@ public class WorkspaceControllerTest {
     when(this.workspaceService.update("01", workspaceDTO))
       .thenThrow(new AccessDeniedException("Acesso negado: Você não tem permissão para modificar este recurso"));
 
-    this.mockMvc.perform(patch(this.baseUrl + "/01")
+    this.mockMvc.perform(patch(BASE_URL + "/01")
       .contentType(MediaType.APPLICATION_JSON).content(jsonBody)
       .accept(MediaType.APPLICATION_JSON))
       .andExpect(status().isForbidden())
@@ -188,7 +187,7 @@ public class WorkspaceControllerTest {
     when(this.workspaceService.update("01", workspaceDTO))
       .thenThrow(new RecordNotFoundException("Workspace não encontrado"));
 
-    this.mockMvc.perform(patch(this.baseUrl + "/01")
+    this.mockMvc.perform(patch(BASE_URL + "/01")
       .contentType(MediaType.APPLICATION_JSON).content(jsonBody)
       .accept(MediaType.APPLICATION_JSON))
       .andExpect(status().isNotFound())
@@ -225,7 +224,7 @@ public class WorkspaceControllerTest {
 
     when(this.workspaceService.getAllUserWorkspaces()).thenReturn(workspaces);
 
-    this.mockMvc.perform(get(this.baseUrl).accept(MediaType.APPLICATION_JSON))
+    this.mockMvc.perform(get(BASE_URL).accept(MediaType.APPLICATION_JSON))
       .andExpect(status().isOk())
       .andExpect(content().json(jsonResponseBody));
 
@@ -268,7 +267,7 @@ public class WorkspaceControllerTest {
     when(this.workspaceService.getById("01")).thenReturn(workspace);
     when(this.workspaceMapper.toWorkspaceResponseDTO(workspace)).thenReturn(workspaceDTO);
 
-    this.mockMvc.perform(get(this.baseUrl + "/01/members")
+    this.mockMvc.perform(get(BASE_URL + "/01/members")
       .accept(MediaType.APPLICATION_JSON))
       .andExpect(status().isOk())
       .andExpect(content().json(jsonResponseBody));
@@ -284,7 +283,7 @@ public class WorkspaceControllerTest {
     when(this.workspaceService.getById("01"))
       .thenThrow(new RecordNotFoundException("Workspace de ID: '01' não encontrado"));
 
-    this.mockMvc.perform(get(this.baseUrl + "/01/members")
+    this.mockMvc.perform(get(BASE_URL + "/01/members")
       .accept(MediaType.APPLICATION_JSON))
       .andExpect(status().isNotFound())
       .andExpect(jsonPath("$.status").value(ResponseConditionStatus.ERROR.getValue()))
@@ -303,7 +302,7 @@ public class WorkspaceControllerTest {
     when(this.workspaceService.getById("01"))
       .thenThrow(new AccessDeniedException("Acesso negado: Você não tem permissão para acessar este recurso"));
 
-    this.mockMvc.perform(get(this.baseUrl + "/01/members")
+    this.mockMvc.perform(get(BASE_URL + "/01/members")
       .accept(MediaType.APPLICATION_JSON))
       .andExpect(status().isForbidden())
       .andExpect(jsonPath("$.status").value(ResponseConditionStatus.ERROR.getValue()))
@@ -334,7 +333,7 @@ public class WorkspaceControllerTest {
     when(this.workspaceService.delete("01")).thenReturn(workspace);
     when(this.workspaceMapper.toWorkspaceResponseDTO(workspace)).thenReturn(deletedWorkspace);
 
-    this.mockMvc.perform(delete(this.baseUrl + "/01")
+    this.mockMvc.perform(delete(BASE_URL + "/01")
       .accept(MediaType.APPLICATION_JSON))
       .andExpect(status().isOk())
       .andExpect(jsonPath("$.status").value(ResponseConditionStatus.SUCCESS.getValue()))
@@ -356,7 +355,7 @@ public class WorkspaceControllerTest {
     when(this.workspaceService.delete("01"))
       .thenThrow(new RecordNotFoundException("Workspace de ID: '01' não encontrado"));
 
-    this.mockMvc.perform(delete(this.baseUrl + "/01")
+    this.mockMvc.perform(delete(BASE_URL + "/01")
       .accept(MediaType.APPLICATION_JSON))
       .andExpect(status().isNotFound())
       .andExpect(jsonPath("$.status").value(ResponseConditionStatus.ERROR.getValue()))
@@ -374,7 +373,7 @@ public class WorkspaceControllerTest {
     when(this.workspaceService.delete("01"))
       .thenThrow(new AccessDeniedException("Acesso negado: Você não tem permissão para manipular este recurso"));
 
-    this.mockMvc.perform(delete(this.baseUrl + "/01")
+    this.mockMvc.perform(delete(BASE_URL + "/01")
       .accept(MediaType.APPLICATION_JSON))
       .andExpect(status().isForbidden())
       .andExpect(jsonPath("$.status").value(ResponseConditionStatus.ERROR.getValue()))
@@ -395,7 +394,7 @@ public class WorkspaceControllerTest {
     when(this.workspaceService.delete("01"))
       .thenThrow(new WorkspaceIsNotEmptyException(workspace));
 
-    this.mockMvc.perform(delete(this.baseUrl + "/01")
+    this.mockMvc.perform(delete(BASE_URL + "/01")
       .accept(MediaType.APPLICATION_JSON))
       .andExpect(status().isBadRequest())
       .andExpect(jsonPath("$.status").value(ResponseConditionStatus.ERROR.getValue()))
@@ -445,7 +444,7 @@ public class WorkspaceControllerTest {
     when(this.memberService.insertMember("01", "02")).thenReturn(workspace);
     when(this.workspaceMapper.toWorkspaceResponseDTO(workspace)).thenReturn(workspaceDTO);
 
-    this.mockMvc.perform(patch(this.baseUrl + "/01/members/02")
+    this.mockMvc.perform(patch(BASE_URL + "/01/members/02")
       .accept(MediaType.APPLICATION_JSON))
       .andExpect(status().isOk())
       .andExpect(content().json(jsonResponseBody));
@@ -461,7 +460,7 @@ public class WorkspaceControllerTest {
     when(this.memberService.insertMember("01", "02"))
       .thenThrow(new AccessDeniedException("Acesso negado: Você não tem permissão para alterar este recurso"));
 
-    this.mockMvc.perform(patch(this.baseUrl + "/01/members/02")
+    this.mockMvc.perform(patch(BASE_URL + "/01/members/02")
       .accept(MediaType.APPLICATION_JSON))
       .andExpect(status().isForbidden())
       .andExpect(jsonPath("$.status").value(ResponseConditionStatus.ERROR.getValue()))
@@ -480,7 +479,7 @@ public class WorkspaceControllerTest {
     when(this.memberService.insertMember("01", "02"))
       .thenThrow(new RecordNotFoundException("Workspace com ID: '01' não encontrado"));
 
-    this.mockMvc.perform(patch(this.baseUrl + "/01/members/02")
+    this.mockMvc.perform(patch(BASE_URL + "/01/members/02")
       .accept(MediaType.APPLICATION_JSON))
       .andExpect(status().isNotFound())
       .andExpect(jsonPath("$.status").value(ResponseConditionStatus.ERROR.getValue()))
@@ -499,7 +498,7 @@ public class WorkspaceControllerTest {
     when(this.memberService.insertMember("01", "02"))
       .thenThrow(new MemberAlreadyExistsException("02", "01"));
 
-    this.mockMvc.perform(patch(this.baseUrl + "/01/members/02")
+    this.mockMvc.perform(patch(BASE_URL + "/01/members/02")
       .accept(MediaType.APPLICATION_JSON))
       .andExpect(status().isConflict())
       .andExpect(jsonPath("$.status").value(ResponseConditionStatus.ERROR.getValue()))
@@ -548,7 +547,7 @@ public class WorkspaceControllerTest {
     when(this.memberService.removeMember("01", "02")).thenReturn(workspace);
     when(this.workspaceMapper.toWorkspaceResponseDTO(workspace)).thenReturn(workspaceDTO);
 
-    this.mockMvc.perform(delete(this.baseUrl + "/01/members/02")
+    this.mockMvc.perform(delete(BASE_URL + "/01/members/02")
       .accept(MediaType.APPLICATION_JSON))
       .andExpect(status().isOk())
       .andExpect(content().json(jsonResponseBody));
@@ -564,7 +563,7 @@ public class WorkspaceControllerTest {
     when(this.memberService.removeMember("01", "02"))
       .thenThrow(new RecordNotFoundException("Workspace de ID: '01' não encontrado"));
 
-    this.mockMvc.perform(delete(this.baseUrl + "/01/members/02")
+    this.mockMvc.perform(delete(BASE_URL + "/01/members/02")
       .accept(MediaType.APPLICATION_JSON))
       .andExpect(status().isNotFound())
       .andExpect(jsonPath("$.status").value(ResponseConditionStatus.ERROR.getValue()))
@@ -583,7 +582,7 @@ public class WorkspaceControllerTest {
     when(this.memberService.removeMember("01", "02"))
       .thenThrow(new AccessDeniedException("Acesso negado: Você não tem permissão para alterar este recurso"));
 
-    this.mockMvc.perform(delete(this.baseUrl + "/01/members/02")
+    this.mockMvc.perform(delete(BASE_URL + "/01/members/02")
       .accept(MediaType.APPLICATION_JSON))
       .andExpect(status().isForbidden())
       .andExpect(jsonPath("$.status").value(ResponseConditionStatus.ERROR.getValue()))
@@ -602,7 +601,7 @@ public class WorkspaceControllerTest {
     when(this.memberService.removeMember("01", "02"))
       .thenThrow(new RecordNotFoundException("Membro de ID: '02' não encontrado no workspace de ID: '01'"));
 
-    this.mockMvc.perform(delete(this.baseUrl + "/01/members/02")
+    this.mockMvc.perform(delete(BASE_URL + "/01/members/02")
       .accept(MediaType.APPLICATION_JSON))
       .andExpect(status().isNotFound())
       .andExpect(jsonPath("$.status").value(ResponseConditionStatus.ERROR.getValue()))
@@ -668,7 +667,7 @@ public class WorkspaceControllerTest {
 
     when(this.workspaceService.getById("01")).thenReturn(workspace);
 
-    this.mockMvc.perform(get(this.baseUrl + "/01")
+    this.mockMvc.perform(get(BASE_URL + "/01")
       .accept(MediaType.APPLICATION_JSON))
       .andExpect(status().isOk())
       .andExpect(content().json(jsonResponseBody));
@@ -682,7 +681,7 @@ public class WorkspaceControllerTest {
     when(this.workspaceService.getById("01"))
       .thenThrow(new RecordNotFoundException("Workspace de ID: '01' não encontrado"));
 
-    this.mockMvc.perform(get(this.baseUrl + "/01")
+    this.mockMvc.perform(get(BASE_URL + "/01")
       .accept(MediaType.APPLICATION_JSON))
       .andExpect(status().isNotFound())
       .andExpect(jsonPath("$.status").value(ResponseConditionStatus.ERROR.getValue()))
@@ -701,7 +700,7 @@ public class WorkspaceControllerTest {
     when(this.workspaceService.getById("01"))
       .thenThrow(new AccessDeniedException("Acesso negado: Você não tem permissão para acessar este recurso"));
 
-    this.mockMvc.perform(get(this.baseUrl + "/01")
+    this.mockMvc.perform(get(BASE_URL + "/01")
       .accept(MediaType.APPLICATION_JSON))
       .andExpect(status().isForbidden())
       .andExpect(jsonPath("$.status").value(ResponseConditionStatus.ERROR.getValue()))
