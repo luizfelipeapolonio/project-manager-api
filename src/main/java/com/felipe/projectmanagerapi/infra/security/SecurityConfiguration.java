@@ -23,6 +23,13 @@ public class SecurityConfiguration {
   private final CustomAuthenticationEntryPoint customAuthenticationEntryPoint;
   private final CustomAccessDeniedHandler customAccessDeniedHandler;
 
+  private final String AUTH_BASE_URL = "/api/auth";
+  private final String USER_BASE_URL = "/api/users";
+  private final String WORKSPACE_BASE_URL = "/api/workspaces";
+  private final String PROJECT_BASE_URL = "/api/projects";
+  private final String TASK_BASE_URL = "/api/tasks";
+
+
   public SecurityConfiguration(
     SecurityFilter securityFilter,
     CustomAuthenticationEntryPoint customAuthenticationEntryPoint,
@@ -35,48 +42,42 @@ public class SecurityConfiguration {
 
   @Bean
   public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-    String authBaseUrl = "/api/auth";
-    String userBaseUrl = "/api/users";
-    String workspaceBaseUrl = "/api/workspaces";
-    String projectBaseUrl = "/api/projects";
-    String taskBaseUrl = "/api/tasks";
     return http
       .csrf(AbstractHttpConfigurer::disable)
       .cors(Customizer.withDefaults())
       .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
       .authorizeHttpRequests(authorizeHttpRequests -> authorizeHttpRequests
-        .requestMatchers(HttpMethod.POST, authBaseUrl + "/register").hasRole("ADMIN")
-        .requestMatchers(HttpMethod.POST, authBaseUrl + "/login").permitAll()
-        .requestMatchers(HttpMethod.GET, userBaseUrl).hasRole("ADMIN")
-        .requestMatchers(HttpMethod.GET, userBaseUrl + "/me").hasAnyRole("ADMIN", "WRITE_READ", "READ_ONLY")
-        .requestMatchers(HttpMethod.PATCH, userBaseUrl + "/{userId}").hasAnyRole("ADMIN", "WRITE_READ", "READ_ONLY")
-        .requestMatchers(HttpMethod.GET, userBaseUrl + "/{userId}").hasRole("ADMIN")
-        .requestMatchers(HttpMethod.DELETE, userBaseUrl + "/{userId}").hasRole("ADMIN")
-        .requestMatchers(HttpMethod.PATCH, userBaseUrl + "/{userId}/role").hasRole("ADMIN")
-        .requestMatchers(workspaceBaseUrl).hasRole("ADMIN")
-        .requestMatchers(HttpMethod.PATCH, workspaceBaseUrl + "/{workspaceId}").hasRole("ADMIN")
-        .requestMatchers(HttpMethod.DELETE, workspaceBaseUrl + "/{workspaceId}").hasRole("ADMIN")
-        .requestMatchers(HttpMethod.GET, workspaceBaseUrl + "/{workspaceId}").hasAnyRole("ADMIN", "WRITE_READ", "READ_ONLY")
-        .requestMatchers(HttpMethod.GET, workspaceBaseUrl + "/{workspaceId}/members").hasAnyRole("ADMIN", "WRITE_READ", "READ_ONLY")
-        .requestMatchers(workspaceBaseUrl + "/{workspaceId}/members/**").hasRole("ADMIN")
-        .requestMatchers(HttpMethod.POST, projectBaseUrl).hasAnyRole("ADMIN", "WRITE_READ")
-        .requestMatchers(HttpMethod.GET, projectBaseUrl).hasAnyRole("ADMIN", "WRITE_READ")
-        .requestMatchers(HttpMethod.DELETE, projectBaseUrl).hasAnyRole("ADMIN", "WRITE_READ")
-        .requestMatchers(HttpMethod.PATCH, projectBaseUrl + "/{projectId}").hasAnyRole("ADMIN", "WRITE_READ")
-        .requestMatchers(HttpMethod.DELETE, projectBaseUrl + "/{projectId}").hasAnyRole("ADMIN", "WRITE_READ")
-        .requestMatchers(projectBaseUrl + "/workspaces/{workspaceId}/owner/{ownerId}").hasRole("ADMIN")
-        .requestMatchers(HttpMethod.GET, projectBaseUrl + "/{projectId}").hasAnyRole("ADMIN", "WRITE_READ", "READ_ONLY")
-        .requestMatchers(HttpMethod.GET, projectBaseUrl + "/workspaces/{workspaceId}").hasAnyRole("ADMIN", "WRITE_READ", "READ_ONLY")
-        .requestMatchers(HttpMethod.DELETE, projectBaseUrl + "/workspaces/{workspaceId}").hasRole("ADMIN")
-        .requestMatchers(HttpMethod.POST, taskBaseUrl).hasAnyRole("ADMIN", "WRITE_READ")
-        .requestMatchers(HttpMethod.GET, taskBaseUrl).hasAnyRole("ADMIN", "WRITE_READ")
-        .requestMatchers(HttpMethod.GET, taskBaseUrl + "/{taskId}").hasAnyRole("ADMIN", "WRITE_READ", "READ_ONLY")
-        .requestMatchers(HttpMethod.DELETE, taskBaseUrl + "/{taskId}").hasAnyRole("ADMIN", "WRITE_READ")
-        .requestMatchers(HttpMethod.PATCH, taskBaseUrl + "/{taskId}").hasAnyRole("ADMIN", "WRITE_READ")
-        .requestMatchers(HttpMethod.GET, taskBaseUrl + "/projects/{projectId}").hasAnyRole("ADMIN", "WRITE_READ", "READ_ONLY")
-        .requestMatchers(HttpMethod.DELETE, taskBaseUrl + "/projects/{projectId}").hasAnyRole("ADMIN", "WRITE_READ")
-        .requestMatchers(HttpMethod.GET, taskBaseUrl + "/owner/{ownerId}").hasRole("ADMIN")
-        .requestMatchers("/api/auth/test").permitAll()
+        .requestMatchers(HttpMethod.POST, AUTH_BASE_URL + "/register").hasRole("ADMIN")
+        .requestMatchers(HttpMethod.POST, AUTH_BASE_URL + "/login").permitAll()
+        .requestMatchers(HttpMethod.GET, USER_BASE_URL).hasRole("ADMIN")
+        .requestMatchers(HttpMethod.GET, USER_BASE_URL + "/me").hasAnyRole("ADMIN", "WRITE_READ", "READ_ONLY")
+        .requestMatchers(HttpMethod.PATCH, USER_BASE_URL + "/{userId}").hasAnyRole("ADMIN", "WRITE_READ", "READ_ONLY")
+        .requestMatchers(HttpMethod.GET, USER_BASE_URL + "/{userId}").hasRole("ADMIN")
+        .requestMatchers(HttpMethod.DELETE, USER_BASE_URL + "/{userId}").hasRole("ADMIN")
+        .requestMatchers(HttpMethod.PATCH, USER_BASE_URL + "/{userId}/role").hasRole("ADMIN")
+        .requestMatchers(WORKSPACE_BASE_URL).hasRole("ADMIN")
+        .requestMatchers(HttpMethod.PATCH, WORKSPACE_BASE_URL + "/{workspaceId}").hasRole("ADMIN")
+        .requestMatchers(HttpMethod.DELETE, WORKSPACE_BASE_URL + "/{workspaceId}").hasRole("ADMIN")
+        .requestMatchers(HttpMethod.GET, WORKSPACE_BASE_URL + "/{workspaceId}").hasAnyRole("ADMIN", "WRITE_READ", "READ_ONLY")
+        .requestMatchers(HttpMethod.GET, WORKSPACE_BASE_URL + "/{workspaceId}/members").hasAnyRole("ADMIN", "WRITE_READ", "READ_ONLY")
+        .requestMatchers(WORKSPACE_BASE_URL + "/{workspaceId}/members/**").hasRole("ADMIN")
+        .requestMatchers(HttpMethod.POST, PROJECT_BASE_URL).hasAnyRole("ADMIN", "WRITE_READ")
+        .requestMatchers(HttpMethod.GET, PROJECT_BASE_URL).hasAnyRole("ADMIN", "WRITE_READ")
+        .requestMatchers(HttpMethod.DELETE, PROJECT_BASE_URL).hasAnyRole("ADMIN", "WRITE_READ")
+        .requestMatchers(HttpMethod.PATCH, PROJECT_BASE_URL + "/{projectId}").hasAnyRole("ADMIN", "WRITE_READ")
+        .requestMatchers(HttpMethod.DELETE, PROJECT_BASE_URL + "/{projectId}").hasAnyRole("ADMIN", "WRITE_READ")
+        .requestMatchers(PROJECT_BASE_URL + "/workspaces/{workspaceId}/owner/{ownerId}").hasRole("ADMIN")
+        .requestMatchers(HttpMethod.GET, PROJECT_BASE_URL + "/{projectId}").hasAnyRole("ADMIN", "WRITE_READ", "READ_ONLY")
+        .requestMatchers(HttpMethod.GET, PROJECT_BASE_URL + "/workspaces/{workspaceId}").hasAnyRole("ADMIN", "WRITE_READ", "READ_ONLY")
+        .requestMatchers(HttpMethod.DELETE, PROJECT_BASE_URL + "/workspaces/{workspaceId}").hasRole("ADMIN")
+        .requestMatchers(HttpMethod.POST, TASK_BASE_URL).hasAnyRole("ADMIN", "WRITE_READ")
+        .requestMatchers(HttpMethod.GET, TASK_BASE_URL).hasAnyRole("ADMIN", "WRITE_READ")
+        .requestMatchers(HttpMethod.GET, TASK_BASE_URL + "/{taskId}").hasAnyRole("ADMIN", "WRITE_READ", "READ_ONLY")
+        .requestMatchers(HttpMethod.DELETE, TASK_BASE_URL + "/{taskId}").hasAnyRole("ADMIN", "WRITE_READ")
+        .requestMatchers(HttpMethod.PATCH, TASK_BASE_URL + "/{taskId}").hasAnyRole("ADMIN", "WRITE_READ")
+        .requestMatchers(HttpMethod.GET, TASK_BASE_URL + "/projects/{projectId}").hasAnyRole("ADMIN", "WRITE_READ", "READ_ONLY")
+        .requestMatchers(HttpMethod.DELETE, TASK_BASE_URL + "/projects/{projectId}").hasAnyRole("ADMIN", "WRITE_READ")
+        .requestMatchers(HttpMethod.GET, TASK_BASE_URL + "/owner/{ownerId}").hasRole("ADMIN")
         .anyRequest().authenticated())
       .addFilterBefore(this.securityFilter, UsernamePasswordAuthenticationFilter.class)
       .exceptionHandling(exceptionHandling -> exceptionHandling
