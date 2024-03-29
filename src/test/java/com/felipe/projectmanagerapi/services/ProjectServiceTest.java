@@ -347,7 +347,7 @@ public class ProjectServiceTest {
       .hasMessage(
         "O novo orçamento é menor do que o custo atual do projeto. " +
         "Novo orçamento: R$ 800.00" +
-        "Custo atual: R$ 1000.00"
+        " Custo atual: R$ 1000.00"
       );
 
     verify(this.authorizationService, times(1)).getAuthentication();
