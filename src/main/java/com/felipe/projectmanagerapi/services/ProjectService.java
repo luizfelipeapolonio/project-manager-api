@@ -179,6 +179,11 @@ public class ProjectService {
     return this.projectRepository.findAllByUserId(userPrincipal.getUser().getId());
   }
 
+  public List<Project> getAllFromOwner(@NotNull String ownerId) {
+    User projectsOwner = this.userService.getProfile(ownerId);
+    return this.projectRepository.findAllByUserId(projectsOwner.getId());
+  }
+
   public Project delete(@NotNull String projectId) {
     Authentication authentication = this.authorizationService.getAuthentication();
     UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
