@@ -226,6 +226,12 @@ public class ProjectService {
     return projects;
   }
 
+  public List<Project> deleteAllFromOwner(@NotNull String ownerId) {
+    List<Project> projects = this.getAllFromOwner(ownerId);
+    this.projectRepository.deleteAll(projects);
+    return projects;
+  }
+
   public List<Project> deleteAllFromOwnerAndWorkspace(@NotNull String workspaceId, @NotNull String ownerId) {
     List<Project> projects = this.getAllByWorkspaceAndOwner(workspaceId, ownerId);
     this.projectRepository.deleteAll(projects);
