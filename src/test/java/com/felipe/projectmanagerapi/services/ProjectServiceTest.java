@@ -725,6 +725,27 @@ public class ProjectServiceTest {
   }
 
   @Test
+  @DisplayName("deleteAllFromOwner - Should successfully delete all projects from an owner")
+  void deleteAllFromOwnerSuccess() {
+    User projectsOwner = this.dataMock.getUsers().get(1);
+    List<Project> projects = List.of(this.dataMock.getProjects().get(1), this.dataMock.getProjects().get(2));
+
+    when(this.userService.getProfile("02")).thenReturn(projectsOwner);
+    when(this.projectRepository.findAllByUserId(projectsOwner.getId())).thenReturn(projects);
+    doNothing().when(this.projectRepository).deleteAll(projects);
+
+    List<Project> deletedProjects = this.projectService.deleteAllFromOwner("02");
+
+    assertThat(deletedProjects)
+      .allSatisfy(project -> assertThat(project.getOwner().getId()).isEqualTo(projectsOwner.getId()))
+      .hasSize(2);
+
+    verify(this.userService, times(1)).getProfile("02");
+    verify(this.projectRepository, times(1)).findAllByUserId(projectsOwner.getId());
+    verify(this.projectRepository, times(1)).deleteAll(projects);
+  }
+
+  @Test
   @DisplayName("addCost - Should successfully update the project cost adding the new cost to it")
   void addCostSuccess() {
     Project project = this.dataMock.getProjects().get(1);

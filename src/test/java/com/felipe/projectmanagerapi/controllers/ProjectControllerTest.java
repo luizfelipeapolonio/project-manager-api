@@ -741,6 +741,49 @@ public class ProjectControllerTest {
   }
 
   @Test
+  @DisplayName("deleteAllFromOwner - Should return a success response with OK status code and a list of deleted projects")
+  void deleteAllFromOwnerSuccess() throws Exception {
+    List<Project> projects = List.of(this.dataMock.getProjects().get(1), this.dataMock.getProjects().get(2));
+    List<ProjectResponseDTO> projectsDTO = projects.stream()
+      .map(project -> new ProjectResponseDTO(
+        project.getId(),
+        project.getName(),
+        project.getPriority().getValue(),
+        project.getCategory(),
+        project.getDescription(),
+        project.getBudget().toString(),
+        project.getCost().toString(),
+        ConvertDateFormat.convertDateToFormattedString(project.getDeadline()),
+        project.getCreatedAt(),
+        project.getUpdatedAt(),
+        project.getOwner().getId(),
+        project.getWorkspace().getId()
+      ))
+      .toList();
+
+    Map<String, List<ProjectResponseDTO>> deletedProjects = new HashMap<>(1);
+    deletedProjects.put("deletedProjects", projectsDTO);
+
+    CustomResponseBody<Map<String, List<ProjectResponseDTO>>> response = new CustomResponseBody<>();
+    response.setStatus(ResponseConditionStatus.SUCCESS);
+    response.setCode(HttpStatus.OK);
+    response.setMessage("Todos os projetos do usuário de ID: '02' foram excluídos com sucesso");
+    response.setData(deletedProjects);
+
+    String jsonResponseBody = this.objectMapper.writeValueAsString(response);
+
+    when(this.projectService.deleteAllFromOwner("02")).thenReturn(projects);
+
+    this.mockMvc.perform(delete(BASE_URL + "/owner/02")
+      .accept(MediaType.APPLICATION_JSON))
+      .andExpect(status().isOk())
+      .andExpect(content().json(jsonResponseBody));
+
+    verify(this.projectService, times(1)).deleteAllFromOwner("02");
+    verify(this.projectMapper, times(2)).toProjectResponseDTO(any(Project.class));
+  }
+
+  @Test
   @DisplayName("deleteAllFromWorkspace - Should return an error response with forbidden status code")
   void deleteAllFromWorkspaceFailsByNotBeingWorkspaceOwner() throws Exception {
     when(this.projectService.deleteAllFromWorkspace("01"))
