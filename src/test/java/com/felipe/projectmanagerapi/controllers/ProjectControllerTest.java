@@ -535,6 +535,46 @@ public class ProjectControllerTest {
   }
 
   @Test
+  @DisplayName("getAllFromOwner - Should return a success response with OK status code and a list of projects")
+  void getAllFromOwnerSuccess() throws Exception {
+    List<Project> projects = List.of(this.dataMock.getProjects().get(1), this.dataMock.getProjects().get(2));
+    List<ProjectResponseDTO> projectsDTO = projects.stream()
+      .map(project -> new ProjectResponseDTO(
+        project.getId(),
+        project.getName(),
+        project.getPriority().getValue(),
+        project.getCategory(),
+        project.getDescription(),
+        project.getBudget().toString(),
+        project.getCost().toString(),
+        ConvertDateFormat.convertDateToFormattedString(project.getDeadline()),
+        project.getCreatedAt(),
+        project.getUpdatedAt(),
+        project.getOwner().getId(),
+        project.getWorkspace().getId()
+      ))
+      .toList();
+
+      CustomResponseBody<List<ProjectResponseDTO>> response = new CustomResponseBody<>();
+      response.setStatus(ResponseConditionStatus.SUCCESS);
+      response.setCode(HttpStatus.OK);
+      response.setMessage("Todos os projetos do usuário de ID: '02'");
+      response.setData(projectsDTO);
+
+      String jsonResponseBody = this.objectMapper.writeValueAsString(response);
+
+      when(this.projectService.getAllFromOwner("02")).thenReturn(projects);
+
+      this.mockMvc.perform(get(BASE_URL + "/owner/02")
+        .accept(MediaType.APPLICATION_JSON))
+        .andExpect(status().isOk())
+        .andExpect(content().json(jsonResponseBody));
+
+      verify(this.projectService, times(1)).getAllFromOwner("02");
+      verify(this.projectMapper, times(2)).toProjectResponseDTO(any(Project.class));
+  }
+
+  @Test
   @DisplayName("getAllFromAuthenticatedUser - Should return a success response with OK status code and all user projects")
   void getAllFromAuthenticatedUserSuccess() throws Exception {
     List<Project> projects = List.of(this.dataMock.getProjects().get(1), this.dataMock.getProjects().get(2));

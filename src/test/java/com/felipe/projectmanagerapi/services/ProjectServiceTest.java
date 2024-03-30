@@ -552,6 +552,25 @@ public class ProjectServiceTest {
   }
 
   @Test
+  @DisplayName("getAllFromOwner - Should successfully return all user projects")
+  void getAllFromOwnerSuccess() {
+    User projectsOwner = this.dataMock.getUsers().get(1);
+    List<Project> projects = List.of(this.dataMock.getProjects().get(1), this.dataMock.getProjects().get(2));
+
+    when(this.userService.getProfile("02")).thenReturn(projectsOwner);
+    when(this.projectRepository.findAllByUserId(projectsOwner.getId())).thenReturn(projects);
+
+    List<Project> userProjects = this.projectService.getAllFromOwner("02");
+
+    assertThat(userProjects)
+      .allSatisfy(project -> assertThat(project.getOwner().getId()).isEqualTo(projectsOwner.getId()))
+      .hasSize(2);
+
+    verify(this.userService, times(1)).getProfile("02");
+    verify(this.projectRepository, times(1)).findAllByUserId(projectsOwner.getId());
+  }
+
+  @Test
   @DisplayName("delete - Should successfully delete a project")
   void deleteSuccess() {
     UserPrincipal userPrincipal = new UserPrincipal(this.dataMock.getUsers().get(0));
