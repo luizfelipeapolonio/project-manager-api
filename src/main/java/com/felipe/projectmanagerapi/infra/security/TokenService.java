@@ -44,7 +44,6 @@ public class TokenService {
   }
 
   private Instant generateExpirationDate() {
-    // TODO: trocar minutos para horas
-    return LocalDateTime.now().plusMinutes(1).toInstant(ZoneOffset.of("-03:00"));
+    return LocalDateTime.now().plusHours(2).toInstant(ZoneOffset.of("-03:00"));
   }
 }
