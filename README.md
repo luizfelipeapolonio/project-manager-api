@@ -12,7 +12,7 @@ criar projetos dentro dos workspaces, e adicionar tarefas nos projetos com base 
 
 <p align="center">
     <a href="#auth">Autorização</a> •
-    <a href="requirements">Requisitos funcionais</a> •
+    <a href="#requirements">Requisitos funcionais</a> •
     <a href="#business">Regras de negócio</a> •
     <a href="#tech">Tecnologias utilizadas</a> •
     <a href="#resources">Funções/Recursos</a> •
