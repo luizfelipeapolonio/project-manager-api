@@ -79,7 +79,8 @@ Os requisitos funcionais da aplicação são:
 
 - Um usuário só pode ser excluído se não possuir nenhum workspace, projeto ou tarefa.
 - Um projeto só deve existir dentro de um workspace.
-- Um usuário só pode criar um projeto ou tarefa se for membro de algum workspace.
+- Um usuário só pode criar, atualizar, visualizar e excluir um projeto ou tarefa se for membro do workspace ao qual 
+  o projeto pertence.
 - Todos os projetos de um usuário devem ser excluídos quando for removido do workspace.
 
 <h2 id="business">📝 Regras de negócio</h2>
@@ -109,7 +110,7 @@ sistema foi desenvolvido de uma maneira bem específica seguindo algumas regras.
 
 - Apenas usuários com a role `ADMIN`, que seja dono ou membro do workspace, e `WRITE_READ`, que seja membro do 
   workspace, podem criar projetos.
-- Apenas o usuário com a role `ADMIN`, que seja dono do projeto e membro do workspace ao qual o projeto pertence, e 
+- Apenas o usuário com a role `ADMIN`, que seja dono do projeto e membro/dono do workspace ao qual o projeto pertence, e 
   `WRITE_READ`, que seja dono do projeto e membro do workspace ao qual o projeto pertence, podem atualizar os dados do projeto.
 - Apenas o usuário com a role `ADMIN`, que seja dono do projeto ou do workspace ao qual o projeto pertence, e 
   `WRITE_READ`, que seja o dono do projeto e membro do workspace, podem excluir um projeto específico.
@@ -140,10 +141,10 @@ sistema foi desenvolvido de uma maneira bem específica seguindo algumas regras.
 
 ### Auth
 
-|     Tipo     | Rota                 | Descrição     |  Autenticação  | Autorização         |
-|:------------:|:---------------------|:--------------|:--------------:|:--------------------|
-| **_`POST`_** | `/api/auth/register` | Criar usuário |      Sim       | Apenas para `ADMIN` |
-| **_`POST`_** | `/api/auth/login`    | Logar usuário |      Não       | Qualquer usuário    |
+|     Tipo     | Rota                 | Descrição                                           |  Autenticação  | Autorização         |
+|:------------:|:---------------------|:----------------------------------------------------|:--------------:|:--------------------|
+| **_`POST`_** | `/api/auth/register` | Criar usuário [requisição/resposta](#auth-register) |      Sim       | Apenas para `ADMIN` |
+| **_`POST`_** | `/api/auth/login`    | Logar usuário [requisição/resposta](#auth-login)    |      Não       | Qualquer usuário    |
 
 <br />
 
@@ -162,13 +163,113 @@ sistema foi desenvolvido de uma maneira bem específica seguindo algumas regras.
 
 ### Workspace
 
-|      Tipo      | Rota                                             | Descrição                            | Autenticação | Autorização                                                     |
-|:--------------:|:-------------------------------------------------|:-------------------------------------|:------------:|:----------------------------------------------------------------|
-|  **_`POST`_**  | `/api/workspaces`                                | Criar workspace                      |     Sim      | Apenas `ADMIN`                                                  |
-|  **_`GET`_**   | `/api/workspaces`                                | Listar os próprios workspaces        |     Sim      | Apenas `ADMIN`                                                  |
-| **_`PATCH`_**  | `/api/workspaces/{workspaceId}`                  | Atualizar dados do workspace         |     Sim      | Apenas `ADMIN` dono do workspace                                |
-|  **_`GET`_**   | `/api/workspaces/{workspaceId}`                  | Visualizar um workspace              |     Sim      | Qualquer membro do workspace `ADMIN`, `WRITE_READ`, `READ_ONLY` |
-| **_`DELETE`_** | `/api/workspaces/{workspaceId}`                  | Excluir um workspace                 |     Sim      | Apenas `ADMIN` dono do workspace                                |
-|  **_`GET`_**   | `/api/workspaces/{workspaceId}/members`          | Listar todos os membros do workspace |     Sim      | Apenas `ADMIN`                                                  |
-| **_`PATCH`_**  | `/api/workspaces/{workspaceId}/members/{userId}` | Inserir um membro em um workspace    |     Sim      | Apenas `ADMIN` dono do workspace                                |
-| **_`DELETE`_** | `/api/workspaces/{workspaceId}/members/{userId}` | Remover um membro de um workspace    |     Sim      | Apenas `ADMIN` dono do workspace                                |
+|      Tipo      | Rota                                             | Descrição                                         | Autenticação | Autorização                                                     |
+|:--------------:|:-------------------------------------------------|:--------------------------------------------------|:------------:|:----------------------------------------------------------------|
+|  **_`POST`_**  | `/api/workspaces`                                | Criar workspace                                   |     Sim      | Apenas `ADMIN`                                                  |
+|  **_`GET`_**   | `/api/workspaces`                                | Listar todos os workspaces do usuário autenticado |     Sim      | Apenas `ADMIN`                                                  |
+| **_`PATCH`_**  | `/api/workspaces/{workspaceId}`                  | Atualizar dados do workspace                      |     Sim      | Apenas `ADMIN` dono do workspace                                |
+|  **_`GET`_**   | `/api/workspaces/{workspaceId}`                  | Visualizar um workspace                           |     Sim      | Qualquer membro do workspace `ADMIN`, `WRITE_READ`, `READ_ONLY` |
+| **_`DELETE`_** | `/api/workspaces/{workspaceId}`                  | Excluir um workspace                              |     Sim      | Apenas `ADMIN` dono do workspace                                |
+|  **_`GET`_**   | `/api/workspaces/{workspaceId}/members`          | Listar todos os membros do workspace              |     Sim      | Apenas `ADMIN`                                                  |
+| **_`PATCH`_**  | `/api/workspaces/{workspaceId}/members/{userId}` | Inserir um membro em um workspace                 |     Sim      | Apenas `ADMIN` dono do workspace                                |
+| **_`DELETE`_** | `/api/workspaces/{workspaceId}/members/{userId}` | Remover um membro de um workspace                 |     Sim      | Apenas `ADMIN` dono do workspace                                |
+
+<br />
+
+### Project
+
+|      Tipo      | Rota                                                     | Descrição                                                                     | Autenticação | Autorização                                                    |
+|:--------------:|:---------------------------------------------------------|:------------------------------------------------------------------------------|:------------:|:---------------------------------------------------------------|
+|  **_`POST`_**  | `/api/projects`                                          | Criar projeto                                                                 |     Sim      | Apenas `ADMIN` e `WRITE_READ` dono ou membro do workspace      |
+|  **_`GET`_**   | `/api/projects`                                          | Listar todos os projetos do usuário autenticado                               |     Sim      | Apenas `ADMIN`, `WRITE_READ`                                   |
+| **_`DELETE`_** | `/api/projects`                                          | Deletar todos os projetos do usuário autenticado                              |     Sim      | Apenas `ADMIN`, `WRITE_READ`                                   |
+| **_`PATCH`_**  | `/api/projects/{projectId}`                              | Atualizar os dados de um projeto                                              |     Sim      | Apenas `ADMIN`, `WRITE_READ` dono do projeto                   |
+|  **_`GET`_**   | `/api/projects/{projectId}`                              | Visualizar um projeto                                                         |     Sim      | `ADMIN`, `WRITE_READ`, `READ_ONLY` membro ou dono do workspace |
+| **_`DELETE`_** | `/api/projects/{projectId}`                              | Excluir um projeto                                                            |     Sim      | Apenas `ADMIN`, `WRITE_READ` dono do projeto ou workspace      |
+|  **_`GET`_**   | `/api/projects/owner/{ownerId}`                          | Listar todos os projetos de um usuário específico                             |     Sim      | Apenas `ADMIN`                                                 |
+| **_`DELETE`_** | `/api/projects/owner/{ownerId}`                          | Excluir todos os projetos de um usuário específico                            |     Sim      | Apenas `ADMIN`                                                 |
+|  **_`GET`_**   | `/api/projects/workspaces/{workspaceId}`                 | Listar todos os projetos de um workspace específico                           |     Sim      | `ADMIN`, `WRITE_READ`, `READ_ONLY` membro ou dono do workspace |
+| **_`DELETE`_** | `/api/projects/workspaces/{workspaceId}`                 | Excluir todos os projetos de um workspace específico                          |     Sim      | Apenas `ADMIN` dono do workspace                               |
+|  **_`GET`_**   | `/api/projects/workspaces/{workspaceId}/owner/{ownerId}` | Listar todos os projetos de um usuário específico em um workspace específico  |     Sim      | Apenas `ADMIN` dono do workspace                               |
+| **_`DELETE`_** | `/api/projects/workspaces/{workspaceId}/owner/{ownerId}` | Excluir todos os projetos de um usuário específico em um workspace específico |     Sim      | Apenas `ADMIN` dono do workspace                               |
+
+<br />
+
+### Task 
+
+|      Tipo      | Rota                              | Descrição                                       | Autenticação | Autorização                                                     |
+|:--------------:|:----------------------------------|:------------------------------------------------|:------------:|:----------------------------------------------------------------|
+|  **_`POST`_**  | `/api/tasks`                      | Criar task                                      |     Sim      | Apenas `ADMIN`, `WRITE_READ` membro ou dono do workspace        |
+|  **_`GET`_**   | `/api/tasks`                      | Listar todas as tasks do usuário autenticado    |     Sim      | Apenas `ADMIN`, `WRITE_READ`                                    |
+|  **_`GET`_**   | `/api/tasks/{taskId}`             | Visualizar uma task                             |     Sim      | `ADMIN`, `WRITE_READ`, `READ_ONLY` membro ou dono do workspace  |
+| **_`DELETE`_** | `/api/tasks/{taskId}`             | Excluir uma task                                |     Sim      | Apenas `ADMIN`, `WRITE_READ` dono do workspace, projeto ou task |
+| **_`PATCH`_**  | `/api/tasks/{taskId}`             | Atualizar uma task                              |     Sim      | Apenas `ADMIN`, `WRITE_READ` dono do workspace, projeto ou task |
+|  **_`GET`_**   | `/api/tasks/projects/{projectId}` | Listar todas as tasks de um projeto específico  |     Sim      | `ADMIN`, `WRITE_READ`, `READ_ONLY` membro ou dono do workspace  |
+| **_`DELETE`_** | `/api/tasks/projects/{projectId}` | Excluir todas as tasks de um projeto específico |     Sim      | Apenas `ADMIN`, `WRITE_READ` dono do projeto ou do workspace    |
+|  **_`GET`_**   | `/api/tasks/owner/{ownerId}`      | Listar todas as tasks de um usuário específico  |     Sim      | Apenas `ADMIN`                                                  |
+
+<br />
+
+### Requisição e Resposta
+
+<h4 id="auth-register">**`POST`** /api/auth/register</h4>
+
+**Requisição**
+```json
+{
+  "name": "User 1",
+  "email": "user1@email.com",
+  "password": "123456",
+  "role": "write_read"
+}
+```
+
+**Resposta**
+```json
+{
+  "status": "Success",
+  "code": 201,
+  "message": "Usuário criado com sucesso",
+  "data": {
+    "id": "65fae69d-b3a7-4d75-9a99-da62eda399e9",
+    "name": "User 1",
+    "email": "user1@email.com",
+    "role": "WRITE_READ",
+    "createdAt": "2024-03-28T17:31:09.256061",
+    "updatedAt": "2024-03-28T17:31:09.256061"
+  }
+}
+```
+
+<br />
+
+<h4 id="auth-login">**`POST`** /api/auth/login</h4>
+
+**Requisição**
+```json
+{
+  "email": "user1@email.com",
+  "password": "123456"
+}
+```
+
+**Resposta**
+```json
+{
+  "status": "Success",
+  "code": 200,
+  "message": "Usuário logado",
+  "data": {
+    "userInfo": {
+      "id": "65fae69d-b3a7-4d75-9a99-da62eda399e9",
+      "name": "User 1",
+      "email": "user1@email.com",
+      "role": "WRITE_READ",
+      "createdAt": "2024-03-28T15:37:40.92",
+      "updatedAt": "2024-03-28T15:37:40.92"
+    },
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJwcm9qZWN0LW1hbmFnZXItYXBpIiwic3ViIjoidXNlcjFAZW1haWwuY29tIiwiZXhwIjoxNzEyMjYyOTU0fQ.sCaFqsb1BDH5t90LzwfqhOEOjmJwefCiVV24cr6-V4Y"
+  }
+}
+```
+
