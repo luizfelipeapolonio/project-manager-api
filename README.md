@@ -150,29 +150,29 @@ sistema foi desenvolvido de uma maneira bem específica seguindo algumas regras.
 
 ### User
 
-|      Tipo      | Rota                       | Descrição                                  | Autenticação | Autorização                        |
-|:--------------:|:---------------------------|:-------------------------------------------|:------------:|:-----------------------------------|
-|  **_`GET`_**   | `/api/users/me`            | Visualizar perfil do usuário autenticado   |     Sim      | `ADMIN`, `WRITE_READ`, `READ_ONLY` |
-|  **_`GET`_**   | `/api/users`               | Listar todos os usuários                   |     Sim      | Apenas `ADMIN`                     |
-| **_`PATCH`_**  | `/api/users/{userId}`      | Atualizar dados do usuário                 |     Sim      | `ADMIN`, `WRITE_READ`, `READ_ONLY` |
-|  **_`GET`_**   | `/api/users/{userId}`      | Visualizar perfil de um usuário específico |     Sim      | Apenas `ADMIN`                     |
-| **_`DELETE`_** | `/api/users/{userId}`      | Excluir perfil de um usuário específico    |     Sim      | Apenas `ADMIN`                     |
-| **_`PATCH`_**  | `/api/users/{userId}/role` | Alterar role de um usuário                 |     Sim      | Apenas `ADMIN`                     |
+|      Tipo      | Rota                       | Descrição                                                        | Autenticação | Autorização                        |
+|:--------------:|:---------------------------|:-----------------------------------------------------------------|:------------:|:-----------------------------------|
+|  **_`GET`_**   | `/api/users/me`            | Visualizar perfil do usuário autenticado [resposta](#auth-me)    |     Sim      | `ADMIN`, `WRITE_READ`, `READ_ONLY` |
+|  **_`GET`_**   | `/api/users`               | Listar todos os usuários [resposta](#all-users)                  |     Sim      | Apenas `ADMIN`                     |
+| **_`PATCH`_**  | `/api/users/{userId}`      | Atualizar dados do usuário [requisição/resposta](#update-user)   |     Sim      | `ADMIN`, `WRITE_READ`, `READ_ONLY` |
+|  **_`GET`_**   | `/api/users/{userId}`      | Visualizar perfil de um usuário específico [resposta](#get-user) |     Sim      | Apenas `ADMIN`                     |
+| **_`DELETE`_** | `/api/users/{userId}`      | Excluir perfil de um usuário específico [resposta](#delete-user) |     Sim      | Apenas `ADMIN`                     |
+| **_`PATCH`_**  | `/api/users/{userId}/role` | Alterar role de um usuário [requisição/resposta](#role)          |     Sim      | Apenas `ADMIN`                     |
 
 <br />
 
 ### Workspace
 
-|      Tipo      | Rota                                             | Descrição                                         | Autenticação | Autorização                                                     |
-|:--------------:|:-------------------------------------------------|:--------------------------------------------------|:------------:|:----------------------------------------------------------------|
-|  **_`POST`_**  | `/api/workspaces`                                | Criar workspace                                   |     Sim      | Apenas `ADMIN`                                                  |
-|  **_`GET`_**   | `/api/workspaces`                                | Listar todos os workspaces do usuário autenticado |     Sim      | Apenas `ADMIN`                                                  |
-| **_`PATCH`_**  | `/api/workspaces/{workspaceId}`                  | Atualizar dados do workspace                      |     Sim      | Apenas `ADMIN` dono do workspace                                |
-|  **_`GET`_**   | `/api/workspaces/{workspaceId}`                  | Visualizar um workspace                           |     Sim      | Qualquer membro do workspace `ADMIN`, `WRITE_READ`, `READ_ONLY` |
-| **_`DELETE`_** | `/api/workspaces/{workspaceId}`                  | Excluir um workspace                              |     Sim      | Apenas `ADMIN` dono do workspace                                |
-|  **_`GET`_**   | `/api/workspaces/{workspaceId}/members`          | Listar todos os membros do workspace              |     Sim      | Apenas `ADMIN`                                                  |
-| **_`PATCH`_**  | `/api/workspaces/{workspaceId}/members/{userId}` | Inserir um membro em um workspace                 |     Sim      | Apenas `ADMIN` dono do workspace                                |
-| **_`DELETE`_** | `/api/workspaces/{workspaceId}/members/{userId}` | Remover um membro de um workspace                 |     Sim      | Apenas `ADMIN` dono do workspace                                |
+|      Tipo      | Rota                                             | Descrição                                                                      | Autenticação | Autorização                                                     |
+|:--------------:|:-------------------------------------------------|:-------------------------------------------------------------------------------|:------------:|:----------------------------------------------------------------|
+|  **_`POST`_**  | `/api/workspaces`                                | Criar workspace [requisição/resposta](#create-workspace)                       |     Sim      | Apenas `ADMIN`                                                  |
+|  **_`GET`_**   | `/api/workspaces`                                | Listar todos os workspaces do usuário autenticado [resposta](#user-workspaces) |     Sim      | Apenas `ADMIN`                                                  |
+| **_`PATCH`_**  | `/api/workspaces/{workspaceId}`                  | Atualizar dados do workspace [requisição/resposta](#update-workspace)          |     Sim      | Apenas `ADMIN` dono do workspace                                |
+|  **_`GET`_**   | `/api/workspaces/{workspaceId}`                  | Visualizar um workspace [resposta](#get-workspace)                             |     Sim      | Qualquer membro do workspace `ADMIN`, `WRITE_READ`, `READ_ONLY` |
+| **_`DELETE`_** | `/api/workspaces/{workspaceId}`                  | Excluir um workspace [resposta](#delete-workspace)                             |     Sim      | Apenas `ADMIN` dono do workspace                                |
+|  **_`GET`_**   | `/api/workspaces/{workspaceId}/members`          | Listar todos os membros do workspace [resposta](#members)                      |     Sim      | Apenas `ADMIN`                                                  |
+| **_`PATCH`_**  | `/api/workspaces/{workspaceId}/members/{userId}` | Inserir um membro em um workspace [resposta](#insert-member)                   |     Sim      | Apenas `ADMIN` dono do workspace                                |
+| **_`DELETE`_** | `/api/workspaces/{workspaceId}/members/{userId}` | Remover um membro de um workspace [resposta](#remove-member)                   |     Sim      | Apenas `ADMIN` dono do workspace                                |
 
 <br />
 
@@ -180,9 +180,9 @@ sistema foi desenvolvido de uma maneira bem específica seguindo algumas regras.
 
 |      Tipo      | Rota                                                     | Descrição                                                                     | Autenticação | Autorização                                                    |
 |:--------------:|:---------------------------------------------------------|:------------------------------------------------------------------------------|:------------:|:---------------------------------------------------------------|
-|  **_`POST`_**  | `/api/projects`                                          | Criar projeto                                                                 |     Sim      | Apenas `ADMIN` e `WRITE_READ` dono ou membro do workspace      |
-|  **_`GET`_**   | `/api/projects`                                          | Listar todos os projetos do usuário autenticado                               |     Sim      | Apenas `ADMIN`, `WRITE_READ`                                   |
-| **_`DELETE`_** | `/api/projects`                                          | Deletar todos os projetos do usuário autenticado                              |     Sim      | Apenas `ADMIN`, `WRITE_READ`                                   |
+|  **_`POST`_**  | `/api/projects`                                          | Criar projeto [requisição/resposta](#create-project)                          |     Sim      | Apenas `ADMIN` e `WRITE_READ` dono ou membro do workspace      |
+|  **_`GET`_**   | `/api/projects`                                          | Listar todos os projetos do usuário autenticado [resposta](#user-projects)    |     Sim      | Apenas `ADMIN`, `WRITE_READ`                                   |
+| **_`DELETE`_** | `/api/projects`                                          | Excluir todos os projetos do usuário autenticado [resposta](#delete-projects) |     Sim      | Apenas `ADMIN`, `WRITE_READ`                                   |
 | **_`PATCH`_**  | `/api/projects/{projectId}`                              | Atualizar os dados de um projeto                                              |     Sim      | Apenas `ADMIN`, `WRITE_READ` dono do projeto                   |
 |  **_`GET`_**   | `/api/projects/{projectId}`                              | Visualizar um projeto                                                         |     Sim      | `ADMIN`, `WRITE_READ`, `READ_ONLY` membro ou dono do workspace |
 | **_`DELETE`_** | `/api/projects/{projectId}`                              | Excluir um projeto                                                            |     Sim      | Apenas `ADMIN`, `WRITE_READ` dono do projeto ou workspace      |
@@ -212,7 +212,9 @@ sistema foi desenvolvido de uma maneira bem específica seguindo algumas regras.
 
 ### Requisição e Resposta
 
-<h4 id="auth-register">**`POST`** /api/auth/register</h4>
+**`AUTH`**
+
+<h4 id="auth-register">POST /api/auth/register</h4>
 
 **Requisição**
 ```json
@@ -231,7 +233,7 @@ sistema foi desenvolvido de uma maneira bem específica seguindo algumas regras.
   "code": 201,
   "message": "Usuário criado com sucesso",
   "data": {
-    "id": "65fae69d-b3a7-4d75-9a99-da62eda399e9",
+    "id": "f175c9ca-cbf3-4018-98dd-369ba0aa38d5",
     "name": "User 1",
     "email": "user1@email.com",
     "role": "WRITE_READ",
@@ -243,7 +245,7 @@ sistema foi desenvolvido de uma maneira bem específica seguindo algumas regras.
 
 <br />
 
-<h4 id="auth-login">**`POST`** /api/auth/login</h4>
+<h4 id="auth-login">POST /api/auth/login</h4>
 
 **Requisição**
 ```json
@@ -261,14 +263,558 @@ sistema foi desenvolvido de uma maneira bem específica seguindo algumas regras.
   "message": "Usuário logado",
   "data": {
     "userInfo": {
-      "id": "65fae69d-b3a7-4d75-9a99-da62eda399e9",
+      "id": "f175c9ca-cbf3-4018-98dd-369ba0aa38d5",
       "name": "User 1",
       "email": "user1@email.com",
       "role": "WRITE_READ",
       "createdAt": "2024-03-28T15:37:40.92",
       "updatedAt": "2024-03-28T15:37:40.92"
     },
-    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJwcm9qZWN0LW1hbmFnZXItYXBpIiwic3ViIjoidXNlcjFAZW1haWwuY29tIiwiZXhwIjoxNzEyMjYyOTU0fQ.sCaFqsb1BDH5t90LzwfqhOEOjmJwefCiVV24cr6-V4Y"
+    "token": "eyJhbGciOR5cCI6IkpXVCJ9.eyJpc3MiYXBpIiNzEyMjYyOTU0fQ.sCaFqsb1BDH5hOEOjmJwefCiVV24cr6-V4Y"
+  }
+}
+```
+
+<br />
+
+**`USER`**
+
+<h4 id="auth-me">GET /api/users/me</h4>
+
+**Resposta**
+```json
+{
+  "status": "Success",
+  "code": 200,
+  "message": "Usuário autenticado",
+  "data": {
+    "id": "f175c9ca-cbf3-4018-98dd-369ba0aa38d5",
+    "name": "User 1",
+    "email": "user1@email.com",
+    "role": "WRITE_READ",
+    "createdAt": "2024-03-28T15:37:40.92",
+    "updatedAt": "2024-03-28T15:37:40.92"
+  }
+}
+```
+
+<br />
+
+<h4 id="all-users">GET /api/users</h4>
+
+**Resposta**
+```json
+{
+  "status": "Success",
+  "code": 200,
+  "message": "Todos os usuários",
+  "data": [
+    {
+      "id": "405c98ba-3251-4b21-8575-7db33576f28a",
+      "name": "admin",
+      "email": "admin@admin",
+      "role": "ADMIN",
+      "createdAt": "2024-03-28T15:32:35.32",
+      "updatedAt": "2024-03-28T15:32:35.32"
+    },
+    {
+      "id": "f175c9ca-cbf3-4018-98dd-369ba0aa38d5",
+      "name": "User 1",
+      "email": "user1@email.com",
+      "role": "WRITE_READ",
+      "createdAt": "2024-03-28T15:37:40.92",
+      "updatedAt": "2024-03-28T15:37:40.92"
+    }
+  ]
+}
+```
+
+<br />
+
+<h4 id="update-user">PATCH /api/users/{userId}</h4>
+
+**Requisição**
+```json
+{
+  "name": "User 1 atualizado",
+  "password": "novasenha"
+}
+```
+
+**Resposta**
+```json
+{
+  "status": "Success",
+  "code": 200,
+  "message": "Usuário atualizado com sucesso",
+  "data": {
+    "id": "f175c9ca-cbf3-4018-98dd-369ba0aa38d5",
+    "name": "User 1 atualizado",
+    "email": "user1@email.com",
+    "role": "WRITE_READ",
+    "createdAt": "2024-03-28T15:37:40.92",
+    "updatedAt": "2024-04-07T15:35:48.243646"
+  }
+}
+```
+
+<br />
+
+<h4 id="get-user">GET /api/users/{userId}</h4>
+
+**Resposta**
+```json
+{
+  "status": "Success",
+  "code": 200,
+  "message": "Usuário encontrado",
+  "data": {
+    "id": "f175c9ca-cbf3-4018-98dd-369ba0aa38d5",
+    "name": "User 1",
+    "email": "user1@email.com",
+    "role": "WRITE_READ",
+    "createdAt": "2024-03-28T15:37:40.92",
+    "updatedAt": "2024-04-07T15:37:18.93"
+  }
+}
+```
+
+<br />
+
+<h4 id="delete-user">DELETE /api/users/{userId}</h4>
+
+**Resposta**
+```json
+{
+  "status": "Success",
+  "code": 200,
+  "message": "Usuário deletado com sucesso",
+  "data": {
+    "deletedUser": {
+      "id": "472e3467-5147-46e8-9799-84c0ba8dc1f3",
+      "name": "User 3",
+      "email": "user3@email.com",
+      "role": "READ_ONLY",
+      "createdAt": "2024-03-28T15:38:05.48",
+      "updatedAt": "2024-03-28T15:38:05.48"
+    }
+  }
+}
+```
+
+<br />
+
+<h4 id="role">PATCH /api/users/{userId}/role</h4>
+
+**Requisição**
+```json
+{
+  "role": "read_only"
+}
+```
+
+**Resposta**
+```json
+{
+  "status": "Success",
+  "code": 200,
+  "message": "Role atualizada com sucesso",
+  "data": {
+    "id": "f175c9ca-cbf3-4018-98dd-369ba0aa38d5",
+    "name": "User 1",
+    "email": "user1@email.com",
+    "role": "READ_ONLY",
+    "createdAt": "2024-03-28T17:31:09.26",
+    "updatedAt": "2024-03-28T17:31:09.26"
+  }
+}
+```
+
+<br />
+
+**`WORKSPACE`**
+
+<h4 id="create-workspace">POST /api/workspaces</h4>
+
+**Requisição**
+```json
+{
+  "name": "Workspace 1"
+}
+```
+
+**Resposta**
+```json
+{
+  "status": "Success",
+  "code": 201,
+  "message": "Workspace criado com sucesso",
+  "data": {
+    "id": "64a7efa3-a786-43bf-ada0-d4d2e64b398f",
+    "name": "Workspace 1",
+    "ownerId": "405c98ba-3251-4b21-8575-7db33576f28a",
+    "createdAt": "2024-03-28T17:10:32.649052",
+    "updatedAt": "2024-03-28T17:10:32.649052"
+  }
+}
+```
+
+<br />
+
+<h4 id="user-workspaces">GET /api/workspaces</h4>
+
+**Resposta**
+```json
+{
+  "status": "Success",
+  "code": 200,
+  "message": "Todos os seus workspaces",
+  "data": [
+    {
+      "id": "64a7efa3-a786-43bf-ada0-d4d2e64b398f",
+      "name": "Workspace 1",
+      "ownerId": "405c98ba-3251-4b21-8575-7db33576f28a",
+      "createdAt": "2024-03-28T17:10:32.65",
+      "updatedAt": "2024-03-28T17:28:30.28"
+    }
+  ]
+}
+```
+
+<br />
+
+<h4 id="update-workspace">PATCH /api/workspaces/{workspaceId}</h4>
+
+**Requisição**
+```json
+{
+  "name": "Workspace 1 atualizado"
+}
+```
+
+**Resposta**
+```json
+{
+  "status": "Success",
+  "code": 200,
+  "message": "Workspace atualizado com sucesso",
+  "data": {
+    "id": "64a7efa3-a786-43bf-ada0-d4d2e64b398f",
+    "name": "Workspace 1 atualizado",
+    "ownerId": "405c98ba-3251-4b21-8575-7db33576f28a",
+    "createdAt": "2024-03-28T17:10:32.65",
+    "updatedAt": "2024-03-28T17:28:30.275353"
+  }
+}
+```
+
+<br />
+
+<h4 id="get-workspace">GET /api/workspaces/{workspaceId}</h4>
+
+**Resposta**
+```json
+{
+  "status": "Success",
+  "code": 200,
+  "message": "Workspace encontrado",
+  "data": {
+    "workspace": {
+      "id": "69a5e94d-efc2-44ae-9595-c699b99911d9",
+      "name": "Workspace 1",
+      "ownerId": "97d2a1ad-cd7a-40dc-b2df-9bfe912e6542",
+      "createdAt": "2024-03-21T19:37:39.73",
+      "updatedAt": "2024-03-21T19:37:39.73"
+    },
+    "projects": [
+      {
+        "id": "d61a01b5-9273-467e-a56a-4290b1510efa",
+        "name": "Projeto 1",
+        "priority": "alta",
+        "category": "Desenvolvimento",
+        "description": "Descrição do Projeto 1",
+        "budget": "25000.00",
+        "cost": "2000.00",
+        "deadline": "21-08-2025",
+        "createdAt": "2024-03-21T19:40:27.4",
+        "updatedAt": "2024-03-21T19:42:30.26",
+        "ownerId": "a0648bd1-fb7f-4a4c-916a-c354801dff54",
+        "workspaceId": "69a5e94d-efc2-44ae-9595-c699b99911d9"
+      }
+    ],
+    "members": [
+      {
+        "id": "a0648bd1-fb7f-4a4c-916a-c354801dff54",
+        "name": "User 1",
+        "email": "user1@email.com",
+        "role": "WRITE_READ",
+        "createdAt": "2024-03-21T19:36:43.72",
+        "updatedAt": "2024-03-21T19:36:43.72"
+      }
+    ]
+  }
+}
+```
+
+<br />
+
+<h4 id="delete-workspace">DELETE /api/workspaces/{workspaceId}</h4>
+
+**Resposta**
+```json
+{
+  "status": "Success",
+  "code": 200,
+  "message": "Workspace deletado com sucesso",
+  "data": {
+    "deletedWorkspace": {
+      "id": "64a7efa3-a786-43bf-ada0-d4d2e64b398f",
+      "name": "Workspace 1",
+      "ownerId": "405c98ba-3251-4b21-8575-7db33576f28a",
+      "createdAt": "2024-03-28T15:38:48.64",
+      "updatedAt": "2024-03-28T15:38:48.64"
+    }
+  }
+}
+```
+
+<br />
+
+<h4 id="members">GET /api/workspaces/{workspaceId}/members</h4>
+
+**Resposta**
+```json
+{
+  "status": "Success",
+  "code": 200,
+  "message": "Todos os membros do workspace",
+  "data": {
+    "workspace": {
+      "id": "64a7efa3-a786-43bf-ada0-d4d2e64b398f",
+      "name": "Workspace 1",
+      "ownerId": "405c98ba-3251-4b21-8575-7db33576f28a",
+      "createdAt": "2024-03-28T17:10:32.65",
+      "updatedAt": "2024-03-28T17:28:30.28"
+    },
+    "members": [
+      {
+        "id": "f175c9ca-cbf3-4018-98dd-369ba0aa38d5",
+        "name": "User 1",
+        "email": "user1@email.com",
+        "role": "WRITE_READ",
+        "createdAt": "2024-03-28T15:37:40.92",
+        "updatedAt": "2024-04-07T15:37:18.93"
+      },
+      {
+        "id": "65fae69d-b3a7-4d75-9a99-da62eda399e9",
+        "name": "User 3",
+        "email": "user3@email.com",
+        "role": "READ_ONLY",
+        "createdAt": "2024-03-28T17:31:09.26",
+        "updatedAt": "2024-03-28T17:31:09.26"
+      }
+    ]
+  }
+}
+```
+
+<br />
+
+<h4 id="insert-member">PATCH /api/workspaces/{workspaceId}/members/{userId}</h4>
+
+**Resposta**
+```json
+{
+  "status": "Success",
+  "code": 200,
+  "message": "Membro inserido no workspace com sucesso",
+  "data": {
+    "workspace": {
+      "id": "64a7efa3-a786-43bf-ada0-d4d2e64b398f",
+      "name": "Workspace 1",
+      "ownerId": "405c98ba-3251-4b21-8575-7db33576f28a",
+      "createdAt": "2024-03-28T17:10:32.65",
+      "updatedAt": "2024-03-28T17:28:30.28"
+    },
+    "members": [
+      {
+        "id": "f175c9ca-cbf3-4018-98dd-369ba0aa38d5",
+        "name": "User 1",
+        "email": "user1@email.com",
+        "role": "WRITE_READ",
+        "createdAt": "2024-03-28T15:37:40.92",
+        "updatedAt": "2024-03-28T15:37:40.92"
+      },
+      {
+        "id": "a36a2e9e-d999-4326-aced-b2c91a04ff2d",
+        "name": "User 2",
+        "email": "user2@email.com",
+        "role": "WRITE_READ",
+        "createdAt": "2024-03-28T17:29:27.15",
+        "updatedAt": "2024-03-28T17:29:27.15"
+      }
+    ]
+  }
+}
+```
+
+<br />
+
+<h4 id="remove-member">DELETE /api/workspaces/{workspaceId}/members/{userId}</h4>
+
+**Resposta**
+```json
+{
+  "status": "Success",
+  "code": 200,
+  "message": "Membro removido do workspace com sucesso",
+  "data": {
+    "workspace": {
+      "id": "64a7efa3-a786-43bf-ada0-d4d2e64b398f",
+      "name": "Workspace 1",
+      "ownerId": "405c98ba-3251-4b21-8575-7db33576f28a",
+      "createdAt": "2024-03-28T17:10:32.65",
+      "updatedAt": "2024-03-28T17:28:30.28"
+    },
+    "members": [
+      {
+        "id": "f175c9ca-cbf3-4018-98dd-369ba0aa38d5",
+        "name": "User 1",
+        "email": "user1@email.com",
+        "role": "WRITE_READ",
+        "createdAt": "2024-03-28T15:37:40.92",
+        "updatedAt": "2024-03-28T15:37:40.92"
+      }
+    ]
+  }
+}
+```
+
+<br />
+
+**`PROJECT`**
+<h4 id="create-project">POST /api/projects</h4>
+
+**Requisição**
+```json
+{
+  "name": "Projeto 1",
+  "category": "Infra",
+  "description": "Descrição do Projeto 1",
+  "budget": "25000.00",
+  "priority": "alta",
+  "deadline": "21-08-2025",
+  "workspaceId": "64a7efa3-a786-43bf-ada0-d4d2e64b398f"
+}
+```
+
+**Resposta**
+```json
+{
+  "status": "Success",
+  "code": 201,
+  "message": "Projeto criado com sucesso",
+  "data": {
+    "id": "6e371e5f-6094-4f16-b01f-5b90f531c970",
+    "name": "Projeto 1",
+    "priority": "alta",
+    "category": "Infra",
+    "description": "Descrição do Projeto 1",
+    "budget": "25000.00",
+    "cost": "0",
+    "deadline": "21-08-2025",
+    "createdAt": "2024-03-28T19:10:35.313285",
+    "updatedAt": "2024-03-28T19:10:35.313285",
+    "ownerId": "405c98ba-3251-4b21-8575-7db33576f28a",
+    "workspaceId": "64a7efa3-a786-43bf-ada0-d4d2e64b398f"
+  }
+}
+```
+
+<br />
+
+<h4 id="user-projects">GET /api/projects</h4>
+
+**Resposta**
+```json
+{
+  "status": "Success",
+  "code": 200,
+  "message": "Todos os seus projetos",
+  "data": [
+    {
+      "id": "e4b9dc6e-a4c0-4a63-8950-3f5a6f616d17",
+      "name": "Projeto 1",
+      "priority": "alta",
+      "category": "Infra",
+      "description": "Descrição do Projeto 1",
+      "budget": "25000.00",
+      "cost": "0.00",
+      "deadline": "21-08-2025",
+      "createdAt": "2024-03-28T17:22:00.26",
+      "updatedAt": "2024-03-28T17:22:00.26",
+      "ownerId": "f175c9ca-cbf3-4018-98dd-369ba0aa38d5",
+      "workspaceId": "64a7efa3-a786-43bf-ada0-d4d2e64b398f"
+    },
+    {
+      "id": "04a2f77a-7551-4888-8f04-751c9ab8f2eb",
+      "name": "Projeto 2",
+      "priority": "media",
+      "category": "Desenvolvimento",
+      "description": "Descrição do Projeto 2",
+      "budget": "20000.00",
+      "cost": "0.00",
+      "deadline": "21-08-2025",
+      "createdAt": "2024-03-28T17:22:08.81",
+      "updatedAt": "2024-03-28T17:22:08.81",
+      "ownerId": "f175c9ca-cbf3-4018-98dd-369ba0aa38d5",
+      "workspaceId": "64a7efa3-a786-43bf-ada0-d4d2e64b398f"
+    }
+  ]
+}
+```
+
+<br />
+
+<h4 id="delete-projects">DELETE /api/projects</h4>
+
+**Resposta**
+```json
+{
+  "status": "Success",
+  "code": 200,
+  "message": "Todos os seus projetos foram excluídos com sucesso",
+  "data": {
+    "deletedProjects": [
+      {
+        "id": "e4b9dc6e-a4c0-4a63-8950-3f5a6f616d17",
+        "name": "Projeto 1",
+        "priority": "baixa",
+        "category": "Infra",
+        "description": "Descrição do Projeto 1",
+        "budget": "25000.00",
+        "cost": "0.00",
+        "deadline": "21-08-2025",
+        "createdAt": "2024-03-28T17:22:00.26",
+        "updatedAt": "2024-03-28T17:22:00.26",
+        "ownerId": "f175c9ca-cbf3-4018-98dd-369ba0aa38d5",
+        "workspaceId": "64a7efa3-a786-43bf-ada0-d4d2e64b398f"
+      },
+      {
+        "id": "04a2f77a-7551-4888-8f04-751c9ab8f2eb",
+        "name": "Projeto 2",
+        "priority": "baixa",
+        "category": "Infra",
+        "description": "Descrição do Projeto 2",
+        "budget": "25000.00",
+        "cost": "0.00",
+        "deadline": "21-08-2025",
+        "createdAt": "2024-03-28T17:22:08.81",
+        "updatedAt": "2024-03-28T17:22:08.81",
+        "ownerId": "f175c9ca-cbf3-4018-98dd-369ba0aa38d5",
+        "workspaceId": "64a7efa3-a786-43bf-ada0-d4d2e64b398f"
+      }
+    ]
   }
 }
 ```
