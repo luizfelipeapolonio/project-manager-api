@@ -1495,4 +1495,79 @@ sistema foi desenvolvido de uma maneira bem específica seguindo algumas regras.
 ```
 [Voltar para as rotas ⬆](#endpoints)
 
+<h2 id="run">⚙ Como rodar a aplicação</h2>
+
+### Executando o código localmente
+-> Para executar o código localmente, é necessário ter instalado o [Git](https://git-scm.com/), o [Java](https://www.oracle.com/br/java/technologies/downloads/#java17)
+devidamente configurado, e o [Docker](https://www.docker.com/).
+- Para executar a aplicação, precisamos rodar alguns comandos com o auxílio de um terminal. Primeiro, clone este repositório:
+
+  ```bash
+  $ git clone https://github.com/luizfelipeapolonio/project-manager-api
+  ```
+- Acesse a pasta da aplicação:
+  ```bash
+  $ cd project-manager-api
+  ```
+- Crie e inicialize o container Docker do banco de dados da aplicação:
+  > ⚠ O Docker já deve estar executando antes de rodar este comando.
+  ```bash
+  $ docker compose -f docker-compose-local.yml up -d
+  ```
+- Assumindo que o container Docker do banco de dados Postgres esteja rodando localmente, altere o arquivo `application.properties` da seguinte maneira:
+  ```bash
+  # Acesse a pasta onde se encontra o arquivo:
+  src/main/resources
+
+  # Em um editor de código, altere a linha do arquivo application.properties para:
+  spring.datasource.url=jdbc:postgresql://localhost:5432/project_manager_api
+  ```
+
+<br />
+
+> ⚠ Se estiver utilizando Windows, use o `PowerShell` para executar todos os comandos abaixo para que funcionem como esperado.
+- Na raíz da pasta `project-manager-api`, execute o script do Maven Wrapper para instalar as dependências:
+  ```bash
+  $ ./mvnw clean install
+  ```
+- Execute a aplicação como uma aplicação Spring Boot:
+  ```bash
+  $ ./mvnw spring-boot:run
+  ```
+  ou abra a aplicação na sua IDE favorita como um projeto Maven e execute como uma aplicação Spring Boot.
+
+- A aplicação ficará acessível no endereço http://localhost:8080
+
+### Executando a aplicação no Docker
+
+-> Para executar a aplicação e o banco de dados em containers basta ter instalado o [Docker](https://www.docker.com/) e o [Git](https://git-scm.com/).
+- Primeiro, clone este repositório:
+
+  ```bash
+  $ git clone https://github.com/luizfelipeapolonio/project-manager-api
+  ```
+- Acesse a pasta da aplicação:
+  ```bash
+  $ cd project-manager-api
+  ```
+- Gere a imagem Docker da aplicação com o comando:
+  > ⚠ O " . " no final do comando é essencial para a execução, portanto, certifique-se de que o comando esteja exatamente igual a este.
+  ```bash
+  $ docker build -t project_manager_image .
+  ```
+- Uma vez gerada a imagem, crie e inicialize os containers da aplicação e do banco de dados com o comando:
+  ```bash
+  $ docker compose up -d
+  ```
+- Ambos containers serão construídos e inicializados. A aplicação estará acessível no endereço http://localhost:8080
+
+<h2 id="license">📝 Licença</h2>
+
+Este repositório está licenciado pela **MIT LICENSE**. Para mais informações, leia o arquivo [LICENSE](./LICENSE) contido neste repositório.
+
+<h2 id="author">Autor</h2>
+
+Linkedin: [acesse meu perfil](https://www.linkedin.com/in/luiz-felipe-salgado-31a969273/).
+
+Feito com 💜 por luizfelipeapolonio
 
