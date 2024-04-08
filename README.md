@@ -178,35 +178,35 @@ sistema foi desenvolvido de uma maneira bem específica seguindo algumas regras.
 
 ### Project
 
-|      Tipo      | Rota                                                     | Descrição                                                                     | Autenticação | Autorização                                                    |
-|:--------------:|:---------------------------------------------------------|:------------------------------------------------------------------------------|:------------:|:---------------------------------------------------------------|
-|  **_`POST`_**  | `/api/projects`                                          | Criar projeto [requisição/resposta](#create-project)                          |     Sim      | Apenas `ADMIN` e `WRITE_READ` dono ou membro do workspace      |
-|  **_`GET`_**   | `/api/projects`                                          | Listar todos os projetos do usuário autenticado [resposta](#user-projects)    |     Sim      | Apenas `ADMIN`, `WRITE_READ`                                   |
-| **_`DELETE`_** | `/api/projects`                                          | Excluir todos os projetos do usuário autenticado [resposta](#delete-projects) |     Sim      | Apenas `ADMIN`, `WRITE_READ`                                   |
-| **_`PATCH`_**  | `/api/projects/{projectId}`                              | Atualizar os dados de um projeto                                              |     Sim      | Apenas `ADMIN`, `WRITE_READ` dono do projeto                   |
-|  **_`GET`_**   | `/api/projects/{projectId}`                              | Visualizar um projeto                                                         |     Sim      | `ADMIN`, `WRITE_READ`, `READ_ONLY` membro ou dono do workspace |
-| **_`DELETE`_** | `/api/projects/{projectId}`                              | Excluir um projeto                                                            |     Sim      | Apenas `ADMIN`, `WRITE_READ` dono do projeto ou workspace      |
-|  **_`GET`_**   | `/api/projects/owner/{ownerId}`                          | Listar todos os projetos de um usuário específico                             |     Sim      | Apenas `ADMIN`                                                 |
-| **_`DELETE`_** | `/api/projects/owner/{ownerId}`                          | Excluir todos os projetos de um usuário específico                            |     Sim      | Apenas `ADMIN`                                                 |
-|  **_`GET`_**   | `/api/projects/workspaces/{workspaceId}`                 | Listar todos os projetos de um workspace específico                           |     Sim      | `ADMIN`, `WRITE_READ`, `READ_ONLY` membro ou dono do workspace |
-| **_`DELETE`_** | `/api/projects/workspaces/{workspaceId}`                 | Excluir todos os projetos de um workspace específico                          |     Sim      | Apenas `ADMIN` dono do workspace                               |
-|  **_`GET`_**   | `/api/projects/workspaces/{workspaceId}/owner/{ownerId}` | Listar todos os projetos de um usuário específico em um workspace específico  |     Sim      | Apenas `ADMIN` dono do workspace                               |
-| **_`DELETE`_** | `/api/projects/workspaces/{workspaceId}/owner/{ownerId}` | Excluir todos os projetos de um usuário específico em um workspace específico |     Sim      | Apenas `ADMIN` dono do workspace                               |
+|      Tipo      | Rota                                                          | Descrição                                                                                                                                                                     | Autenticação | Autorização                                                    |
+|:--------------:|:--------------------------------------------------------------|:------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|:------------:|:---------------------------------------------------------------|
+|  **_`POST`_**  | `/api/projects`                                               | Criar projeto [requisição/resposta](#create-project)                                                                                                                          |     Sim      | Apenas `ADMIN` e `WRITE_READ` dono ou membro do workspace      |
+|  **_`GET`_**   | `/api/projects`                                               | Listar todos os projetos do usuário autenticado [resposta](#user-projects)                                                                                                    |     Sim      | Apenas `ADMIN`, `WRITE_READ`                                   |
+| **_`DELETE`_** | `/api/projects`                                               | Excluir todos os projetos do usuário autenticado [resposta](#delete-projects)                                                                                                 |     Sim      | Apenas `ADMIN`, `WRITE_READ`                                   |
+| **_`PATCH`_**  | `/api/projects/{projectId}`                                   | Atualizar os dados de um projeto [requisição/resposta](#update-project)                                                                                                       |     Sim      | Apenas `ADMIN`, `WRITE_READ` dono do projeto                   |
+|  **_`GET`_**   | `/api/projects/{projectId}`                                   | Visualizar um projeto [resposta](#get-project)                                                                                                                                |     Sim      | `ADMIN`, `WRITE_READ`, `READ_ONLY` membro ou dono do workspace |
+| **_`DELETE`_** | `/api/projects/{projectId}`                                   | Excluir um projeto [resposta](#delete-project)                                                                                                                                |     Sim      | Apenas `ADMIN`, `WRITE_READ` dono do projeto ou workspace      |
+|  **_`GET`_**   | `/api/projects/owner/{ownerId}`                               | Listar todos os projetos de um usuário específico [resposta](#owner-projects)                                                                                                 |     Sim      | Apenas `ADMIN`                                                 |
+| **_`DELETE`_** | `/api/projects/owner/{ownerId}`                               | Excluir todos os projetos de um usuário específico [resposta](#delete-owner-projects)                                                                                         |     Sim      | Apenas `ADMIN`                                                 |
+|  **_`GET`_**   | `/api/projects/workspaces/{workspaceId}?sortingOrder={order}` | Listar todos os projetos de um workspace específico. Pode ser filtrado pelo campo priority em ordem crescente(`asc`) ou descrescente (`desc`) [resposta](#workspace-projects) |     Sim      | `ADMIN`, `WRITE_READ`, `READ_ONLY` membro ou dono do workspace |
+| **_`DELETE`_** | `/api/projects/workspaces/{workspaceId}`                      | Excluir todos os projetos de um workspace específico [reposta](#delete-workspace-projects)                                                                                    |     Sim      | Apenas `ADMIN` dono do workspace                               |
+|  **_`GET`_**   | `/api/projects/workspaces/{workspaceId}/owner/{ownerId}`      | Listar todos os projetos de um usuário específico em um workspace específico [resposta](#workspace-owner-projects)                                                            |     Sim      | Apenas `ADMIN` dono do workspace                               |
+| **_`DELETE`_** | `/api/projects/workspaces/{workspaceId}/owner/{ownerId}`      | Excluir todos os projetos de um usuário específico em um workspace específico [resposta](#delete-workspace-owner-projects)                                                    |     Sim      | Apenas `ADMIN` dono do workspace                               |
 
 <br />
 
 ### Task 
 
-|      Tipo      | Rota                              | Descrição                                       | Autenticação | Autorização                                                     |
-|:--------------:|:----------------------------------|:------------------------------------------------|:------------:|:----------------------------------------------------------------|
-|  **_`POST`_**  | `/api/tasks`                      | Criar task                                      |     Sim      | Apenas `ADMIN`, `WRITE_READ` membro ou dono do workspace        |
-|  **_`GET`_**   | `/api/tasks`                      | Listar todas as tasks do usuário autenticado    |     Sim      | Apenas `ADMIN`, `WRITE_READ`                                    |
-|  **_`GET`_**   | `/api/tasks/{taskId}`             | Visualizar uma task                             |     Sim      | `ADMIN`, `WRITE_READ`, `READ_ONLY` membro ou dono do workspace  |
-| **_`DELETE`_** | `/api/tasks/{taskId}`             | Excluir uma task                                |     Sim      | Apenas `ADMIN`, `WRITE_READ` dono do workspace, projeto ou task |
-| **_`PATCH`_**  | `/api/tasks/{taskId}`             | Atualizar uma task                              |     Sim      | Apenas `ADMIN`, `WRITE_READ` dono do workspace, projeto ou task |
-|  **_`GET`_**   | `/api/tasks/projects/{projectId}` | Listar todas as tasks de um projeto específico  |     Sim      | `ADMIN`, `WRITE_READ`, `READ_ONLY` membro ou dono do workspace  |
-| **_`DELETE`_** | `/api/tasks/projects/{projectId}` | Excluir todas as tasks de um projeto específico |     Sim      | Apenas `ADMIN`, `WRITE_READ` dono do projeto ou do workspace    |
-|  **_`GET`_**   | `/api/tasks/owner/{ownerId}`      | Listar todas as tasks de um usuário específico  |     Sim      | Apenas `ADMIN`                                                  |
+|      Tipo      | Rota                              | Descrição                                                                         | Autenticação | Autorização                                                     |
+|:--------------:|:----------------------------------|:----------------------------------------------------------------------------------|:------------:|:----------------------------------------------------------------|
+|  **_`POST`_**  | `/api/tasks`                      | Criar task [requisição/resposta](#create-task)                                    |     Sim      | Apenas `ADMIN`, `WRITE_READ` membro ou dono do workspace        |
+|  **_`GET`_**   | `/api/tasks`                      | Listar todas as tasks do usuário autenticado [resposta](#user-tasks)              |     Sim      | Apenas `ADMIN`, `WRITE_READ`                                    |
+|  **_`GET`_**   | `/api/tasks/{taskId}`             | Visualizar uma task [resposta](#get-task)                                         |     Sim      | `ADMIN`, `WRITE_READ`, `READ_ONLY` membro ou dono do workspace  |
+| **_`DELETE`_** | `/api/tasks/{taskId}`             | Excluir uma task [resposta](#delete-task)                                         |     Sim      | Apenas `ADMIN`, `WRITE_READ` dono do workspace, projeto ou task |
+| **_`PATCH`_**  | `/api/tasks/{taskId}`             | Atualizar uma task [requisição/resposta](#update-task)                            |     Sim      | Apenas `ADMIN`, `WRITE_READ` dono do workspace, projeto ou task |
+|  **_`GET`_**   | `/api/tasks/projects/{projectId}` | Listar todas as tasks de um projeto específico [resposta](#project-tasks)         |     Sim      | `ADMIN`, `WRITE_READ`, `READ_ONLY` membro ou dono do workspace  |
+| **_`DELETE`_** | `/api/tasks/projects/{projectId}` | Excluir todas as tasks de um projeto específico [resposta](#delete-project-tasks) |     Sim      | Apenas `ADMIN`, `WRITE_READ` dono do projeto ou do workspace    |
+|  **_`GET`_**   | `/api/tasks/owner/{ownerId}`      | Listar todas as tasks de um usuário específico [resposta](#owner-tasks)           |     Sim      | Apenas `ADMIN`                                                  |
 
 <br />
 
@@ -242,6 +242,7 @@ sistema foi desenvolvido de uma maneira bem específica seguindo algumas regras.
   }
 }
 ```
+[Voltar para as rotas ⬆](#endpoints)
 
 <br />
 
@@ -274,6 +275,7 @@ sistema foi desenvolvido de uma maneira bem específica seguindo algumas regras.
   }
 }
 ```
+[Voltar para as rotas ⬆](#endpoints)
 
 <br />
 
@@ -297,6 +299,7 @@ sistema foi desenvolvido de uma maneira bem específica seguindo algumas regras.
   }
 }
 ```
+[Voltar para as rotas ⬆](#endpoints)
 
 <br />
 
@@ -328,6 +331,7 @@ sistema foi desenvolvido de uma maneira bem específica seguindo algumas regras.
   ]
 }
 ```
+[Voltar para as rotas ⬆](#endpoints)
 
 <br />
 
@@ -357,6 +361,7 @@ sistema foi desenvolvido de uma maneira bem específica seguindo algumas regras.
   }
 }
 ```
+[Voltar para as rotas ⬆](#endpoints)
 
 <br />
 
@@ -378,6 +383,7 @@ sistema foi desenvolvido de uma maneira bem específica seguindo algumas regras.
   }
 }
 ```
+[Voltar para as rotas ⬆](#endpoints)
 
 <br />
 
@@ -401,6 +407,7 @@ sistema foi desenvolvido de uma maneira bem específica seguindo algumas regras.
   }
 }
 ```
+[Voltar para as rotas ⬆](#endpoints)
 
 <br />
 
@@ -429,6 +436,7 @@ sistema foi desenvolvido de uma maneira bem específica seguindo algumas regras.
   }
 }
 ```
+[Voltar para as rotas ⬆](#endpoints)
 
 <br />
 
@@ -458,6 +466,7 @@ sistema foi desenvolvido de uma maneira bem específica seguindo algumas regras.
   }
 }
 ```
+[Voltar para as rotas ⬆](#endpoints)
 
 <br />
 
@@ -480,6 +489,7 @@ sistema foi desenvolvido de uma maneira bem específica seguindo algumas regras.
   ]
 }
 ```
+[Voltar para as rotas ⬆](#endpoints)
 
 <br />
 
@@ -507,6 +517,7 @@ sistema foi desenvolvido de uma maneira bem específica seguindo algumas regras.
   }
 }
 ```
+[Voltar para as rotas ⬆](#endpoints)
 
 <br />
 
@@ -555,6 +566,7 @@ sistema foi desenvolvido de uma maneira bem específica seguindo algumas regras.
   }
 }
 ```
+[Voltar para as rotas ⬆](#endpoints)
 
 <br />
 
@@ -577,6 +589,7 @@ sistema foi desenvolvido de uma maneira bem específica seguindo algumas regras.
   }
 }
 ```
+[Voltar para as rotas ⬆](#endpoints)
 
 <br />
 
@@ -617,6 +630,7 @@ sistema foi desenvolvido de uma maneira bem específica seguindo algumas regras.
   }
 }
 ```
+[Voltar para as rotas ⬆](#endpoints)
 
 <br />
 
@@ -657,6 +671,7 @@ sistema foi desenvolvido de uma maneira bem específica seguindo algumas regras.
   }
 }
 ```
+[Voltar para as rotas ⬆](#endpoints)
 
 <br />
 
@@ -689,6 +704,7 @@ sistema foi desenvolvido de uma maneira bem específica seguindo algumas regras.
   }
 }
 ```
+[Voltar para as rotas ⬆](#endpoints)
 
 <br />
 
@@ -730,6 +746,7 @@ sistema foi desenvolvido de uma maneira bem específica seguindo algumas regras.
   }
 }
 ```
+[Voltar para as rotas ⬆](#endpoints)
 
 <br />
 
@@ -773,6 +790,7 @@ sistema foi desenvolvido de uma maneira bem específica seguindo algumas regras.
   ]
 }
 ```
+[Voltar para as rotas ⬆](#endpoints)
 
 <br />
 
@@ -818,4 +836,663 @@ sistema foi desenvolvido de uma maneira bem específica seguindo algumas regras.
   }
 }
 ```
+[Voltar para as rotas ⬆](#endpoints)
+
+<br />
+
+<h4 id="update-project">PATCH /api/projects/{projectId}</h4>
+
+**Requisição**
+```json
+{
+  "name": "Projeto 4 atualizado",
+  "category": "Infraestrutura",
+  "description": "Descrição do Projeto 4 atualizada",
+  "budget": "30000.00",
+  "priority": "alta",
+  "deadline": "23-09-2025"
+}
+```
+
+**Resposta**
+```json
+{
+  "status": "Success",
+  "code": 200,
+  "message": "Projeto atualizado com sucesso",
+  "data": {
+    "id": "830c32b2-28b7-4016-a633-e33be63a074a",
+    "name": "Projeto 4 atualizado",
+    "priority": "alta",
+    "category": "Infraestrutura",
+    "description": "Descrição do Projeto 4 atualizada",
+    "budget": "30000.00",
+    "cost": "4000.00",
+    "deadline": "23-09-2025",
+    "createdAt": "2024-03-28T17:12:52.71",
+    "updatedAt": "2024-03-28T22:23:46.411341",
+    "ownerId": "f175c9ca-cbf3-4018-98dd-369ba0aa38d5",
+    "workspaceId": "64a7efa3-a786-43bf-ada0-d4d2e64b398f"
+  }
+}
+```
+[Voltar para as rotas ⬆](#endpoints)
+
+<br />
+
+<h4 id="get-project">GET /api/projects/{projectId}</h4>
+
+**Resposta**
+```json
+{
+  "status": "Success",
+  "code": 200,
+  "message": "Projeto encontrado",
+  "data": {
+    "project": {
+      "id": "d61a01b5-9273-467e-a56a-4290b1510efa",
+      "name": "Projeto 1",
+      "priority": "alta",
+      "category": "Desenvolvimento",
+      "description": "Descrição do Projeto 1",
+      "budget": "25000.00",
+      "cost": "11280.00",
+      "deadline": "21-08-2025",
+      "createdAt": "2024-03-21T19:40:27.4",
+      "updatedAt": "2024-03-23T14:53:10.77",
+      "ownerId": "a0648bd1-fb7f-4a4c-916a-c354801dff54",
+      "workspaceId": "69a5e94d-efc2-44ae-9595-c699b99911d9"
+    },
+    "tasks": [
+      {
+        "id": "db972f52-d954-483c-8f54-d3c85cca4440",
+        "name": "Task 2",
+        "description": "Descrição da task 2",
+        "cost": "4280.00",
+        "createdAt": "2024-03-23T14:33:20.72",
+        "updatedAt": "2024-03-23T14:33:20.72",
+        "projectId": "d61a01b5-9273-467e-a56a-4290b1510efa",
+        "ownerId": "a0648bd1-fb7f-4a4c-916a-c354801dff54"
+      },
+      {
+        "id": "3c4f5dbc-7b51-41d0-b216-bb44e78dff04",
+        "name": "Task 1",
+        "description": "Descrição da task 1",
+        "cost": "2000.00",
+        "createdAt": "2024-03-23T14:52:57.56",
+        "updatedAt": "2024-03-23T14:52:57.56",
+        "projectId": "d61a01b5-9273-467e-a56a-4290b1510efa",
+        "ownerId": "a0648bd1-fb7f-4a4c-916a-c354801dff54"
+      }
+    ]
+  }
+}
+```
+[Voltar para as rotas ⬆](#endpoints)
+
+<br />
+
+<h4 id="delete-project">DELETE /api/projects/{projectId}</h4>
+
+**Resposta**
+```json
+{
+  "status": "Success",
+  "code": 200,
+  "message": "Projeto excluído com sucesso",
+  "data": {
+    "deletedProject": {
+      "id": "830c32b2-28b7-4016-a633-e33be63a074a",
+      "name": "Projeto 4",
+      "priority": "baixa",
+      "category": "Infra",
+      "description": "Descrição do Projeto 4",
+      "budget": "25000.00",
+      "cost": "4000.00",
+      "deadline": "21-08-2025",
+      "createdAt": "2024-03-28T17:12:52.71",
+      "updatedAt": "2024-03-28T22:23:46.41",
+      "ownerId": "f175c9ca-cbf3-4018-98dd-369ba0aa38d5",
+      "workspaceId": "64a7efa3-a786-43bf-ada0-d4d2e64b398f"
+    }
+  }
+}
+```
+[Voltar para as rotas ⬆](#endpoints)
+
+<br />
+
+<h4 id="owner-projects">GET /api/projects/owner/{ownerId}</h4>
+
+**Resposta**
+```json
+{
+  "status": "Success",
+  "code": 200,
+  "message": "Todos os projetos do usuário de ID: 'f175c9ca-cbf3-4018-98dd-369ba0aa38d5'",
+  "data": [
+    {
+      "id": "e4b9dc6e-a4c0-4a63-8950-3f5a6f616d17",
+      "name": "Projeto 1",
+      "priority": "baixa",
+      "category": "Infra",
+      "description": "Descrição do Projeto 4",
+      "budget": "25000.00",
+      "cost": "0.00",
+      "deadline": "21-08-2025",
+      "createdAt": "2024-03-28T17:22:00.26",
+      "updatedAt": "2024-03-28T17:22:00.26",
+      "ownerId": "f175c9ca-cbf3-4018-98dd-369ba0aa38d5",
+      "workspaceId": "64a7efa3-a786-43bf-ada0-d4d2e64b398f"
+    },
+    {
+      "id": "04a2f77a-7551-4888-8f04-751c9ab8f2eb",
+      "name": "Projeto 2",
+      "priority": "baixa",
+      "category": "Infra",
+      "description": "Descrição do Projeto 4",
+      "budget": "25000.00",
+      "cost": "0.00",
+      "deadline": "21-08-2025",
+      "createdAt": "2024-03-28T17:22:08.81",
+      "updatedAt": "2024-03-28T17:22:08.81",
+      "ownerId": "f175c9ca-cbf3-4018-98dd-369ba0aa38d5",
+      "workspaceId": "64a7efa3-a786-43bf-ada0-d4d2e64b398f"
+    }
+  ]
+}
+```
+[Voltar para as rotas ⬆](#endpoints)
+
+<br />
+
+<h4 id="delete-owner-projects">DELETE /api/projects/owner/{ownerId}</h4>
+
+**Resposta**
+```json
+{
+  "status": "Success",
+  "code": 200,
+  "message": "Todos os projetos do usuário de ID: '405c98ba-3251-4b21-8575-7db33576f28a' foram excluídos com sucesso",
+  "data": {
+    "deletedProjects": [
+      {
+        "id": "2a0a2b1e-4b74-4f6c-8491-965ebbc0b8f5",
+        "name": "Projeto 4",
+        "priority": "baixa",
+        "category": "Infra",
+        "description": "Descrição do Projeto 4",
+        "budget": "25000.00",
+        "cost": "0.00",
+        "deadline": "21-08-2025",
+        "createdAt": "2024-03-28T19:10:12.44",
+        "updatedAt": "2024-03-28T19:10:12.44",
+        "ownerId": "405c98ba-3251-4b21-8575-7db33576f28a",
+        "workspaceId": "64a7efa3-a786-43bf-ada0-d4d2e64b398f"
+      },
+      {
+        "id": "6e371e5f-6094-4f16-b01f-5b90f531c970",
+        "name": "Projeto 5",
+        "priority": "baixa",
+        "category": "Infra",
+        "description": "Descrição do Projeto 5",
+        "budget": "25000.00",
+        "cost": "0.00",
+        "deadline": "21-08-2025",
+        "createdAt": "2024-03-28T19:10:35.31",
+        "updatedAt": "2024-03-28T19:10:35.31",
+        "ownerId": "405c98ba-3251-4b21-8575-7db33576f28a",
+        "workspaceId": "64a7efa3-a786-43bf-ada0-d4d2e64b398f"
+      }
+    ]
+  }
+}
+```
+[Voltar para as rotas ⬆](#endpoints)
+
+<br />
+
+<h4 id="workspace-projects">GET /api/projects/workspaces/{workspaceId}?sortingOrder={order}</h4>
+
+**Resposta**
+```json
+{
+  "status": "Success",
+  "code": 200,
+  "message": "Todos os projetos do workspace de ID: '69a5e94d-efc2-44ae-9595-c699b99911d9'",
+  "data": [
+    {
+      "id": "0e9d6313-c7ec-4c67-a14e-7d5ea4743cca",
+      "name": "Projeto 5",
+      "priority": "alta",
+      "category": "Infra",
+      "description": "Descrição do Projeto 5",
+      "budget": "25000.00",
+      "cost": "0.00",
+      "deadline": "21-08-2025",
+      "createdAt": "2024-03-26T16:52:48.18",
+      "updatedAt": "2024-03-26T16:52:48.18",
+      "ownerId": "97d2a1ad-cd7a-40dc-b2df-9bfe912e6542",
+      "workspaceId": "69a5e94d-efc2-44ae-9595-c699b99911d9"
+    },
+    {
+      "id": "d61a01b5-9273-467e-a56a-4290b1510efa",
+      "name": "Projeto 1",
+      "priority": "media",
+      "category": "Desenvolvimento",
+      "description": "Descrição do Projeto 1",
+      "budget": "25000.00",
+      "cost": "12280.00",
+      "deadline": "21-08-2025",
+      "createdAt": "2024-03-21T19:40:27.4",
+      "updatedAt": "2024-03-24T21:58:55.86",
+      "ownerId": "a0648bd1-fb7f-4a4c-916a-c354801dff54",
+      "workspaceId": "69a5e94d-efc2-44ae-9595-c699b99911d9"
+    }
+  ]
+}
+```
+[Voltar para as rotas ⬆](#endpoints)
+
+<br />
+
+<h4 id="delete-workspace-projects">DELETE /api/projects/workspaces/{workspaceId}</h4>
+
+**Resposta**
+```json
+{
+  "status": "Success",
+  "code": 200,
+  "message": "Todos os projetos do workspace de ID: '3dc5aef9-d24f-4aba-8e28-2aa18a949b2c' excluídos com sucesso",
+  "data": {
+    "deletedProjects": [
+      {
+        "id": "b8257cad-09ed-4b89-9b97-5ead3c75c709",
+        "name": "Projeto 3",
+        "priority": "baixa",
+        "category": "Infra",
+        "description": "Descrição do Projeto 3",
+        "budget": "25000.00",
+        "cost": "0.00",
+        "deadline": "21-08-2025",
+        "createdAt": "2024-03-28T15:43:20.96",
+        "updatedAt": "2024-03-28T15:43:20.96",
+        "ownerId": "f175c9ca-cbf3-4018-98dd-369ba0aa38d5",
+        "workspaceId": "3dc5aef9-d24f-4aba-8e28-2aa18a949b2c"
+      },
+      {
+        "id": "0ad75ed2-0ec8-4ff0-b0c3-a8bd4e404ac1",
+        "name": "Projeto 2",
+        "priority": "baixa",
+        "category": "Infra",
+        "description": "Descrição do Projeto 2",
+        "budget": "25000.00",
+        "cost": "0.00",
+        "deadline": "21-08-2025",
+        "createdAt": "2024-03-28T15:43:12.83",
+        "updatedAt": "2024-03-28T16:56:36.33",
+        "ownerId": "f175c9ca-cbf3-4018-98dd-369ba0aa38d5",
+        "workspaceId": "3dc5aef9-d24f-4aba-8e28-2aa18a949b2c"
+      }
+    ]
+  }
+}
+```
+[Voltar para as rotas ⬆](#endpoints)
+
+<br />
+
+<h4 id="workspace-owner-projects">GET /api/projects/workspaces/{workspaceId}/owner/{ownerId}</h4>
+
+**Resposta**
+```json
+{
+  "status": "Success",
+  "code": 200,
+  "message": "Todos os projetos do usuário de id 'f175c9ca-cbf3-4018-98dd-369ba0aa38d5' no workspace de id '64a7efa3-a786-43bf-ada0-d4d2e64b398f'",
+  "data": [
+    {
+      "id": "fef0bc14-d684-4214-b605-02cc3b8e88ab",
+      "name": "Projeto 1",
+      "priority": "alta",
+      "category": "Desenvolvimento",
+      "description": "Descrição do Projeto 1",
+      "budget": "25000.00",
+      "cost": "0.00",
+      "deadline": "21-08-2025",
+      "createdAt": "2024-04-07T19:20:53.3",
+      "updatedAt": "2024-04-07T19:20:53.3",
+      "ownerId": "f175c9ca-cbf3-4018-98dd-369ba0aa38d5",
+      "workspaceId": "64a7efa3-a786-43bf-ada0-d4d2e64b398f"
+    },
+    {
+      "id": "1772e34c-bfc9-4b1f-bca2-dccd71d10f2f",
+      "name": "Projeto 2",
+      "priority": "alta",
+      "category": "Infra",
+      "description": "Descrição do Projeto 2",
+      "budget": "25000.00",
+      "cost": "0.00",
+      "deadline": "21-08-2025",
+      "createdAt": "2024-04-07T19:21:08.62",
+      "updatedAt": "2024-04-07T19:21:08.62",
+      "ownerId": "f175c9ca-cbf3-4018-98dd-369ba0aa38d5",
+      "workspaceId": "64a7efa3-a786-43bf-ada0-d4d2e64b398f"
+    }
+  ]
+}
+```
+[Voltar para as rotas ⬆](#endpoints)
+
+<br />
+
+<h4 id="delete-workspace-owner-projects">DELETE /api/projects/workspaces/{workspaceId}/owner/{ownerId}</h4>
+
+**Resposta**
+```json
+{
+  "status": "Success",
+  "code": 200,
+  "message": "Todos os projetos do usuário de ID 'a0648bd1-fb7f-4a4c-916a-c354801dff54' do workspace de ID '57cd724e-5f6d-4c9f-aeb1-954e154cbba7' foram excluídos com sucesso",
+  "data": {
+    "deletedProjects": [
+      {
+        "id": "6ae7acda-ad8b-43d7-bb66-e8e55b731fa9",
+        "name": "Projeto 3",
+        "priority": "baixa",
+        "category": "Infra",
+        "description": "Descrição do Projeto 3",
+        "budget": "25000.00",
+        "cost": "0.00",
+        "deadline": "21-08-2025",
+        "createdAt": "2024-03-26T19:48:52.48",
+        "updatedAt": "2024-03-26T19:48:52.48",
+        "ownerId": "a0648bd1-fb7f-4a4c-916a-c354801dff54",
+        "workspaceId": "57cd724e-5f6d-4c9f-aeb1-954e154cbba7"
+      },
+      {
+        "id": "65602661-bd82-455d-85ae-1b89e1ac630f",
+        "name": "Projeto 4",
+        "priority": "baixa",
+        "category": "Infra",
+        "description": "Descrição do Projeto 4",
+        "budget": "25000.00",
+        "cost": "0.00",
+        "deadline": "21-08-2025",
+        "createdAt": "2024-03-26T19:48:58.33",
+        "updatedAt": "2024-03-26T19:48:58.33",
+        "ownerId": "a0648bd1-fb7f-4a4c-916a-c354801dff54",
+        "workspaceId": "57cd724e-5f6d-4c9f-aeb1-954e154cbba7"
+      }
+    ]
+  }
+}
+```
+[Voltar para as rotas ⬆](#endpoints)
+
+<br />
+
+**`TASK`**
+
+<h4 id="create-task">POST /api/tasks</h4>
+
+**Requisição**
+```json
+{
+	"name": "Task 1",
+	"description": "Descrição da task 1",
+	"cost": "1000.00",
+	"projectId": "830c32b2-28b7-4016-a633-e33be63a074a"
+}
+```
+
+**Resposta**
+```json
+{
+  "status": "Success",
+  "code": 201,
+  "message": "Task criada com sucesso",
+  "data": {
+    "id": "34186661-aa70-4152-9cac-3ffca66f348b",
+    "name": "Task 1",
+    "description": "Descrição da task 1",
+    "cost": "1000.00",
+    "createdAt": "2024-03-28T17:23:53.614976",
+    "updatedAt": "2024-03-28T17:23:53.614976",
+    "projectId": "830c32b2-28b7-4016-a633-e33be63a074a",
+    "ownerId": "f175c9ca-cbf3-4018-98dd-369ba0aa38d5"
+  }
+}
+```
+[Voltar para as rotas ⬆](#endpoints)
+
+<br />
+
+<h4 id="user-tasks">GET /api/tasks</h4>
+
+**Resposta**
+```json
+{
+  "status": "Success",
+  "code": 200,
+  "message": "Todas as suas tasks",
+  "data": [
+    {
+      "id": "db972f52-d954-483c-8f54-d3c85cca4440",
+      "name": "Task 2",
+      "description": "Descrição da task 2",
+      "cost": "4280.00",
+      "createdAt": "2024-03-23T14:33:20.72",
+      "updatedAt": "2024-03-23T14:33:20.72",
+      "projectId": "d61a01b5-9273-467e-a56a-4290b1510efa",
+      "ownerId": "a0648bd1-fb7f-4a4c-916a-c354801dff54"
+    },
+    {
+      "id": "3c4f5dbc-7b51-41d0-b216-bb44e78dff04",
+      "name": "Task 1",
+      "description": "Descrição da task 1",
+      "cost": "2000.00",
+      "createdAt": "2024-03-23T14:52:57.56",
+      "updatedAt": "2024-03-24T21:42:29.66",
+      "projectId": "d61a01b5-9273-467e-a56a-4290b1510efa",
+      "ownerId": "a0648bd1-fb7f-4a4c-916a-c354801dff54"
+    }
+  ]
+}
+```
+[Voltar para as rotas ⬆](#endpoints)
+
+<br />
+
+<h4 id="get-task">GET /api/tasks/{taskId}</h4>
+
+**Resposta**
+```json
+{
+  "status": "Success",
+  "code": 200,
+  "message": "Task encontrada",
+  "data": {
+    "id": "9991bea9-48c5-497f-b833-b5a10f67cd9a",
+    "name": "Task 1",
+    "description": "Descrição da task 1",
+    "cost": "2000.00",
+    "createdAt": "2024-03-21T19:42:30.29",
+    "updatedAt": "2024-03-21T19:42:30.29",
+    "projectId": "d61a01b5-9273-467e-a56a-4290b1510efa",
+    "ownerId": "a0648bd1-fb7f-4a4c-916a-c354801dff54"
+  }
+}
+```
+[Voltar para as rotas ⬆](#endpoints)
+
+<br />
+
+<h4 id="delete-task">DELETE /api/tasks/{taskId}</h4>
+
+**Resposta**
+```json
+{
+  "status": "Success",
+  "code": 200,
+  "message": "Task excluída com sucesso",
+  "data": {
+    "deletedTask": {
+      "id": "cdd8bbed-b8df-4cd1-88d0-02be58c317e6",
+      "name": "Task 4",
+      "description": "Descrição da task 4",
+      "cost": "1000.00",
+      "createdAt": "2024-03-28T16:23:20.09",
+      "updatedAt": "2024-03-28T16:23:20.09",
+      "projectId": "7905905d-30ba-4766-82dd-d91e0818f905",
+      "ownerId": "63a129b7-2be9-48e5-b561-99240ab479ba"
+    }
+  }
+}
+```
+[Voltar para as rotas ⬆](#endpoints)
+
+<br />
+
+<h4 id="update-task">PATCH /api/tasks/{taskId}</h4>
+
+**Requisição**
+```json
+{
+  "name": "Task 4 atualizada",
+  "description": "Descrição da Task 4 atualizada",
+  "cost": "1000.00"
+}
+```
+
+**Resposta**
+```json
+{
+  "status": "Success",
+  "code": 200,
+  "message": "Task atualizada com sucesso",
+  "data": {
+    "id": "46b15bca-46b6-4c05-9e20-3934387b6d68",
+    "name": "Task 4 atualizada",
+    "description": "Descrição da task 4 atualizada",
+    "cost": "1000.00",
+    "createdAt": "2024-03-24T21:43:34.81",
+    "updatedAt": "2024-03-24T21:58:55.932462",
+    "projectId": "d61a01b5-9273-467e-a56a-4290b1510efa",
+    "ownerId": "bb45a1dc-b8f9-4b5b-9237-4f133ce41921"
+  }
+}
+```
+[Voltar para as rotas ⬆](#endpoints)
+
+<br />
+
+<h4 id="project-tasks">GET /api/tasks/projects/{projectId}</h4>
+
+**Resposta**
+```json
+{
+  "status": "Success",
+  "code": 200,
+  "message": "Todas as tasks do projeto de ID: 'd61a01b5-9273-467e-a56a-4290b1510efa'",
+  "data": [
+    {
+      "id": "db972f52-d954-483c-8f54-d3c85cca4440",
+      "name": "Task 2",
+      "description": "Descrição da task 2",
+      "cost": "4280.00",
+      "createdAt": "2024-03-23T14:33:20.72",
+      "updatedAt": "2024-03-23T14:33:20.72",
+      "projectId": "d61a01b5-9273-467e-a56a-4290b1510efa",
+      "ownerId": "a0648bd1-fb7f-4a4c-916a-c354801dff54"
+    },
+    {
+      "id": "3c4f5dbc-7b51-41d0-b216-bb44e78dff04",
+      "name": "Task 1",
+      "description": "Descrição da task 1",
+      "cost": "2000.00",
+      "createdAt": "2024-03-23T14:52:57.56",
+      "updatedAt": "2024-03-24T21:42:29.66",
+      "projectId": "d61a01b5-9273-467e-a56a-4290b1510efa",
+      "ownerId": "a0648bd1-fb7f-4a4c-916a-c354801dff54"
+    }
+  ]
+}
+```
+[Voltar para as rotas ⬆](#endpoints)
+
+<br />
+
+<h4 id="delete-project-tasks">DELETE /api/tasks/projects/{projectId}</h4>
+
+**Resposta**
+```json
+{
+  "status": "Success",
+  "code": 200,
+  "message": "Todas as tasks do projeto de ID: 'd755f16b-5729-44e4-b0e7-fdc2f11e7231' foram excluídas com sucesso",
+  "data": {
+    "deletedTasks": [
+      {
+        "id": "9fb7b897-7971-4bd8-b0a3-8998025c5eda",
+        "name": "Task 8",
+        "description": "Descrição da task 8",
+        "cost": "1000.00",
+        "createdAt": "2024-03-26T19:46:37.62",
+        "updatedAt": "2024-03-26T19:46:37.62",
+        "projectId": "d755f16b-5729-44e4-b0e7-fdc2f11e7231",
+        "ownerId": "8e5b432e-cd5d-493f-879b-dfa1a4bd2c89"
+      },
+      {
+        "id": "b081c17d-dedd-425b-9a85-b226f1c9f1ba",
+        "name": "Task 9",
+        "description": "Descrição da task 9",
+        "cost": "1000.00",
+        "createdAt": "2024-03-26T19:46:44.71",
+        "updatedAt": "2024-03-26T19:46:44.71",
+        "projectId": "d755f16b-5729-44e4-b0e7-fdc2f11e7231",
+        "ownerId": "8e5b432e-cd5d-493f-879b-dfa1a4bd2c89"
+      }
+    ]
+  }
+}
+```
+[Voltar para as rotas ⬆](#endpoints)
+
+<br />
+
+<h4 id="owner-tasks">GET /api/tasks/owner/{ownerId}</h4>
+
+**Resposta**
+```json
+{
+  "status": "Success",
+  "code": 200,
+  "message": "Todas as tasks do usuário de ID: '63a129b7-2be9-48e5-b561-99240ab479ba'",
+  "data": [
+    {
+      "id": "10aa3465-d79a-463c-aabb-616ca7ff69ce",
+      "name": "Task 3",
+      "description": "Descrição da task 3",
+      "cost": "1000.00",
+      "createdAt": "2024-03-28T16:23:11.76",
+      "updatedAt": "2024-03-28T16:23:11.76",
+      "projectId": "7905905d-30ba-4766-82dd-d91e0818f905",
+      "ownerId": "63a129b7-2be9-48e5-b561-99240ab479ba"
+    },
+    {
+      "id": "cdd8bbed-b8df-4cd1-88d0-02be58c317e6",
+      "name": "Task 4",
+      "description": "Descrição da task 4",
+      "cost": "1000.00",
+      "createdAt": "2024-03-28T16:23:20.09",
+      "updatedAt": "2024-03-28T16:23:20.09",
+      "projectId": "7905905d-30ba-4766-82dd-d91e0818f905",
+      "ownerId": "63a129b7-2be9-48e5-b561-99240ab479ba"
+    }
+  ]
+}
+```
+[Voltar para as rotas ⬆](#endpoints)
+
 
