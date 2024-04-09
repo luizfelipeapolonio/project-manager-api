@@ -1,0 +1,47 @@
+version: "3"
+
+services:
+  project_manager_api:
+    image: project_manager_image
+    ports:
+      - "8080:8080"
+    container_name: "project_manager_api"
+    volumes:
+      - "/etc/timezone:/etc/timezone:ro"
+      - "/etc/localtime:/etc/localtime:ro"
+    environment:
+      TZ: "America/Sao_Paulo"
+    networks:
+      - project_manager_net
+    depends_on:
+      database:
+        condition: service_healthy
+
+  database:
+    image: postgres
+    ports:
+      - "5432:5432"
+    container_name: "postgres_project_manager"
+    restart: unless-stopped
+    volumes:
+      - db_project_manager:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: project_manager_api
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    networks:
+      - project_manager_net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+networks:
+  project_manager_net:
+    driver: bridge
+    name: "project_manager_net"
+
+volumes:
+  db_project_manager:
+    name: "db_project_manager"

@@ -1,0 +1,19 @@
+version: "3"
+
+services:
+  database:
+    image: postgres
+    ports:
+      - "5432:5432"
+    container_name: "postgres_project_manager"
+    restart: always
+    volumes:
+      - db_project_manager:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: project_manager_api
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+
+volumes:
+  db_project_manager:
+    name: "db_project_manager"
