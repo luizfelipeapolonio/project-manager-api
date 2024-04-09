@@ -1239,10 +1239,10 @@ sistema foi desenvolvido de uma maneira bem específica seguindo algumas regras.
 **Requisição**
 ```json
 {
-	"name": "Task 1",
-	"description": "Descrição da task 1",
-	"cost": "1000.00",
-	"projectId": "830c32b2-28b7-4016-a633-e33be63a074a"
+  "name": "Task 1",
+  "description": "Descrição da task 1",
+  "cost": "1000.00",
+  "projectId": "830c32b2-28b7-4016-a633-e33be63a074a"
 }
 ```
 
